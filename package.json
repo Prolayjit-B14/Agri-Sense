@@ -1,7 +1,7 @@
 {
   "name": "agri-sense",
   "private": true,
-  "version": "2.6.0",
+  "version": "2.7.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "android:sync": "npx cap sync",
     "android:open": "npx cap open android",
-    "production:sync": "npm run build && npx cap sync android"
+    "production:sync": "npm run build && npx cap sync android",
+    "android:clean": "powershell -Command \"Remove-Item -Path android/app/build, android/build, node_modules/@capacitor/app/android/build, node_modules/@capacitor/android/capacitor/build -Recurse -Force -ErrorAction SilentlyContinue\""
   },
   "dependencies": {
     "@capacitor/app": "^8.0.1",

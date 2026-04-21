@@ -6,7 +6,8 @@ import useTrendEngine from '../hooks/useTrendEngine';
 import {
   Sprout, Droplets, Thermometer, Activity,
   History, TrendingUp, TrendingDown,
-  Minus, AlertTriangle, BarChart3, Leaf, Sparkles
+  Minus, AlertTriangle, BarChart3, Leaf, Sparkles,
+  Wind, Droplet
 } from 'lucide-react';
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────
@@ -109,6 +110,7 @@ const SoilMonitoring = () => {
   const navigate = useNavigate();
   const { sensorData, sensorHistory, lastGlobalUpdate } = useApp();
   const soil = sensorData?.soil || {};
+  const weather = sensorData?.weather || {};
   const trend = useTrendEngine(sensorHistory);
 
   const stats = useMemo(() => {
@@ -118,20 +120,20 @@ const SoilMonitoring = () => {
     };
     return {
       moisture: getSafeVal(soil.moisture),
-      temp: getSafeVal(soil.temp),
       ph: getSafeVal(soil.ph),
       humidity: getSafeVal(soil.humidity),
+      n: soil.npk?.n || 0,
+      p: soil.npk?.p || 0,
+      k: soil.npk?.k || 0,
     };
-  }, [soil]);
+  }, [soil, weather]);
 
-  const isOnline = stats.moisture !== null || stats.temp !== null || stats.ph !== null;
-  const heroVal = stats.moisture !== null ? `${stats.moisture}%` : (isOnline ? '--' : 'Offline');
+  const isOnline = stats.moisture !== null || stats.ph !== null;
+  const heroVal = stats.moisture !== null ? `${stats.moisture}%` : (isOnline ? '---' : 'Offline');
 
   const sensors = [
-    { label: 'Soil Temperature', val: stats.temp, unit: '°C', icon: Thermometer, color: '#10B981' },
     { label: 'Soil pH Level', val: stats.ph, unit: 'pH', icon: Activity, color: '#3B82F6' },
-    { label: 'Air Humidity', val: stats.humidity, unit: '%', icon: Droplets, color: '#14B8A6' },
-    { label: 'Root Activity', val: isOnline ? 'Active' : null, unit: '', icon: Sprout, color: '#F59E0B' },
+    { label: 'Soil Moisture', val: stats.moisture, unit: '%', icon: Droplets, color: '#14B8A6' },
   ];
 
   const { healthScore, scoreInfo } = trend;
@@ -144,49 +146,63 @@ const SoilMonitoring = () => {
         initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
         style={{
           background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-          borderRadius: '24px', padding: '1.75rem', color: 'white',
-          boxShadow: '0 12px 24px -8px rgba(16, 185, 129, 0.4)',
+          borderRadius: '32px', padding: '2rem', color: 'white',
+          boxShadow: '0 20px 40px -12px rgba(16, 185, 129, 0.35)',
           position: 'relative', overflow: 'hidden'
         }}
       >
-        <div style={{ position: 'absolute', top: '-10%', right: '-5%', opacity: 0.15 }}>
-          <Sprout size={140} color="white" />
-        </div>
+        <div style={{ position: 'absolute', top: '-20%', right: '-10%', width: '200px', height: '200px', background: 'rgba(255,255,255,0.1)', borderRadius: '50%', filter: 'blur(60px)' }} />
+        <div style={{ position: 'absolute', bottom: '-10%', left: '-10%', width: '150px', height: '150px', background: 'rgba(52,211,153,0.2)', borderRadius: '50%', filter: 'blur(40px)' }} />
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', position: 'relative', zIndex: 2 }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
               <div style={{
-                width: '8px', height: '8px', borderRadius: '50%',
+                width: '10px', height: '10px', borderRadius: '50%',
                 background: isOnline ? '#34D399' : '#CBD5E1',
-                boxShadow: isOnline ? '0 0 10px #34D399' : 'none'
+                boxShadow: isOnline ? '0 0 15px #34D399' : 'none'
               }} />
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, opacity: 0.9 }}>{isOnline ? 'Online' : 'Offline'}</span>
+              <span style={{ fontSize: '0.8rem', fontWeight: 800, opacity: 0.9, letterSpacing: '0.05em' }}>{isOnline ? 'SENSORS ONLINE' : 'SENSORS OFFLINE'}</span>
             </div>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 900, margin: 0 }}>Soil Intelligence</h2>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', opacity: 0.8 }}>
-              <History size={12} /><span style={{ fontSize: '0.65rem', fontWeight: 700 }}>{lastGlobalUpdate || '--'}</span>
-            </div>
-            {healthScore !== null && (
-              <div style={{ padding: '3px 8px', borderRadius: '8px', background: 'rgba(255,255,255,0.15)', fontSize: '0.65rem', fontWeight: 900 }}>
-                Score: {healthScore}/100
-              </div>
-            )}
+            <p style={{ fontSize: '0.9rem', fontWeight: 700, margin: 0, opacity: 0.8 }}>Ground-Truth Metrics</p>
           </div>
         </div>
 
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <span style={{ fontSize: '3.5rem', fontWeight: 950, lineHeight: 1 }}>{heroVal}</span>
-          <p style={{ fontSize: '0.85rem', fontWeight: 700, opacity: 0.9, marginTop: '8px' }}>Volumetric Moisture Content</p>
+        <div style={{ position: 'relative', zIndex: 2 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+            <span style={{ fontSize: '4.5rem', fontWeight: 950, lineHeight: 1, letterSpacing: '-0.02em' }}>{heroVal}</span>
+          </div>
+          <p style={{ fontSize: '0.9rem', fontWeight: 800, opacity: 0.95, marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Droplets size={16} /> Precision Soil Moisture
+          </p>
         </div>
       </motion.div>
 
-      {/* 2. PREDICTIVE INSIGHT */}
+      {/* 2. NPK DASHBOARD (Real Data) */}
+      <div style={{ background: 'white', borderRadius: '24px', padding: '1.25rem', border: `1px solid ${COLORS.border}`, boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
+        <h3 style={{ fontSize: '0.75rem', fontWeight: 900, color: COLORS.subtext, marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Sprout size={16} color={COLORS.primary} /> NPK Nutrient Profile
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ margin: 0, fontSize: '0.65rem', fontWeight: 800, color: '#94A3B8' }}>Nitrogen (N)</p>
+            <p style={{ margin: '4px 0 0 0', fontSize: '1.2rem', fontWeight: 950, color: '#10B981' }}>{stats.n}<span style={{ fontSize: '0.7rem' }}> mg/kg</span></p>
+          </div>
+          <div style={{ textAlign: 'center', borderLeft: `1px solid ${COLORS.border}`, borderRight: `1px solid ${COLORS.border}` }}>
+            <p style={{ margin: 0, fontSize: '0.65rem', fontWeight: 800, color: '#94A3B8' }}>Phospho (P)</p>
+            <p style={{ margin: '4px 0 0 0', fontSize: '1.2rem', fontWeight: 950, color: '#3B82F6' }}>{stats.p}<span style={{ fontSize: '0.7rem' }}> mg/kg</span></p>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ margin: 0, fontSize: '0.65rem', fontWeight: 800, color: '#94A3B8' }}>Potass (K)</p>
+            <p style={{ margin: '4px 0 0 0', fontSize: '1.2rem', fontWeight: 950, color: '#F59E0B' }}>{stats.k}<span style={{ fontSize: '0.7rem' }}> mg/kg</span></p>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. PREDICTIVE INSIGHT */}
       <PredictiveBanner moisture={stats.moisture} trend={trend.moisture.trend} />
 
-      {/* 3. SENSOR GRID */}
+      {/* 4. SENSOR GRID */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
         {sensors.map((s, i) => (
           <motion.div
@@ -203,14 +219,14 @@ const SoilMonitoring = () => {
             </div>
             <p style={{ fontSize: '0.7rem', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', marginBottom: '4px' }}>{s.label}</p>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '2px' }}>
-              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: s.val === null ? '#CBD5E1' : COLORS.text }}>{s.val || '--'}</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: s.val === null ? '#CBD5E1' : COLORS.text }}>{s.val || '---'}</span>
               {s.val !== null && s.unit && <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94A3B8' }}>{s.unit}</span>}
             </div>
           </motion.div>
         ))}
       </div>
 
-      {/* 4. TREND ANALYSIS */}
+      {/* 5. TREND ANALYSIS */}
       <motion.div
         initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
         style={{ background: 'white', borderRadius: '24px', padding: '1.5rem', boxShadow: '0 4px 12px rgba(0,0,0,0.02)', border: `1px solid ${COLORS.border}` }}
@@ -220,17 +236,15 @@ const SoilMonitoring = () => {
             <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><BarChart3 size={16} color={COLORS.primary} /></div>
             <h3 style={{ fontSize: '0.85rem', fontWeight: 900, color: COLORS.text, margin: 0, textTransform: 'uppercase' }}>Trend Analysis</h3>
           </div>
-          <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#94A3B8' }}>{trend.hasData ? `Last ${trend.dataPoints} readings` : 'Awaiting data'}</span>
         </div>
 
         <div style={{ background: scoreInfo.bg, borderRadius: '16px', padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', border: `1px solid ${scoreInfo.color}20` }}>
           <div><p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase' }}>Soil Health Score</p><p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', fontWeight: 800, color: scoreInfo.color }}>{scoreInfo.label}</p></div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '3px' }}><span style={{ fontSize: '2.5rem', fontWeight: 950, color: scoreInfo.color, lineHeight: 1 }}>{healthScore !== null ? healthScore : '--'}</span>{healthScore !== null && <span style={{ fontSize: '0.75rem', fontWeight: 700, color: scoreInfo.color }}>/100</span>}</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '3px' }}><span style={{ fontSize: '2.5rem', fontWeight: 950, color: scoreInfo.color, lineHeight: 1 }}>{healthScore !== null ? healthScore : '---'}</span>{healthScore !== null && <span style={{ fontSize: '0.75rem', fontWeight: 700, color: scoreInfo.color }}>/100</span>}</div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <InsightRow label="💧 Moisture Trend" insightObj={trend.moisture} delay={0.05} />
-          <InsightRow label="🌡️ Temperature" insightObj={trend.temperature} delay={0.10} />
           <InsightRow label="⚗️ pH Status" insightObj={trend.ph} delay={0.15} />
           <InsightRow label="🌿 NPK Balance" insightObj={trend.npk} delay={0.20} />
         </div>
@@ -238,16 +252,10 @@ const SoilMonitoring = () => {
 
       <motion.button
         whileTap={{ scale: 0.98 }}
-        onClick={() => navigate('/analytics')}
-        style={{
-          width: '100%', padding: '1.1rem', borderRadius: '18px',
-          background: COLORS.primary, color: 'white', border: 'none',
-          fontSize: '0.95rem', fontWeight: 900, cursor: 'pointer',
-          boxShadow: `0 8px 16px -4px ${COLORS.primary}40`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
-        }}
+        onClick={() => navigate('/analytics', { state: { tab: 'Soil' } })}
+        style={{ width: '100%', padding: '1.25rem', borderRadius: '24px', background: 'white', border: `1px solid ${COLORS.border}`, color: COLORS.text, fontSize: '0.9rem', fontWeight: 950, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginTop: '0.5rem', cursor: 'pointer' }}
       >
-        <Leaf size={18} strokeWidth={2.5} />Soil Analytics Hub
+        Deep Soil Analytics <BarChart3 size={18} />
       </motion.button>
 
     </div>

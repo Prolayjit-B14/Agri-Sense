@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../context/AppContext';
 import { 
@@ -82,7 +82,7 @@ const AnalyticsChart = ({ title, type = 'area', data, dataKeys, colors, unit = '
         </div>
         <div style={{ textAlign: 'right' }}>
            <span style={{ fontSize: '1.2rem', fontWeight: 950, color: COLORS.text }}>
-             {data && data.length > 0 ? (data[data.length - 1][primaryKey] ?? '--') : '--'}
+             {data && data.length > 0 ? (data[data.length - 1][primaryKey] ?? '---') : '---'}
            </span>
            <span style={{ fontSize: '0.7rem', fontWeight: 800, color: COLORS.subtext, marginLeft: '4px' }}>{unit}</span>
         </div>
@@ -135,15 +135,21 @@ const AnalyticsChart = ({ title, type = 'area', data, dataKeys, colors, unit = '
 
 const AnalyticsHub = () => {
   const { sensorHistory } = useApp();
-  const [activeTab, setActiveTab] = useState('Soil');
   const navigate = useNavigate();
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(location.state?.tab || 'Soil');
+  
+  useEffect(() => {
+    if (location.state?.tab) {
+      setActiveTab(location.state.tab);
+    }
+  }, [location.state]);
   
   const analysis = useMemo(() => ({
     soil: Engine.analyzeSoil(sensorHistory || []),
     weather: Engine.analyzeWeather(sensorHistory || []),
     storage: Engine.analyzeStorage(sensorHistory || []),
     irrigation: Engine.analyzeIrrigation(sensorHistory || []),
-    solar: Engine.analyzeSolar(sensorHistory || []),
   }), [sensorHistory]);
 
   const chartData = useMemo(() => (sensorHistory || []).map(h => ({
@@ -154,8 +160,6 @@ const AnalyticsHub = () => {
     gas: Engine.safeNum(h.storage?.mq135),
     flow: Engine.safeNum(h.water?.flowRate),
     usage: Engine.safeNum(h.water?.totalUsage),
-    power: Engine.safeNum(h.solar?.power),
-    voltage: Engine.safeNum(h.solar?.voltage),
     n: Engine.safeNum(h.soil?.npk?.n),
     p: Engine.safeNum(h.soil?.npk?.p),
     k: Engine.safeNum(h.soil?.npk?.k),
@@ -165,21 +169,11 @@ const AnalyticsHub = () => {
     { id: 'Soil', icon: Sprout, color: COLORS.soil },
     { id: 'Weather', icon: CloudRain, color: COLORS.weather },
     { id: 'Storage', icon: Archive, color: COLORS.storage },
-    { id: 'Irrigation', icon: Droplets, color: COLORS.water },
-    { id: 'Solar', icon: Sun, color: COLORS.energy }
   ];
 
   return (
     <div style={{ background: COLORS.bg, minHeight: '100vh', padding: '1.25rem', paddingBottom: '100px' }}>
       
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-        <div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 950, color: COLORS.text, margin: 0 }}>Analytics Hub</h2>
-          <p style={{ fontSize: '0.8rem', fontWeight: 700, color: COLORS.subtext, marginTop: '2px' }}>Biospheric Intelligence Hub</p>
-        </div>
-        <StatusBadge isOnline={analysis[activeTab.toLowerCase()]?.isOnline} />
-      </header>
-
       {/* HORIZONTAL TAB SELECTOR */}
       <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginBottom: '1.5rem', paddingBottom: '8px' }} className="no-scrollbar">
         {tabs.map(tab => (
@@ -211,21 +205,13 @@ const AnalyticsHub = () => {
               <AnalyticsChart title="Nutrient Matrix (N/P/K)" type="line" data={chartData} dataKeys={['n','p','k']} colors={[COLORS.soil, COLORS.water, COLORS.energy]} insight={analysis.soil.npk.insight} />
             </>}
             {activeTab === 'Weather' && <>
-              <AnalyticsChart title="Ambient Temp" data={chartData} dataKeys="temp" colors={COLORS.weather} unit="°C" insight={analysis.weather.temp.insight} />
               <AnalyticsChart title="Relative Humidity" data={chartData} dataKeys="humid" colors={COLORS.water} unit="%" insight={analysis.weather.humidity.insight} />
             </>}
             {activeTab === 'Storage' && <>
               <AnalyticsChart title="Gas (MQ135)" data={chartData} dataKeys="gas" colors={COLORS.storage} unit="ppm" insight={analysis.storage.gas.insight} />
               <AnalyticsChart title="Internal Stability" type="line" data={chartData} dataKeys={['gas']} colors={[COLORS.storage]} insight="Storage environment metrics." />
             </>}
-            {activeTab === 'Irrigation' && <>
-              <AnalyticsChart title="Flow Rate" data={chartData} dataKeys="flow" colors={COLORS.water} unit="L/m" insight={analysis.irrigation.flow.insight} />
-              <AnalyticsChart title="Daily Consumption" type="bar" data={chartData} dataKeys="usage" colors={COLORS.water} unit="L" insight={analysis.irrigation.usage.insight} />
-            </>}
-            {activeTab === 'Solar' && <>
-              <AnalyticsChart title="Power Generation" data={chartData} dataKeys="power" colors={COLORS.energy} unit="W" insight={analysis.solar.power.insight} />
-              <AnalyticsChart title="Voltage Stability" data={chartData} dataKeys="voltage" colors={COLORS.soil} unit="V" insight={analysis.solar.voltage.insight} />
-            </>}
+
           </div>
 
           <motion.button
@@ -235,8 +221,6 @@ const AnalyticsHub = () => {
                 'Soil': '/soil-monitoring',
                 'Weather': '/weather',
                 'Storage': '/storage-hub',
-                'Irrigation': '/irrigation',
-                'Solar': '/solar-monitoring'
               };
               navigate(mapping[activeTab]);
             }}

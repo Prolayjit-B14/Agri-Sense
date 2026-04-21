@@ -1,10 +1,9 @@
-import React, { useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { useApp } from '../context/AppContext';
 import { 
-  Droplets, Power, Clock, Activity, 
-  Droplet, Waves, Sparkles, AlertTriangle, 
-  Timer, Calendar, Settings as SettingsIcon,
+  Droplets, Power, Activity,
+  Waves, AlertTriangle,
   CheckCircle2, Info
 } from 'lucide-react';
 
@@ -24,44 +23,44 @@ const WaterLevelCard = ({ level }) => {
   const l = parseFloat(level) || 0;
   return (
     <div style={{ 
-      background: 'white', borderRadius: '32px', padding: '1.75rem',
-      border: `1px solid ${COLORS.border}`, boxShadow: '0 10px 30px rgba(0,0,0,0.02)',
-      position: 'relative', overflow: 'hidden', height: '220px',
+      background: 'white', borderRadius: '32px', padding: '2rem',
+      border: `1px solid ${COLORS.border}`, boxShadow: '0 20px 40px -12px rgba(59, 130, 246, 0.1)',
+      position: 'relative', overflow: 'hidden', height: '240px',
       display: 'flex', flexDirection: 'column', justifyContent: 'space-between'
     }}>
       <div style={{ position: 'relative', zIndex: 10 }}>
         <h3 style={{ fontSize: '0.85rem', fontWeight: 950, color: COLORS.subtext, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tank Reservoir</h3>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginTop: '8px' }}>
-          <span style={{ fontSize: '3.5rem', fontWeight: 950, color: COLORS.text, lineHeight: 1 }}>{l.toFixed(0)}</span>
-          <span style={{ fontSize: '1.5rem', fontWeight: 800, color: COLORS.subtext }}>%</span>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginTop: '12px' }}>
+          <span style={{ fontSize: '4.5rem', fontWeight: 950, color: COLORS.text, lineHeight: 1 }}>{level !== '---' ? parseFloat(level).toFixed(0) : '---'}</span>
+          {level !== '---' && <span style={{ fontSize: '2rem', fontWeight: 800, color: COLORS.subtext }}>%</span>}
         </div>
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', position: 'relative', zIndex: 10 }}>
         <div>
-          <div style={{ fontSize: '0.75rem', fontWeight: 800, color: COLORS.primary, display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <Activity size={14} /> Supply Active
+          <div style={{ fontSize: '0.8rem', fontWeight: 800, color: COLORS.primary, display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Activity size={16} /> Tank Active
           </div>
-          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: COLORS.subtext, marginTop: '4px' }}>Approx. 4500 Liters remaining</div>
+          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: COLORS.subtext, marginTop: '4px' }}>Approx. 4,500 L remaining</div>
         </div>
-        <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${COLORS.primary}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Waves size={20} color={COLORS.primary} />
+        <div style={{ width: '48px', height: '48px', borderRadius: '16px', background: `${COLORS.primary}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Waves size={24} color={COLORS.primary} />
         </div>
       </div>
 
-      {/* 🌊 FLUID ANIMATION BACKGROUND */}
+      {/* 🌊 FLUID ANIMATION BACKGROUND (Improved Gradient) */}
       <motion.div 
         animate={{ y: `${100 - l}%` }}
         transition={{ type: 'spring', stiffness: 30, damping: 20 }}
         style={{
-          position: 'absolute', inset: 0, background: 'linear-gradient(180deg, #60A5FA 0%, #2563EB 100%)',
-          opacity: 0.15, zIndex: 1
+          position: 'absolute', inset: 0, background: 'linear-gradient(180deg, #93C5FD 0%, #3B82F6 100%)',
+          opacity: 0.2, zIndex: 1
         }}
       >
         <motion.div 
-          animate={{ x: [-10, 10, -10] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-          style={{ width: '120%', height: '20px', background: 'white', opacity: 0.3, filter: 'blur(10px)', marginTop: '-10px' }}
+          animate={{ x: [-20, 20, -20] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+          style={{ width: '150%', height: '30px', background: 'white', opacity: 0.4, filter: 'blur(15px)', marginTop: '-15px' }}
         />
       </motion.div>
     </div>
@@ -90,7 +89,7 @@ const IrrigationInsight = ({ flow, level }) => {
     >
       <insight.icon size={20} color={insight.color} />
       <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800, color: COLORS.text, lineHeight: 1.4 }}>
-        <span style={{ color: insight.color, textTransform: 'uppercase', fontSize: '0.65rem', display: 'block', marginBottom: '2px' }}>Water Intelligence</span>
+        <span style={{ color: insight.color, textTransform: 'uppercase', fontSize: '0.65rem', display: 'block', marginBottom: '2px' }}>Water Status</span>
         {insight.text}
       </p>
     </motion.div>
@@ -105,25 +104,16 @@ const IrrigationControl = () => {
   const isPumpActive = actuators ? actuators[ACTUATORS?.PUMP] : false;
 
   const stats = useMemo(() => ({
-    level: water.level ? Number(water.level).toFixed(1) : '75.2',
-    flow: water.flowRate ? Number(water.flowRate).toFixed(1) : (isPumpActive ? '12.4' : '0.0'),
-    usage: water.totalUsage ? Number(water.totalUsage).toFixed(0) : '1240',
-    pressure: '3.2'
+    level: water.level !== null ? Number(water.level).toFixed(1) : '---',
+    flow: water.flowRate !== null ? Number(water.flowRate).toFixed(1) : (isPumpActive ? '---' : '0.0'),
+    usage: water.totalUsage !== null ? Number(water.totalUsage).toFixed(0) : '---',
+    pressure: '---'
   }), [water, isPumpActive]);
 
   return (
     <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', paddingBottom: '100px' }}>
       
-      {/* 1. HEADER */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 950, color: COLORS.text, margin: 0 }}>Irrigation Hub</h2>
-          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: COLORS.subtext, marginTop: '2px' }}>System Mode: AUTOMATED</div>
-        </div>
-        <div style={{ width: '40px', height: '40px', borderRadius: '14px', border: `1px solid ${COLORS.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <SettingsIcon size={20} color={COLORS.subtext} />
-        </div>
-      </div>
+
 
       {/* 2. WATER LEVEL HERO */}
       <WaterLevelCard level={stats.level} />
@@ -145,7 +135,7 @@ const IrrigationControl = () => {
             <div>
               <div style={{ fontSize: '1rem', fontWeight: 900, color: COLORS.text }}>Master Pump</div>
               <div style={{ fontSize: '0.75rem', fontWeight: 700, color: isPumpActive ? '#10B981' : COLORS.subtext }}>
-                {isPumpActive ? 'Pumping Water • 12.4 L/min' : 'System Standby'}
+                {isPumpActive ? `Pumping Water • ${stats.flow} L/min` : 'System Standby'}
               </div>
             </div>
           </div>
@@ -174,22 +164,6 @@ const IrrigationControl = () => {
           </div>
         </div>
       </section>
-
-      {/* 5. SCHEDULE MOCK */}
-      <div style={{ background: 'white', borderRadius: '32px', padding: '1.75rem', border: `1px solid ${COLORS.border}` }}>
-        <h3 style={{ fontSize: '0.85rem', fontWeight: 950, color: COLORS.text, marginBottom: '1.5rem', textTransform: 'uppercase' }}>Next Scheduled Cycle</h3>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', background: '#F8FAFC', padding: '1rem', borderRadius: '16px' }}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Calendar size={20} color={COLORS.primary} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '0.85rem', fontWeight: 800, color: COLORS.text }}>Tomorrow, 06:00 AM</div>
-            <div style={{ fontSize: '0.7rem', fontWeight: 600, color: COLORS.subtext }}>Duration: 45 minutes • Zone A, B</div>
-          </div>
-          <div style={{ fontSize: '0.75rem', fontWeight: 900, color: COLORS.primary }}>EDIT</div>
-        </div>
-      </div>
-
     </div>
   );
 };

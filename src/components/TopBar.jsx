@@ -26,7 +26,7 @@ const AgriSenseLogo = () => (
 
 const TopBar = ({ title }) => {
   const { 
-    setIsSidebarOpen, recommendations 
+    isSidebarOpen, setIsSidebarOpen, recommendations 
   } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
@@ -34,32 +34,34 @@ const TopBar = ({ title }) => {
   return (
     <header style={{ 
       position: 'relative', zIndex: 1000, 
-      background: 'rgba(255,255,255,0.9)',
+      background: 'rgba(255,255,255,0.95)',
       backdropFilter: 'blur(20px)',
       WebkitBackdropFilter: 'blur(20px)',
-      borderBottom: '1px solid #f1f5f9',
+      borderBottom: '1px solid #F1F5F9',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '0.75rem 1rem', height: '64px',
+      padding: '0 1rem', height: '60px',
       flexShrink: 0
     }}>
 
-      {/* 🧭 LEFT SIDE: MENU & TITLE/LOGO */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+      {/* LEFT: MENU & TITLE */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <motion.button 
           whileTap={{ scale: 0.9 }}
-          onClick={() => setIsSidebarOpen(true)}
-          style={{ background: '#f8fafc', border: '1px solid #f1f5f9', color: '#1e293b', cursor: 'pointer', width: '38px', height: '38px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={() => setIsSidebarOpen(prev => !prev)}
+          style={{ background: '#F8FAFC', border: '1px solid #F1F5F9', color: '#1E293B', cursor: 'pointer', width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
         >
-          <Menu size={20} strokeWidth={2.5} />
+          <Menu size={19} strokeWidth={2.5} />
         </motion.button>
         
         {location.pathname === '/dashboard' ? (
           <AgriSenseLogo />
         ) : (
           <motion.h1 
-            initial={{ opacity: 0, x: -10 }}
+            key={title}
+            initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: 1, x: 0 }}
-            style={{ fontSize: '1.2rem', fontWeight: 950, color: '#1e293b', margin: 0, letterSpacing: '-0.02em' }}
+            transition={{ duration: 0.2 }}
+            style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.02em' }}
           >
             {title}
           </motion.h1>

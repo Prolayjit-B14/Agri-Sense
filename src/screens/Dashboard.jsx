@@ -76,10 +76,10 @@ const SystemInsightCard = ({ healthScore, status }) => {
 
 const QuickSummaryStrip = ({ sensorData }) => {
   const stats = [
-    { icon: Thermometer, value: sensorData?.weather?.temp ? `${Number(sensorData.weather.temp).toFixed(1)}°C` : '--', color: '#EF4444' },
-    { icon: Droplet, value: sensorData?.weather?.humidity ? `${Number(sensorData.weather.humidity).toFixed(1)}%` : '--', color: '#0EA5E9' },
-    { icon: Wind, value: sensorData?.weather?.windSpeed ? `${Number(sensorData.weather.windSpeed).toFixed(1)} km/h` : '--', color: '#64748B' },
-    { icon: Sun, value: sensorData?.weather?.lightIntensity ? (sensorData.weather.lightIntensity > 1000 ? 'High' : 'Normal') : '--', color: '#F59E0B' },
+    { icon: Thermometer, value: sensorData?.weather?.temp !== null ? `${Number(sensorData.weather.temp).toFixed(1)}°C` : '---', color: '#EF4444' },
+    { icon: Droplet, value: sensorData?.weather?.humidity !== null ? `${Number(sensorData.weather.humidity).toFixed(1)}%` : '---', color: '#0EA5E9' },
+    { icon: Wind, value: sensorData?.weather?.windSpeed !== null ? `${Number(sensorData.weather.windSpeed).toFixed(1)} km/h` : '---', color: '#64748B' },
+    { icon: Sun, value: sensorData?.weather?.lightIntensity !== null ? (sensorData.weather.lightIntensity > 1000 ? 'High' : 'Normal') : '---', color: '#F59E0B' },
   ];
 
   return (
@@ -93,8 +93,8 @@ const QuickSummaryStrip = ({ sensorData }) => {
           display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0,
           boxShadow: '0 4px 12px rgba(0,0,0,0.02)', border: `1px solid ${COLORS.border}`
         }}>
-          <stat.icon size={14} color={stat.value === '--' ? '#CBD5E1' : stat.color} />
-          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: stat.value === '--' ? '#CBD5E1' : COLORS.text }}>{stat.value}</span>
+          <stat.icon size={14} color={stat.value === '---' ? '#CBD5E1' : stat.color} />
+          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: stat.value === '---' ? '#CBD5E1' : COLORS.text }}>{stat.value}</span>
         </div>
       ))}
     </div>
@@ -124,7 +124,7 @@ const SystemOverviewCard = ({ score, status }) => {
          <div style={{ width: '45%', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderRight: `1px solid ${COLORS.border}`, paddingRight: '15px' }}>
            <div style={{ fontSize: '0.65rem', fontWeight: 950, color: COLORS.subtext, textTransform: 'uppercase', marginBottom: '4px' }}>HEALTH</div>
            <div style={{ fontSize: '1.1rem', fontWeight: 950, color: isOffline ? '#CBD5E1' : (isWarning ? '#EF4444' : '#10B981'), marginBottom: '10px' }}>{isOffline ? 'OFFLINE' : (isWarning ? 'WARNING' : 'STABLE')}</div>
-           <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#475569' }}>Rating: <span style={{ color: isOffline ? '#CBD5E1' : COLORS.text, fontWeight: 950 }}>{isOffline ? '--' : `${score}%`}</span></div>
+           <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#475569' }}>Rating: <span style={{ color: isOffline ? '#CBD5E1' : COLORS.text, fontWeight: 950 }}>{isOffline ? '---' : `${score}%`}</span></div>
          </div>
          
          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px', justifyContent: 'center' }}>
@@ -172,7 +172,7 @@ const SensorCard = ({ title, value, icon: Icon, color, status, onClick }) => {
         </div>
       </div>
       <h4 style={{ margin: 0, fontSize: '0.75rem', color: COLORS.subtext, fontWeight: 700 }}>{title}</h4>
-      <div style={{ fontSize: '1.3rem', fontWeight: 950, color: value === '--' ? '#CBD5E1' : COLORS.text, marginTop: '4px' }}>
+      <div style={{ fontSize: '1.3rem', fontWeight: 950, color: value === '---' ? '#CBD5E1' : COLORS.text, marginTop: '4px' }}>
         {value}
       </div>
     </motion.div>
@@ -319,11 +319,10 @@ const Dashboard = () => {
       <SystemOverviewCard score={farmHealthScore} status={overviewStatus} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-        <SensorCard title="Soil" value={val(sensorData?.soil?.moisture) ? `${Number(sensorData.soil.moisture).toFixed(1)}%` : '--'} icon={Sprout} color={COLORS.primary} status={val(sensorData?.soil?.moisture) ? "CONNECTED" : "OFFLINE"} onClick={() => navigate('/soil-monitoring')} />
-        <SensorCard title="Irrigation" value={val(sensorData?.water?.level) ? `${Number(sensorData.water.level).toFixed(1)}%` : '--'} icon={Droplets} color={COLORS.secondary} status={val(sensorData?.water?.level) ? "CONNECTED" : "OFFLINE"} onClick={() => navigate('/irrigation')} />
-        <SensorCard title="Weather" value={val(sensorData?.weather?.temp) ? `${Number(sensorData.weather.temp).toFixed(1)}°C` : '--'} icon={CloudRain} color="#14B8A6" status={val(sensorData?.weather?.temp) ? "CONNECTED" : "OFFLINE"} onClick={() => navigate('/weather')} />
-        <SensorCard title="Solar" value={val(sensorData?.solar?.power) ? `${Number(sensorData.solar.power).toFixed(1)}W` : '--'} icon={Sun} color="#F59E0B" status={val(sensorData?.solar?.power) ? "CONNECTED" : "OFFLINE"} onClick={() => navigate('/solar-monitoring')} />
-        <SensorCard title="Storage" value={val(sensorData?.storage?.temp) ? `${Number(sensorData.storage.temp).toFixed(1)}°C` : '--'} icon={Archive} color="#8B5CF6" status={val(sensorData?.storage?.temp) ? "CONNECTED" : "OFFLINE"} onClick={() => navigate('/storage-hub')} />
+        <SensorCard title="Soil" value={sensorData?.soil?.moisture !== null ? `${Number(sensorData.soil.moisture).toFixed(1)}%` : '---'} icon={Sprout} color={COLORS.primary} status={sensorData?.soil?.moisture !== null ? "CONNECTED" : "OFFLINE"} onClick={() => navigate('/soil-monitoring')} />
+        <SensorCard title="Irrigation" value={sensorData?.water?.level !== null ? `${Number(sensorData.water.level).toFixed(1)}%` : '---'} icon={Droplets} color={COLORS.secondary} status={sensorData?.water?.level !== null ? "CONNECTED" : "OFFLINE"} onClick={() => navigate('/irrigation')} />
+        <SensorCard title="Weather" value={sensorData?.weather?.temp !== null ? `${Number(sensorData.weather.temp).toFixed(1)}°C` : '---'} icon={CloudRain} color="#14B8A6" status={sensorData?.weather?.temp !== null ? "CONNECTED" : "OFFLINE"} onClick={() => navigate('/weather')} />
+        <SensorCard title="Storage" value={sensorData?.storage?.temp !== null ? `${Number(sensorData.storage.temp).toFixed(1)}°C` : '---'} icon={Archive} color="#8B5CF6" status={sensorData?.storage?.temp !== null ? "CONNECTED" : "OFFLINE"} onClick={() => navigate('/storage-hub')} />
       </div>
 
       <section style={{ background: '#0F172A', borderRadius: '24px', padding: '1.5rem', marginBottom: '1.5rem', color: 'white' }}>
@@ -351,7 +350,7 @@ const Dashboard = () => {
 
       <FAB onAction={handleAction} />
 
-      <footer style={{ textAlign: 'center', paddingBottom: '20px' }}>
+      <footer style={{ textAlign: 'center', paddingBottom: '100px' }}>
         <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#CBD5E1', textTransform: 'uppercase' }}>System Online • v{farmInfo.version} • Sync: 2s ago</div>
       </footer>
 

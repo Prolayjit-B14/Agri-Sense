@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { App as CapApp } from '@capacitor/app';
 import { AnimatePresence, motion } from 'framer-motion';
-import { LayoutGrid, LineChart, Cpu, Camera, Bell, User } from 'lucide-react';
+import { LayoutGrid, LineChart, Cpu, Camera, Bell, User, Settings as SettingsIcon, FlaskConical } from 'lucide-react';
 import { AppProvider, useApp } from './context/AppContext';
 
 // Components
@@ -22,7 +22,6 @@ import Alerts from './screens/Alerts';
 import WeatherMonitoring from './screens/WeatherMonitoring';
 import DeviceManagement from './screens/DeviceManagement';
 import AnalyticsHub from './screens/AnalyticsHub';
-import SolarMonitoring from './screens/SolarMonitoring';
 import Settings from './screens/Settings';
 import PrecisionSoilTesting from './screens/PrecisionSoilTesting';
 import Reports from './screens/Reports';
@@ -46,10 +45,10 @@ const BottomNav = () => {
 
   const tabs = [
     { id: 'Home', path: '/dashboard', icon: LayoutGrid },
+    { id: 'Soil Test', path: '/precision-soil-testing', icon: FlaskConical },
     { id: 'Analytics', path: '/analytics', icon: LineChart },
     { id: 'Devices', path: '/device-area', icon: Cpu },
-    { id: 'Vision', path: '/camera', icon: Camera },
-    { id: 'Alerts', path: '/alerts', icon: Bell },
+    { id: 'Settings', path: '/settings', icon: SettingsIcon },
   ];
 
   return (
@@ -94,20 +93,19 @@ const MainLayout = ({ children }) => {
 
   const titles = {
     '/dashboard': 'Dashboard',
-    '/analytics': 'Analytics Hub',
-    '/irrigation': 'Irrigation Control',
-    '/weather': 'Weather Monitor',
-    '/soil-monitoring': 'Soil Monitoring',
-    '/storage-hub': 'Storage Hub',
-    '/solar-monitoring': 'Solar Monitor',
-    '/device-area': 'IoT Matrix',
-    '/camera': 'Live Vision',
-    '/alerts': 'System Alerts',
-    '/profile': 'Farmer Identity',
-    '/settings': 'System Settings',
-    '/reports': 'System Audit',
-    '/map-view': 'Geospatial Tracking',
-    '/precision-soil-testing': 'Forensic Soil Test'
+    '/analytics': 'Analytics',
+    '/irrigation': 'Irrigation',
+    '/weather': 'Weather',
+    '/soil-monitoring': 'Soil Monitor',
+    '/storage-hub': 'Storage',
+    '/device-area': 'Devices',
+    '/camera': 'Live Camera',
+    '/alerts': 'Alerts',
+    '/profile': 'Profile',
+    '/settings': 'Settings',
+    '/reports': 'Reports',
+    '/map-view': 'Field Map',
+    '/precision-soil-testing': 'Soil Lab'
   };
 
   return (
@@ -148,7 +146,6 @@ const AppRoutes = () => {
       <Route path="/analytics" element={<MainLayout><AnalyticsHub /></MainLayout>} />
       <Route path="/soil-monitoring" element={<MainLayout><SoilMonitoring /></MainLayout>} />
       <Route path="/irrigation" element={<MainLayout><IrrigationControl /></MainLayout>} />
-      <Route path="/solar-monitoring" element={<MainLayout><SolarMonitoring /></MainLayout>} />
       <Route path="/storage-hub" element={<MainLayout><StorageMonitoring /></MainLayout>} />
       <Route path="/camera" element={<MainLayout><VisualMonitoring /></MainLayout>} />
       <Route path="/device-area" element={<MainLayout><DeviceManagement /></MainLayout>} />

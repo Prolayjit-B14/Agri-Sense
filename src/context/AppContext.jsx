@@ -20,9 +20,9 @@ export const AppProvider = ({ children }) => {
   
   // 💎 100% REAL-TIME PRODUCTION STATE (Zero-Initialization)
   const [sensorData, setSensorData] = useState({
-    soil: { moisture: null, ph: null, temp: null, humidity: null, npk: { n: null, p: null, k: null }, healthIndex: 0 },
-    storage: { temp: null, humidity: null, ethylene: null, mq135: null, freshnessScore: 100 },
-    weather: { temp: null, humidity: null, pressure: null, windSpeed: null, isRaining: false, lightIntensity: null, rainLevel: 0 },
+    soil: { moisture: null, ph: null, temp: null, humidity: null, npk: { n: null, p: null, k: null }, healthIndex: null },
+    storage: { temp: null, humidity: null, ethylene: null, mq135: null, freshnessScore: null },
+    weather: { temp: null, humidity: null, pressure: null, windSpeed: null, isRaining: false, lightIntensity: null, rainLevel: null },
     water: { level: null, tankLevel: null, flowRate: null, totalUsage: null },
     solar: { lightIntensity: null, exposureDuration: null, power: null, voltage: null, current: null },
     market: { price: null, trend: 'stable', commodities: [] }
@@ -32,6 +32,8 @@ export const AppProvider = ({ children }) => {
     temp: null, humidity: null, pressure: null, windSpeed: null, 
     sunrise: null, sunset: null, condition: 'Detecting...', city: 'Detecting...'
   });
+
+  const [apiForecast, setApiForecast] = useState([]); // 💎 5-Day Forecast Storage
 
 
   const [recommendations, setRecommendations] = useState([]);
@@ -215,7 +217,7 @@ export const AppProvider = ({ children }) => {
             setSensorData(prev => {
               const newSoil = {
                 ...prev.soil,
-                ...data.soil,
+                ...(data.soil || {}),
                 moisture: cleanValue(data.soil?.moisture ?? prev.soil?.moisture),
                 temp: cleanValue(data.soil?.temp ?? prev.soil?.temp),
                 ph: cleanValue(data.soil?.ph ?? prev.soil?.ph),
@@ -233,7 +235,7 @@ export const AppProvider = ({ children }) => {
                 soil: newSoil,
                 weather: { 
                   ...prev.weather, 
-                  ...data.weather,
+                  ...(data.weather || {}),
                   temp: cleanValue(data.weather?.temp ?? prev.weather?.temp),
                   humidity: cleanValue(data.weather?.humidity ?? prev.weather?.humidity),
                   lightIntensity: cleanValue(data.weather?.lightIntensity ?? prev.weather?.lightIntensity),
@@ -242,7 +244,7 @@ export const AppProvider = ({ children }) => {
                 },
                 water: { 
                   ...prev.water, 
-                  ...data.water,
+                  ...(data.water || {}),
                   level: cleanValue(data.water?.level ?? prev.water?.level),
                   tankLevel: cleanValue(data.water?.tankLevel ?? prev.water?.tankLevel),
                   flowRate: cleanValue(data.water?.flowRate ?? prev.water?.flowRate),
@@ -250,15 +252,15 @@ export const AppProvider = ({ children }) => {
                 },
                 storage: { 
                   ...prev.storage, 
-                  ...data.storage,
+                  ...(data.storage || {}),
                   temp: cleanValue(data.storage?.temp ?? prev.storage?.temp),
                   humidity: cleanValue(data.storage?.humidity ?? prev.storage?.humidity),
                   mq135: cleanValue(data.storage?.mq135 ?? prev.storage?.mq135),
                   freshnessScore: data.storage?.mq135 ? (data.storage.mq135 < 3 ? 98 : 75) : (prev.storage?.freshnessScore || 100)
                 },
                 solar: {
-                  ...prev.solar,
-                  ...data.solar,
+                  ...prev.solar, 
+                  ...(data.solar || {}),
                   power: cleanValue(data.solar?.power ?? prev.solar?.power),
                   voltage: cleanValue(data.solar?.voltage ?? prev.solar?.voltage),
                   current: cleanValue(data.solar?.current ?? prev.solar?.current)
@@ -292,10 +294,11 @@ export const AppProvider = ({ children }) => {
         // Systematically Nullify Critical Sensors to trigger "Offline" UI components
         setSensorData(prev => ({
           ...prev,
-          soil: { ...prev.soil, moisture: null, temp: null },
-          weather: { ...prev.weather, temp: null, humidity: null, lightIntensity: null },
-          water: { ...prev.water, level: null },
-          solar: { ...prev.solar, power: null, voltage: null }
+          soil: { ...prev.soil, moisture: null, temp: null, ph: null, healthIndex: null, npk: { n: null, p: null, k: null } },
+          weather: { ...prev.weather, temp: null, humidity: null, lightIntensity: null, isRaining: false, rainLevel: null },
+          water: { ...prev.water, level: null, tankLevel: null, flowRate: null },
+          storage: { ...prev.storage, temp: null, humidity: null, mq135: null, freshnessScore: null },
+          solar: { ...prev.solar, power: null, voltage: null, current: null }
         }));
       }
     }, 5000); // Check every 5s
@@ -310,24 +313,50 @@ export const AppProvider = ({ children }) => {
         try {
           const wUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${MASTER_CONFIG.MAP_LAT}&lon=${MASTER_CONFIG.MAP_LNG}&units=metric&appid=${MASTER_CONFIG.OPENWEATHER_API_KEY}`;
           const aUrl = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${MASTER_CONFIG.MAP_LAT}&lon=${MASTER_CONFIG.MAP_LNG}&appid=${MASTER_CONFIG.OPENWEATHER_API_KEY}`;
+          const fUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${MASTER_CONFIG.MAP_LAT}&lon=${MASTER_CONFIG.MAP_LNG}&units=metric&appid=${MASTER_CONFIG.OPENWEATHER_API_KEY}`;
           
-          const [wRes, aRes] = await Promise.all([fetch(wUrl), fetch(aUrl)]);
-          const [wData, aData] = await Promise.all([wRes.json(), aRes.json()]);
-
+          const [wRes, aRes, fRes] = await Promise.all([fetch(wUrl), fetch(aUrl), fetch(fUrl)]);
+          const [wData, aData, fData] = await Promise.all([wRes.json(), aRes.json(), fRes.json()]);
+          
+          // 1. Current Weather
           if (wData.main) {
             setApiWeather({
               temp: Math.round(wData.main.temp),
               humidity: wData.main.humidity,
               pressure: wData.main.pressure,
               windSpeed: wData.wind?.speed,
+              windDeg: wData.wind?.deg,
+              windGust: wData.wind?.gust,
               condition: wData.weather?.[0]?.main,
+              description: wData.weather?.[0]?.description,
               city: wData.name,
-              feelsLike: wData.main.feels_like,
+              feelsLike: Math.round(wData.main.feels_like),
+              tempMin: Math.round(wData.main.temp_min),
+              tempMax: Math.round(wData.main.temp_max),
+              visibility: (wData.visibility / 1000).toFixed(1),
+              clouds: wData.clouds?.all,
+              seaLevel: wData.main?.sea_level,
+              grndLevel: wData.main?.grnd_level,
+              apiRain: wData.rain?.['1h'] || 0,
               aqi: aData.list?.[0]?.main?.aqi || null,
+              pollutants: aData.list?.[0]?.components || {},
               sunrise: wData.sys?.sunrise ? new Date(wData.sys.sunrise * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--',
               sunset: wData.sys?.sunset ? new Date(wData.sys.sunset * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'
             });
           }
+
+          // 2. 5-Day Forecast Processing (Filter for 12:00 PM each day)
+          if (fData.list) {
+            const dailyForecast = fData.list.filter(item => item.dt_txt.includes("12:00:00")).map(item => ({
+              date: new Date(item.dt * 1000).toLocaleDateString([], { weekday: 'short' }),
+              temp: Math.round(item.main.temp),
+              condition: item.weather[0].main,
+              icon: item.weather[0].icon,
+              pop: Math.round(item.pop * 100) // Convert 0-1 to 0-100%
+            }));
+            setApiForecast(dailyForecast);
+          }
+
         } catch (e) {
           console.error("API Weather Retrieval Failure:", e);
         }
@@ -398,7 +427,7 @@ export const AppProvider = ({ children }) => {
   return (
     <AppContext.Provider value={{
       user, login, logout, farmInfo, updateProfile, updateBranding,
-      isDarkMode, toggleTheme, sensorData, apiWeather, recommendations, sensorHistory,
+      isDarkMode, toggleTheme, sensorData, apiWeather, apiForecast, recommendations, sensorHistory,
       actuators, toggleActuator, isSidebarOpen, setIsSidebarOpen, ACTUATORS,
       farmHealthScore, connectivityStatus, cloudSyncStatus, profileMeta, updateProfileMeta,
       isDataLoading, lastGlobalUpdate, mqttStatus

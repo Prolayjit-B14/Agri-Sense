@@ -13,7 +13,7 @@ export const MASTER_CONFIG = {
   FARM_NAME: "MAKAUT, WB",
   TAGLINE: "For Better Farming",
   FOOTER_CREDIT: "by Prolayjit Biswas",
-  VERSION: "2.6.0",
+  VERSION: "2.7.0",
   
   // 🔐 AUTHORIZED INVESTIGATORS
   AUTHORIZED_USERS: [
@@ -38,7 +38,7 @@ export const MASTER_CONFIG = {
   DEFAULT_PROFILE_PHOTO: "https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&q=80&w=100",
   
   // 🗺️ MAP & WEATHER (Optional External APIs)
-  OPENWEATHER_API_KEY: import.meta.env.VITE_OPENWEATHER_API_KEY || "", 
+  OPENWEATHER_API_KEY: "YOUR_OPENWEATHER_API_KEY_HERE", 
   WEATHER_CITY: "Kalyani",
   
   MAP_LAT: 22.975,

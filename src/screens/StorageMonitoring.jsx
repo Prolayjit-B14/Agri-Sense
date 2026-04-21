@@ -1,10 +1,11 @@
 import React, { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useApp } from '../context/AppContext';
 import { 
-  Archive, Thermometer, Droplet, Wind, 
-  Activity, AlertTriangle, Sparkles, 
-  History, Info, ShieldCheck, Gauge
+  Archive, Thermometer, Droplet,
+  Activity, AlertTriangle,
+  Info, ShieldCheck, BarChart3
 } from 'lucide-react';
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────
@@ -46,14 +47,16 @@ const CircularGauge = ({ value, label, unit, color, icon: Icon }) => {
           position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', 
           justifyContent: 'center', color: COLORS.text, fontWeight: 950, fontSize: '1.1rem' 
         }}>
-          {value || '--'}<span style={{ fontSize: '0.6rem', fontWeight: 700, marginLeft: '1px' }}>{unit}</span>
+          {value !== null && value !== undefined ? value : '---'}<span style={{ fontSize: '0.6rem', fontWeight: 700, marginLeft: '1px' }}>{unit}</span>
         </div>
       </div>
       <div style={{ textAlign: 'center' }}>
         <p style={{ margin: 0, fontSize: '0.65rem', fontWeight: 800, color: COLORS.subtext, textTransform: 'uppercase' }}>{label}</p>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', marginTop: '4px' }}>
-          <Icon size={12} color={color} />
-          <span style={{ fontSize: '0.7rem', fontWeight: 700, color }}>NORMAL</span>
+          <Icon size={12} color={value === '---' ? COLORS.subtext : color} />
+          <span style={{ fontSize: '0.7rem', fontWeight: 700, color: value === '---' ? COLORS.subtext : color }}>
+            {value === '---' ? 'OFFLINE' : 'NORMAL'}
+          </span>
         </div>
       </div>
     </div>
@@ -93,88 +96,41 @@ const SpoilageInsight = ({ temp, humidity, gas }) => {
 // ─── MAIN SCREEN ──────────────────────────────────────────────────────────
 
 const StorageMonitoring = () => {
-  const { sensorData, lastGlobalUpdate } = useApp();
+  const navigate = useNavigate();
+  const { sensorData } = useApp();
   const storage = sensorData?.storage || {};
 
   const stats = useMemo(() => ({
-    temp: storage.temp ? Number(storage.temp).toFixed(1) : '18.4',
-    humidity: storage.humidity ? Number(storage.humidity).toFixed(1) : '55.2',
-    gas: storage.mq135 ? Number(storage.mq135).toFixed(0) : '124',
-    quality: 98
+    temp: storage.temp !== null ? Number(storage.temp).toFixed(1) : '---',
+    humidity: storage.humidity !== null ? Number(storage.humidity).toFixed(1) : '---',
+    gas: storage.mq135 !== null ? Number(storage.mq135).toFixed(0) : '---',
+    quality: storage.freshnessScore !== null ? storage.freshnessScore : '---'
   }), [storage]);
 
   return (
     <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', paddingBottom: '100px' }}>
       
-      {/* 1. HEADER */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 950, color: COLORS.text, margin: 0 }}>Storage Hub</h2>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: COLORS.subtext, fontSize: '0.65rem', fontWeight: 700 }}>
-            <History size={10} /> Last Sync: {lastGlobalUpdate || 'Just now'}
-          </div>
-        </div>
-        <div style={{ padding: '6px 12px', borderRadius: '10px', background: '#F3E8FF', color: COLORS.primary, fontSize: '0.65rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: COLORS.primary }} />
-          PROTECTED
-        </div>
-      </div>
 
-      {/* 2. PRIMARY GAUGES */}
+
+      {/* 2. SENSOR GRID */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-        <CircularGauge value={stats.temp} label="Temperature" unit="°C" color="#EF4444" icon={Thermometer} />
+        <CircularGauge value={stats.temp} label="Temp" unit="°C" color="#EF4444" icon={Thermometer} />
         <CircularGauge value={stats.humidity} label="Humidity" unit="%" color="#3B82F6" icon={Droplet} />
+        <CircularGauge value={stats.gas} label="Gas Level" unit="ppm" color="#F59E0B" icon={Activity} />
+        <CircularGauge value={stats.quality} label="Freshness" unit="%" color="#10B981" icon={ShieldCheck} />
       </div>
 
       {/* 3. SPOILAGE INSIGHT */}
       <SpoilageInsight temp={stats.temp} humidity={stats.humidity} gas={stats.gas} />
 
-      {/* 4. GAS ANALYSIS HERO */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-        style={{
-          background: 'linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)',
-          borderRadius: '32px', padding: '1.75rem', color: 'white',
-          boxShadow: '0 20px 40px -12px rgba(139, 92, 246, 0.3)',
-          position: 'relative', overflow: 'hidden'
-        }}
+      {/* 4. ANALYTICS CTA */}
+      <motion.button
+        whileTap={{ scale: 0.98 }}
+        onClick={() => navigate('/analytics', { state: { tab: 'Storage' } })}
+        style={{ width: '100%', padding: '1.25rem', borderRadius: '24px', background: 'white', border: `1px solid ${COLORS.border}`, color: COLORS.text, fontSize: '0.9rem', fontWeight: 950, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', cursor: 'pointer' }}
       >
-        <div style={{ position: 'absolute', top: '-10%', right: '-5%', opacity: 0.15 }}>
-          <Gauge size={140} color="white" />
-        </div>
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ fontSize: '0.85rem', fontWeight: 800, opacity: 0.9, textTransform: 'uppercase' }}>Air Composition (VOC/CO2)</div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', margin: '8px 0' }}>
-            <span style={{ fontSize: '3.5rem', fontWeight: 950, lineHeight: 1 }}>{stats.gas}</span>
-            <span style={{ fontSize: '1.2rem', fontWeight: 800, opacity: 0.8 }}>ppm</span>
-          </div>
-          <div style={{ marginTop: '1rem', height: '6px', background: 'rgba(255,255,255,0.2)', borderRadius: '10px', overflow: 'hidden' }}>
-            <motion.div 
-              initial={{ width: 0 }} animate={{ width: `${Math.min(100, (stats.gas / 1000) * 100)}%` }}
-              style={{ height: '100%', background: 'white' }}
-            />
-          </div>
-          <p style={{ margin: '8px 0 0 0', fontSize: '0.65rem', fontWeight: 700, opacity: 0.8 }}>Safe threshold: &lt; 800 ppm</p>
-        </div>
-      </motion.div>
-
-      {/* 5. VENTILATION CONTROLS */}
-      <div style={{ background: 'white', borderRadius: '24px', padding: '1.5rem', border: `1px solid ${COLORS.border}` }}>
-        <h3 style={{ fontSize: '0.85rem', fontWeight: 950, color: COLORS.text, marginBottom: '1.25rem', textTransform: 'uppercase' }}>Environmental Control</h3>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Wind size={20} color={COLORS.subtext} />
-            </div>
-            <div>
-              <div style={{ fontSize: '0.85rem', fontWeight: 800, color: COLORS.text }}>Exhaust Fan</div>
-              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#10B981' }}>AUTOMATED</div>
-            </div>
-          </div>
-          <div style={{ padding: '6px 12px', borderRadius: '8px', border: `1px solid ${COLORS.border}`, fontSize: '0.7rem', fontWeight: 900, color: COLORS.text }}>OFF</div>
-        </div>
-      </div>
-
+        Storage Lifecycle Analytics <BarChart3 size={18} />
+      </motion.button>
     </div>
   );
 };
