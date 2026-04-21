@@ -29,9 +29,10 @@ export const AppProvider = ({ children }) => {
   });
 
   const [apiWeather, setApiWeather] = useState({
-    temp: 0, humidity: 0, pressure: 0, windSpeed: 0, 
-    sunrise: '06:00 AM', sunset: '06:00 PM', condition: 'Clear', city: 'Detecting...'
+    temp: null, humidity: null, pressure: null, windSpeed: null, 
+    sunrise: null, sunset: null, condition: 'Detecting...', city: 'Detecting...'
   });
+
 
   const [recommendations, setRecommendations] = useState([]);
   const [sensorHistory, setSensorHistory] = useState([]);
@@ -49,19 +50,21 @@ export const AppProvider = ({ children }) => {
   const [farmInfo, setFarmInfo] = useState(() => {
     try {
       const saved = localStorage.getItem('agrisense_branding');
-      return saved ? JSON.parse(saved) : {
+      const data = saved ? JSON.parse(saved) : {
         name: MASTER_CONFIG.FARM_NAME,
         projectName: MASTER_CONFIG.PROJECT_NAME,
         tagline: MASTER_CONFIG.TAGLINE,
-        version: "6.2.0" // Elite UI Update
       };
+      // 🛡️ Force latest version from config to override cached version
+      data.version = MASTER_CONFIG.VERSION; 
+      return data;
     } catch (e) {
       console.error("Branding Persistence Failure:", e);
       return {
         name: MASTER_CONFIG.FARM_NAME,
         projectName: MASTER_CONFIG.PROJECT_NAME,
         tagline: MASTER_CONFIG.TAGLINE,
-        version: "5.4.0" // Hardware Safety Sync
+        version: MASTER_CONFIG.VERSION 
       };
     }
   });

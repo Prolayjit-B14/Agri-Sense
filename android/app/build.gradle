@@ -7,8 +7,9 @@ android {
         applicationId "com.agrisense.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 8
-        versionName "6.2.0"
+        versionCode 11
+        versionName "2.2.0"
+
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -24,11 +25,11 @@ android {
     }
 }
 
-repositories {
-    flatDir{
-        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
-    }
-}
+// repositories {
+//     flatDir{
+//         dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+//     }
+// }
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')

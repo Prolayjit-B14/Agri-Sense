@@ -1,7 +1,7 @@
 {
-  "name": "agri-semi",
+  "name": "agri-sense",
   "private": true,
-  "version": "6.2.0",
+  "version": "2.6.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

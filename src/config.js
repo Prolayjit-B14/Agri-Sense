@@ -1,5 +1,5 @@
 /**
- * Agri Sense V6.2.0 ELITE UI RELEASE 🛰️💎
+ * Agri Sense v2.0.0 ELITE UI RELEASE 🛰️💎
  * 
  * --- HOW TO EDIT ---
  * 1. WiFi & HW: Only edit lines 25-27.
@@ -11,8 +11,9 @@ export const MASTER_CONFIG = {
   // 🎨 BRANDING & IDENTITY
   PROJECT_NAME: "Agri Sense",
   FARM_NAME: "MAKAUT, WB",
-  TAGLINE: "Helping Farmers & Bettering Agriculture",
-  FOOTER_CREDIT: "Build by Prolayjit Biswas",
+  TAGLINE: "For Better Farming",
+  FOOTER_CREDIT: "by Prolayjit Biswas",
+  VERSION: "2.6.0",
   
   // 🔐 AUTHORIZED INVESTIGATORS
   AUTHORIZED_USERS: [

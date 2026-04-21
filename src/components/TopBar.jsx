@@ -33,13 +33,16 @@ const TopBar = ({ title }) => {
 
   return (
     <header style={{ 
-      position: 'sticky', top: 0, zIndex: 100, 
+      position: 'relative', zIndex: 1000, 
       background: 'rgba(255,255,255,0.9)',
       backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
       borderBottom: '1px solid #f1f5f9',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '0.75rem 1rem', height: '64px'
+      padding: '0.75rem 1rem', height: '64px',
+      flexShrink: 0
     }}>
+
       {/* 🧭 LEFT SIDE: MENU & TITLE/LOGO */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
         <motion.button 
