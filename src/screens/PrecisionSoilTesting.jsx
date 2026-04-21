@@ -113,10 +113,10 @@ const PrecisionSoilTesting = () => {
     if (isCollecting && collectStep < 3) {
       timer = setTimeout(() => {
         const newVal = {
-          moisture: sensorData?.soil?.moisture !== null ? sensorData.soil.moisture + (Math.random() * 2 - 1) : null,
-          temp: sensorData?.soil?.temp !== null ? sensorData.soil.temp + (Math.random() * 0.5 - 0.25) : null,
-          ph: sensorData?.soil?.ph !== null ? sensorData.soil.ph + (Math.random() * 0.1 - 0.05) : null,
-          npk: sensorData?.soil?.npk?.n !== null ? sensorData.soil.npk.n + (Math.random() * 4 - 2) : null
+          moisture: sensorData?.soil?.moisture !== null ? sensorData.soil.moisture : null,
+          temp: sensorData?.soil?.temp !== null ? sensorData.soil.temp : null,
+          ph: sensorData?.soil?.ph !== null ? sensorData.soil.ph : null,
+          npk: sensorData?.soil?.npk?.n !== null ? sensorData.soil.npk.n : null
         };
         setCurrentReadings(prev => [...prev, newVal]);
         setCollectStep(s => s + 1);

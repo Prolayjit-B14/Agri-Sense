@@ -1,0 +1,208 @@
+﻿
+> agri-sense@2.8.0 lint
+> eslint .
+
+
+C:\Users\polu1\OneDrive\Desktop\Zyro\src\App.jsx
+    4:27  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  112:36  error  Duplicate key 'height'                                                         no-dupe-keys
+
+C:\Users\polu1\OneDrive\Desktop\Zyro\src\components\Sidebar.jsx
+  3:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\polu1\OneDrive\Desktop\Zyro\src\components\TopBar.jsx
+   3:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                  no-unused-vars
+  29:5   error  'isSidebarOpen' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\polu1\OneDrive\Desktop\Zyro\src\context\AppContext.jsx
+   50:35  error    Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  48 |   
+  49 |   const [mqttStatus, setMqttStatus] = useState('disconnected');
+> 50 |   const lastSensorUpdate = useRef(Date.now());
+     |                                   ^^^^^^^^^^ Cannot call impure function
+  51 |
+  52 |   const [farmInfo, setFarmInfo] = useState(() => {
+  53 |     try {  react-hooks/purity
+   84:30  error    'setConnectivityStatus' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    no-unused-vars
+  139:6   warning  React Hook useEffect has a missing dependency: 'calculateHealthScore'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  react-hooks/exhaustive-deps
+  147:6   warning  React Hook useEffect has a missing dependency: 'sensorData'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            react-hooks/exhaustive-deps
+  298:6   warning  React Hook useEffect has a missing dependency: 'calculateHealthScore'. Either include it or remove the dependency array. Outer scope values like 'MASTER_CONFIG.USE_MOCK_DATA' aren't valid dependencies because mutating them doesn't re-render the component                                                                                                                                                                                                                                                                                                                                                                           react-hooks/exhaustive-deps
+  323:6   warning  React Hook useEffect has an unnecessary dependency: 'MASTER_CONFIG.USE_MOCK_DATA'. Either exclude it or remove the dependency array. Outer scope values like 'MASTER_CONFIG.USE_MOCK_DATA' aren't valid dependencies because mutating them doesn't re-render the component                                                                                                                                                                                                                                                                                                                                                               react-hooks/exhaustive-deps
+  470:14  error    Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           react-refresh/only-export-components
+
+C:\Users\polu1\OneDrive\Desktop\Zyro\src\hooks\useTrendEngine.js
+  43:9  error  'lastVal' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\polu1\OneDrive\Desktop\Zyro\src\screens\Alerts.jsx
+  2:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  3:10  error  'useApp' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\polu1\OneDrive\Desktop\Zyro\src\screens\AnalyticsHub.jsx
+    3:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 no-unused-vars
+  144:7   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  142 |   useEffect(() => {
+  143 |     if (location.state?.tab) {
+> 144 |       setActiveTab(location.state.tab);
+      |       ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  145 |     }
+  146 |   }, [location.state]);
+  147 |     react-hooks/set-state-in-effect
+
+C:\Users\polu1\OneDrive\Desktop\Zyro\src\screens\Dashboard.jsx
+    2:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+   27:26  error  'Icon' is defined but never used                                               no-unused-vars
+  139:43  error  'Icon' is defined but never used                                               no-unused-vars
+
+C:\Users\polu1\OneDrive\Desktop\Zyro\src\screens\DeviceManagement.jsx
+    1:36  error  'useEffect' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                  no-unused-vars
+    2:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                     no-unused-vars
+   26:28  error  'Icon' is defined but never used                                                                  no-unused-vars
+   65:9   error  'isPartial' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u         no-unused-vars
+  170:23  error  'mqttStatus' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u        no-unused-vars
+  170:35  error  'lastGlobalUpdate' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\polu1\OneDrive\Desktop\Zyro\src\screens\IrrigationControl.jsx
+  99:9  error  Parsing error: Expected corresponding JSX closing tag for <motion.section>
+
+C:\Users\polu1\OneDrive\Desktop\Zyro\src\screens\Login.jsx
+   3:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         no-unused-vars
+  50:47  error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  48 |           <motion.div 
+  49 |             key={i}
+> 50 |             animate={{ y: [0, -1000], x: [0, (Math.random() - 0.5) * 200] }}
+     |                                               ^^^^^^^^^^^^^ Cannot call impure function
+  51 |             transition={{ duration: 10 + Math.random() * 20, repeat: Infinity, ease: 'linear' }}
+  52 |             style={{ 
+  53 |               position: 'absolute', bottom: -20, left: `${Math.random() * 100}%`,                                                           react-hooks/purity
+  51:42  error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  49 |             key={i}
+  50 |             animate={{ y: [0, -1000], x: [0, (Math.random() - 0.5) * 200] }}
+> 51 |             transition={{ duration: 10 + Math.random() * 20, repeat: Infinity, ease: 'linear' }}
+     |                                          ^^^^^^^^^^^^^ Cannot call impure function
+  52 |             style={{ 
+  53 |               position: 'absolute', bottom: -20, left: `${Math.random() * 100}%`,
+  54 |               width: '2px', height: '2px', background: 'white', borderRadius: '50%'   react-hooks/purity
+  53:59  error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  51 |             transition={{ duration: 10 + Math.random() * 20, repeat: Infinity, ease: 'linear' }}
+  52 |             style={{ 
+> 53 |               position: 'absolute', bottom: -20, left: `${Math.random() * 100}%`,
+     |                                                           ^^^^^^^^^^^^^ Cannot call impure function
+  54 |               width: '2px', height: '2px', background: 'white', borderRadius: '50%' 
+  55 |             }}
+  56 |           />                                                      react-hooks/purity
+
+C:\Users\polu1\OneDrive\Desktop\Zyro\src\screens\MapView.jsx
+   2:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u             no-unused-vars
+  27:29  error  'Icon' is defined but never used                                                          no-unused-vars
+  43:11  error  'farmInfo' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\polu1\OneDrive\Desktop\Zyro\src\screens\PrecisionSoilTesting.jsx
+    1:47  error    'useRef' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  no-unused-vars
+    2:10  error    'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  no-unused-vars
+   50:23  error    'setGpsAccuracy' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 no-unused-vars
+  149:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  147 |       };
+  148 |       
+> 149 |       setSamples(prev => prev.map((s, i) => i === activeSampleIndex ? { ...s, readings: avgReadings, status: 'completed' } : s));
+      |       ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  150 |       setIsCollecting(false);
+  151 |       setCollectStep(0);
+  152 |     }  react-hooks/set-state-in-effect
+  154:6   warning  React Hook useEffect has missing dependencies: 'activeSampleIndex', 'currentReadings', 'sensorData.soil.moisture', 'sensorData.soil.npk.n', 'sensorData.soil.ph', and 'sensorData.soil.temp'. Either include them or remove the dependency array. You can also replace multiple useState variables with useReducer if 'setSamples' needs the current value of 'activeSampleIndex'                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              react-hooks/exhaustive-deps
+
+C:\Users\polu1\OneDrive\Desktop\Zyro\src\screens\Profile.jsx
+   1:27  error  'useMemo' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+   2:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u   no-unused-vars
+  27:47  error  'Icon' is defined but never used                                                no-unused-vars
+  42:35  error  'Icon' is defined but never used                                                no-unused-vars
+
+C:\Users\polu1\OneDrive\Desktop\Zyro\src\screens\Reports.jsx
+   1:27  error  'useMemo' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                   no-unused-vars
+   2:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                    no-unused-vars
+  28:23  error  'recommendations' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\polu1\OneDrive\Desktop\Zyro\src\screens\Settings.jsx
+   2:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  26:40  error  'Icon' is defined but never used                                               no-unused-vars
+  40:30  error  'Icon' is defined but never used                                               no-unused-vars
+
+C:\Users\polu1\OneDrive\Desktop\Zyro\src\screens\SoilMonitoring.jsx
+   3:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  32:43  error  'color' is defined but never used                                              no-unused-vars
+
+C:\Users\polu1\OneDrive\Desktop\Zyro\src\screens\Splash.jsx
+   3:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u             no-unused-vars
+  18:11  error  'farmInfo' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\polu1\OneDrive\Desktop\Zyro\src\screens\StorageMonitoring.jsx
+    3:10  error    'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             no-unused-vars
+   78:49  error    'Icon' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          no-unused-vars
+  125:23  error    'lastGlobalUpdate' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          no-unused-vars
+  125:41  error    'mqttStatus' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                no-unused-vars
+  126:22  error    'setActiveType' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             no-unused-vars
+  131:25  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `isOffline`, but the source dependencies were [storage, activeType]. Inferred different dependency than source.
+
+  129 |   const isOffline = storage.temp === null || storage.temp === undefined;
+  130 |
+> 131 |   const stats = useMemo(() => {
+      |                         ^^^^^^^
+> 132 |     const t = storage.temp;
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 133 |     const h = storage.humidity;
+      ΓÇª
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 166 |     };
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 167 |   }, [storage, activeType]);
+      | ^^^^ Could not preserve existing manual memoization
+  168 |
+  169 |   const riskUI = THEME[stats.riskLevel] || THEME.offline;
+  170 |  react-hooks/preserve-manual-memoization
+  167:6   warning  React Hook useMemo has a missing dependency: 'isOffline'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                react-hooks/exhaustive-deps
+
+C:\Users\polu1\OneDrive\Desktop\Zyro\src\screens\VisualMonitoring.jsx
+   2:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+   3:10  error  'useApp' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  27:29  error  'Icon' is defined but never used                                               no-unused-vars
+  44:29  error  'Icon' is defined but never used                                               no-unused-vars
+
+C:\Users\polu1\OneDrive\Desktop\Zyro\src\screens\WeatherMonitoring.jsx
+   3:10  error    'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                   no-unused-vars
+  39:61  error    'Icon' is defined but never used                                                                                                                                                                no-unused-vars
+  67:47  error    'Icon' is defined but never used                                                                                                                                                                no-unused-vars
+  82:9   warning  The 'weather' logical expression could make the dependencies of useMemo Hook (at line 131) change on every render. To fix this, wrap the initialization of 'weather' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+C:\Users\polu1\OneDrive\Desktop\Zyro\src\services\mockData.js
+  126:26  error  'storage' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  126:35  error  'water' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u    no-unused-vars
+
+Γ£û 70 problems (63 errors, 7 warnings)
+

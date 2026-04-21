@@ -5,7 +5,8 @@ import {
   Wind, Sun, Zap, TrendingUp, AlertTriangle, 
   Camera, Power, Settings as SettingsIcon,
   MapPin, Clock, Thermometer, Droplet, Activity, 
-  Plus, X, Command, RefreshCw
+  Plus, X, Command, RefreshCw, TrendingDown, Info, Umbrella, 
+  CloudSun, Binary
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
@@ -21,7 +22,7 @@ const COLORS = {
   border: '#F1F5F9'
 };
 
-// ─── SUB-COMPONENTS (Moved outside for performance) ───────────────────────
+// ─── SUB-COMPONENTS ───────────────────────────────────────────────────────
 
 const IconBox = ({ icon: Icon, color, size = 18, background = 'rgba(255,255,255,0.8)' }) => (
   <div style={{ 
@@ -34,16 +35,14 @@ const IconBox = ({ icon: Icon, color, size = 18, background = 'rgba(255,255,255,
 );
 
 const SystemInsightCard = ({ healthScore, status }) => {
-  const isWarning = healthScore < 70;
-  const isOffline = Object.values(status).every(s => s === 'Offline');
+  const isWarning = healthScore !== null && healthScore < 70;
+  const isOffline = healthScore === null || Object.values(status).every(s => s === 'Offline');
   
   return (
     <motion.section 
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
       style={{
-        background: 'white',
-        borderRadius: '24px', padding: '1.5rem', marginBottom: '1.5rem',
+        background: 'white', borderRadius: '24px', padding: '1.5rem', marginBottom: '1.5rem',
         boxShadow: '0 10px 30px rgba(0,0,0,0.02)', border: `1px solid ${COLORS.border}`,
         position: 'relative', overflow: 'hidden'
       }}
@@ -76,17 +75,14 @@ const SystemInsightCard = ({ healthScore, status }) => {
 
 const QuickSummaryStrip = ({ sensorData }) => {
   const stats = [
-    { icon: Thermometer, value: sensorData?.weather?.temp !== null ? `${Number(sensorData.weather.temp).toFixed(1)}°C` : '---', color: '#EF4444' },
-    { icon: Droplet, value: sensorData?.weather?.humidity !== null ? `${Number(sensorData.weather.humidity).toFixed(1)}%` : '---', color: '#0EA5E9' },
-    { icon: Wind, value: sensorData?.weather?.windSpeed !== null ? `${Number(sensorData.weather.windSpeed).toFixed(1)} km/h` : '---', color: '#64748B' },
-    { icon: Sun, value: sensorData?.weather?.lightIntensity !== null ? (sensorData.weather.lightIntensity > 1000 ? 'High' : 'Normal') : '---', color: '#F59E0B' },
+    { icon: Thermometer, value: (sensorData?.weather?.temp !== null && sensorData?.weather?.temp !== undefined) ? `${Number(sensorData.weather.temp).toFixed(1)}°C` : '---', color: '#EF4444' },
+    { icon: Droplet, value: (sensorData?.weather?.humidity !== null && sensorData?.weather?.humidity !== undefined) ? `${Number(sensorData.weather.humidity).toFixed(1)}%` : '---', color: '#0EA5E9' },
+    { icon: Wind, value: (sensorData?.weather?.windSpeed !== null && sensorData?.weather?.windSpeed !== undefined) ? `${Number(sensorData.weather.windSpeed).toFixed(1)} km/h` : '---', color: '#64748B' },
+    { icon: Sun, value: (sensorData?.weather?.lightIntensity !== null && sensorData?.weather?.lightIntensity !== undefined) ? (sensorData.weather.lightIntensity > 1000 ? 'High' : 'Normal') : '---', color: '#F59E0B' },
   ];
 
   return (
-    <div style={{ 
-      display: 'flex', gap: '12px', overflowX: 'auto', padding: '4px 0 20px 0',
-      scrollbarWidth: 'none', msOverflowStyle: 'none'
-    }} className="no-scrollbar">
+    <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', padding: '4px 0 20px 0' }} className="no-scrollbar">
       {stats.map((stat, i) => (
         <div key={i} style={{ 
           background: 'white', padding: '8px 12px', borderRadius: '14px',
@@ -102,8 +98,8 @@ const QuickSummaryStrip = ({ sensorData }) => {
 };
 
 const SystemOverviewCard = ({ score, status }) => {
-  const isWarning = score < 70;
-  const isOffline = status.hw === 'Offline';
+  const isWarning = score !== null && score < 70;
+  const isOffline = score === null || status.hw === 'Offline';
   
   const systems = [
     { label: 'Soil', val: status.soil, color: status.soil === 'Offline' ? '#CBD5E1' : (status.soil === 'Warning' ? '#EF4444' : '#10B981') },
@@ -142,11 +138,9 @@ const SystemOverviewCard = ({ score, status }) => {
 
 const SensorCard = ({ title, value, icon: Icon, color, status, onClick }) => {
   const isConnected = status === 'CONNECTED';
-  
   return (
     <motion.div 
-      whileTap={{ scale: 0.95 }}
-      onClick={onClick}
+      whileTap={{ scale: 0.95 }} onClick={onClick}
       style={{ 
         background: 'white', borderRadius: '24px', padding: '1.25rem',
         border: `1px solid ${COLORS.border}`, boxShadow: '0 4px 16px rgba(0,0,0,0.02)',
@@ -154,27 +148,15 @@ const SensorCard = ({ title, value, icon: Icon, color, status, onClick }) => {
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-        <div style={{ 
-          width: '42px', height: '42px', borderRadius: '14px', 
-          background: isConnected ? `${color}10` : '#F1F5F9', display: 'flex', alignItems: 'center', 
-          justifyContent: 'center' 
-        }}>
+        <div style={{ width: '42px', height: '42px', borderRadius: '14px', background: isConnected ? `${color}10` : '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Icon size={20} color={isConnected ? color : '#CBD5E1'} strokeWidth={2.5} />
         </div>
-        <div style={{ 
-          fontSize: '0.55rem', fontWeight: 900, padding: '4px 8px', borderRadius: '6px',
-          background: isConnected ? '#ECFDF5' : '#F8FAFC',
-          color: isConnected ? '#10B981' : '#CBD5E1',
-          textTransform: 'uppercase', letterSpacing: '0.04em',
-          border: isConnected ? 'none' : `1px solid ${COLORS.border}`
-        }}>
-          {status === 'CONNECTED' ? 'Online' : 'Offline'}
+        <div style={{ fontSize: '0.55rem', fontWeight: 900, padding: '4px 8px', borderRadius: '6px', background: isConnected ? '#ECFDF5' : '#F8FAFC', color: isConnected ? '#10B981' : '#CBD5E1', textTransform: 'uppercase', letterSpacing: '0.04em', border: isConnected ? 'none' : `1px solid ${COLORS.border}` }}>
+          {isConnected ? 'Online' : 'Offline'}
         </div>
       </div>
       <h4 style={{ margin: 0, fontSize: '0.75rem', color: COLORS.subtext, fontWeight: 700 }}>{title}</h4>
-      <div style={{ fontSize: '1.3rem', fontWeight: 950, color: value === '---' ? '#CBD5E1' : COLORS.text, marginTop: '4px' }}>
-        {value}
-      </div>
+      <div style={{ fontSize: '1.3rem', fontWeight: 950, color: value === '---' ? '#CBD5E1' : COLORS.text, marginTop: '4px' }}>{value}</div>
     </motion.div>
   );
 };
@@ -185,132 +167,50 @@ const ControlRow = ({ icon, label, status, isActive, onToggle }) => (
       <IconBox icon={icon} color={isActive ? COLORS.primary : COLORS.subtext} background={isActive ? '#ECFDF5' : '#F8FAFC'} />
       <div>
         <div style={{ fontSize: '0.85rem', fontWeight: 800, color: COLORS.text }}>{label}</div>
-        <div style={{ fontSize: '0.7rem', fontWeight: 600, color: isActive ? COLORS.primary : COLORS.subtext }}>
-          Status: {status}
-        </div>
+        <div style={{ fontSize: '0.7rem', fontWeight: 600, color: isActive ? COLORS.primary : COLORS.subtext }}>Status: {status}</div>
       </div>
     </div>
-    <div 
-      onClick={onToggle}
-      style={{ 
-        width: '52px', height: '28px', background: isActive ? COLORS.primary : '#E2E8F0',
-        borderRadius: '20px', padding: '3px', cursor: 'pointer', transition: '0.3s'
-      }}
-    >
-      <motion.div 
-        animate={{ x: isActive ? 24 : 0 }}
-        style={{ width: '22px', height: '22px', background: 'white', borderRadius: '50%', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
-      />
+    <div onClick={onToggle} style={{ width: '52px', height: '28px', background: isActive ? COLORS.primary : '#E2E8F0', borderRadius: '20px', padding: '3px', cursor: 'pointer', transition: '0.3s' }}>
+      <motion.div animate={{ x: isActive ? 24 : 0 }} style={{ width: '22px', height: '22px', background: 'white', borderRadius: '50%', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />
     </div>
   </div>
 );
 
-const FAB = ({ onAction }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const actions = [
-    { icon: Power, label: 'Emergency Stop', color: '#EF4444' },
-    { icon: RefreshCw, label: 'Sync Sensors', color: '#3B82F6' }
-  ];
-
-  return (
-    <div style={{ position: 'fixed', bottom: '100px', right: '20px', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '12px' }}>
-      <AnimatePresence>
-        {isOpen && actions.map((action, i) => (
-          <motion.button
-            key={i}
-            initial={{ opacity: 0, scale: 0.5, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.5, y: 20 }}
-            transition={{ delay: (actions.length - i) * 0.05 }}
-            onClick={() => { onAction(action.label); setIsOpen(false); }}
-            style={{
-              width: 'auto', padding: '12px 16px', borderRadius: '16px', background: 'white',
-              border: `1px solid ${COLORS.border}`, color: COLORS.text, fontWeight: 800, fontSize: '0.75rem',
-              display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.1)'
-            }}
-          >
-            <action.icon size={16} color={action.color} />
-            {action.label}
-          </motion.button>
-        ))}
-      </AnimatePresence>
-      <motion.button
-        whileTap={{ scale: 0.9 }}
-        onClick={() => setIsOpen(!isOpen)}
-        style={{
-          width: '56px', height: '56px', borderRadius: '20px', 
-          background: COLORS.primary, color: 'white', border: 'none',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 12px 30px rgba(16, 185, 129, 0.4)', cursor: 'pointer'
-        }}
-      >
-        <motion.div animate={{ rotate: isOpen ? 45 : 0 }}>
-          {isOpen ? <X size={24} /> : <Plus size={24} />}
-        </motion.div>
-      </motion.button>
-    </div>
-  );
-};
-
-// ─── MAIN DASHBOARD COMPONENT ─────────────────────────────────────────────
-
 const Dashboard = () => {
-  const { 
-    sensorData, farmHealthScore, toggleActuator, actuators, ACTUATORS, mqttStatus, user, farmInfo
-  } = useApp();
+  const { sensorData, farmHealthScore, toggleActuator, actuators, ACTUATORS, mqttStatus, user, farmInfo } = useApp();
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
-
-  const isPumpActive = actuators ? actuators[ACTUATORS?.PUMP] : false;
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  const val = (v) => (v !== null && v !== undefined && v !== '---' ? v : null);
+  const isPumpActive = actuators ? actuators[ACTUATORS?.PUMP] : false;
 
   const systemStatus = useMemo(() => ({
-    soil: (sensorData.soil?.moisture === null) ? 'Offline' : (sensorData.soil.healthIndex > 70 ? 'Optimal' : 'Warning'),
-    water: (sensorData.water?.level === null) ? 'Offline' : (sensorData.water.level > 20 ? 'Optimal' : 'Low'),
-    weather: sensorData.weather?.temp === null ? 'Offline' : 'Stable'
+    soil: (sensorData.soil?.moisture === null) ? 'Offline' : (sensorData.soil?.healthIndex > 70 ? 'Optimal' : 'Warning'),
+    water: (sensorData.water?.level === null) ? 'Offline' : (sensorData.water?.level > 20 ? 'Optimal' : 'Low'),
+    weather: (sensorData.weather?.temp === null) ? 'Offline' : 'Stable'
   }), [sensorData]);
 
   const overviewStatus = useMemo(() => ({ 
-    soil: systemStatus.soil, 
-    water: systemStatus.water, 
-    weather: systemStatus.weather, 
+    soil: systemStatus.soil, water: systemStatus.water, weather: systemStatus.weather, 
     storage: (sensorData.storage?.temp === null) ? 'Offline' : 'Optimal',
     hw: mqttStatus === 'connected' ? 'Online' : 'Offline'
   }), [systemStatus, sensorData, mqttStatus]);
 
-  const handleAction = (label) => {
-    if (label === 'Sync Sensors') window.location.reload();
-    else alert(`${label} initiated...`);
-  };
-
   return (
     <div style={{ padding: '1.25rem', paddingBottom: '100px', background: COLORS.bg }}>
-      
-      {/* 🌅 GREETING */}
       <section style={{ marginBottom: '2rem', padding: '0 4pt' }}>
         <h1 style={{ fontSize: '1.1rem', fontWeight: 700, color: COLORS.subtext, margin: 0 }}>
-          {(() => {
-            const h = currentTime.getHours();
-            return h < 12 ? 'Good Morning,' : h < 17 ? 'Good Afternoon,' : h < 21 ? 'Good Evening,' : 'Good Night,';
-          })()}
+          {(() => { const h = currentTime.getHours(); return h < 12 ? 'Good Morning,' : h < 17 ? 'Good Afternoon,' : h < 21 ? 'Good Evening,' : 'Good Night,'; })()}
         </h1>
-        <h2 style={{ fontSize: '2.2rem', fontWeight: 950, color: COLORS.primary, margin: '4px 0 12px 0', letterSpacing: '-0.04em' }}>
-          {user?.name || 'Farmer'}
-        </h2>
+        <h2 style={{ fontSize: '2.2rem', fontWeight: 950, color: COLORS.primary, margin: '4px 0 12px 0', letterSpacing: '-0.04em' }}>{user?.name || 'Farmer'}</h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#94A3B8', fontSize: '0.75rem', fontWeight: 800 }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><MapPin size={14} color={COLORS.primary} /> Kalyani • Field A-1</span>
           <span style={{ opacity: 0.3 }}>|</span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            {currentTime.toLocaleDateString('en-US', { month: 'short', day: '2-digit' }).toLowerCase().replace(' ', '')}
-            <Clock size={14} style={{ marginLeft: '4px' }} /> 
-            {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
-          </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>{currentTime.toLocaleDateString('en-US', { month: 'short', day: '2-digit' }).toLowerCase().replace(' ', '')}<Clock size={14} style={{ marginLeft: '4px' }} /> {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
         </div>
       </section>
 
@@ -319,45 +219,20 @@ const Dashboard = () => {
       <SystemOverviewCard score={farmHealthScore} status={overviewStatus} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-        <SensorCard title="Soil" value={sensorData?.soil?.moisture !== null ? `${Number(sensorData.soil.moisture).toFixed(1)}%` : '---'} icon={Sprout} color={COLORS.primary} status={sensorData?.soil?.moisture !== null ? "CONNECTED" : "OFFLINE"} onClick={() => navigate('/soil-monitoring')} />
-        <SensorCard title="Irrigation" value={sensorData?.water?.level !== null ? `${Number(sensorData.water.level).toFixed(1)}%` : '---'} icon={Droplets} color={COLORS.secondary} status={sensorData?.water?.level !== null ? "CONNECTED" : "OFFLINE"} onClick={() => navigate('/irrigation')} />
-        <SensorCard title="Weather" value={sensorData?.weather?.temp !== null ? `${Number(sensorData.weather.temp).toFixed(1)}°C` : '---'} icon={CloudRain} color="#14B8A6" status={sensorData?.weather?.temp !== null ? "CONNECTED" : "OFFLINE"} onClick={() => navigate('/weather')} />
-        <SensorCard title="Storage" value={sensorData?.storage?.temp !== null ? `${Number(sensorData.storage.temp).toFixed(1)}°C` : '---'} icon={Archive} color="#8B5CF6" status={sensorData?.storage?.temp !== null ? "CONNECTED" : "OFFLINE"} onClick={() => navigate('/storage-hub')} />
+        <SensorCard title="Soil" value={(sensorData?.soil?.moisture !== null && sensorData?.soil?.moisture !== undefined) ? `${Number(sensorData.soil.moisture).toFixed(1)}%` : '---'} icon={Sprout} color={COLORS.primary} status={sensorData?.soil?.moisture !== null ? "CONNECTED" : "OFFLINE"} onClick={() => navigate('/soil-monitoring')} />
+        <SensorCard title="Irrigation" value={(sensorData?.water?.level !== null && sensorData?.water?.level !== undefined) ? `${Number(sensorData.water.level).toFixed(1)}%` : '---'} icon={Droplets} color={COLORS.secondary} status={sensorData?.water?.level !== null ? "CONNECTED" : "OFFLINE"} onClick={() => navigate('/irrigation')} />
+        <SensorCard title="Weather" value={(sensorData?.weather?.temp !== null && sensorData?.weather?.temp !== undefined) ? `${Number(sensorData.weather.temp).toFixed(1)}°C` : '---'} icon={CloudRain} color="#14B8A6" status={sensorData?.weather?.temp !== null ? "CONNECTED" : "OFFLINE"} onClick={() => navigate('/weather')} />
+        <SensorCard title="Storage" value={(sensorData?.storage?.temp !== null && sensorData?.storage?.temp !== undefined) ? `${Number(sensorData.storage.temp).toFixed(1)}°C` : '---'} icon={Archive} color="#8B5CF6" status={sensorData?.storage?.temp !== null ? "CONNECTED" : "OFFLINE"} onClick={() => navigate('/storage-hub')} />
       </div>
-
-      <section style={{ background: '#0F172A', borderRadius: '24px', padding: '1.5rem', marginBottom: '1.5rem', color: 'white' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Camera size={18} color="#94A3B8" /><h3 style={{ fontSize: '0.9rem', fontWeight: 800, margin: 0 }}>Live Vision</h3></div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#94A3B8', fontSize: '0.65rem', fontWeight: 900 }}><div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#64748B' }} />OFFLINE</div>
-        </div>
-        <div style={{ height: '140px', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px', border: '1px dashed rgba(255,255,255,0.1)' }}>
-          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600, color: '#94A3B8' }}>No Camera Connected</p>
-          <button style={{ background: 'white', color: '#0F172A', border: 'none', padding: '8px 16px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: 800 }}>Tap to setup</button>
-        </div>
-      </section>
 
       <section style={{ background: 'white', borderRadius: '24px', padding: '1.5rem', marginBottom: '2rem', boxShadow: '0 10px 30px rgba(0,0,0,0.02)' }}>
         <h3 style={{ fontSize: '1rem', fontWeight: 950, color: COLORS.text, marginBottom: '1.5rem' }}>Active Controls</h3>
         <ControlRow icon={Power} label="Irrigation Pump" status={isPumpActive ? 'ON' : 'OFF'} isActive={isPumpActive} onToggle={() => toggleActuator(ACTUATORS.PUMP)} />
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}><IconBox icon={SettingsIcon} color={COLORS.subtext} background="#F8FAFC" /><div><div style={{ fontSize: '0.85rem', fontWeight: 800, color: COLORS.text }}>System Mode</div><div style={{ fontSize: '0.7rem', fontWeight: 600, color: COLORS.primary }}>AUTOMATED MODE</div></div></div>
-          <div style={{ display: 'flex', background: '#F1F5F9', borderRadius: '10px', padding: '4px' }}>
-            <button style={{ padding: '6px 12px', borderRadius: '7px', border: 'none', background: 'white', color: COLORS.primary, fontSize: '0.65rem', fontWeight: 900, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>AUTO</button>
-            <button style={{ padding: '6px 12px', borderRadius: '7px', border: 'none', background: 'transparent', color: COLORS.subtext, fontSize: '0.65rem', fontWeight: 900 }}>MANUAL</button>
-          </div>
-        </div>
       </section>
 
-      <FAB onAction={handleAction} />
-
       <footer style={{ textAlign: 'center', paddingBottom: '100px' }}>
-        <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#CBD5E1', textTransform: 'uppercase' }}>System Online • v{farmInfo.version} • Sync: 2s ago</div>
+        <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#CBD5E1', textTransform: 'uppercase' }}>System Online • v{farmInfo.version}</div>
       </footer>
-
-      <style>{`
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
     </div>
   );
 };

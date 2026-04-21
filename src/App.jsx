@@ -109,10 +109,10 @@ const MainLayout = ({ children }) => {
   };
 
   return (
-    <div style={{ height: '100vh', height: '100dvh', width: '100vw', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#F8FAFC' }}>
+    <div style={{ height: '100dvh', width: '100vw', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#F8FAFC' }}>
       <TopBar title={titles[location.pathname] || 'Agri Sense'} />
       <main ref={mainRef} style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
-        <div style={{ maxWidth: '500px', margin: '0 auto', width: '100%', paddingBottom: '40px' }}>
+        <div style={{ maxWidth: '500px', margin: '0 auto', width: '100%', paddingBottom: '10px' }}>
           <AnimatePresence mode="wait">
             <motion.div key={location.pathname} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
               {children}

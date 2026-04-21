@@ -47,7 +47,11 @@ export const AppProvider = ({ children }) => {
   });
   
   const [mqttStatus, setMqttStatus] = useState('disconnected');
-  const lastSensorUpdate = useRef(Date.now());
+  const lastSensorUpdate = useRef(null);
+
+  useEffect(() => {
+    lastSensorUpdate.current = Date.now();
+  }, []);
 
   const [farmInfo, setFarmInfo] = useState(() => {
     try {
@@ -129,6 +133,14 @@ export const AppProvider = ({ children }) => {
     const score = (sIdx * 0.5) + (wIdx * 0.2) + (stIdx * 0.15) + (weIdx * 0.15);
     return Math.round(score);
   };
+
+  // 🏥 FARM HEALTH OBSERVER
+  useEffect(() => {
+    if (sensorData) {
+      const score = calculateHealthScore(sensorData);
+      setFarmHealthScore(score);
+    }
+  }, [sensorData]);
 
   // AI Recommendation Engine Observer (Recommendations Only)
   useEffect(() => {
@@ -215,60 +227,68 @@ export const AppProvider = ({ children }) => {
             const cleanValue = (val) => (val === null || isNaN(val) || val === undefined) ? null : Number(val);
 
             setSensorData(prev => {
+              // 🧪 SUPER-ADAPTIVE DATA INGESTOR (Handles Nested, Flat, or Aliased JSON)
+              const root = data;
+              const s = data.soil || data;
+              const w = data.weather || data;
+              const wt = data.water || data;
+              const st = data.storage || data;
+              const sl = data.solar || data;
+
+              // 🛡️ Safe Extraction Helper (Prioritizes specific keys, then aliases)
+              const getVal = (src, keys, fallback) => {
+                for (const k of keys) {
+                  if (src[k] !== undefined && src[k] !== null) return cleanValue(src[k]);
+                }
+                return fallback;
+              };
+
               const newSoil = {
                 ...prev.soil,
-                ...(data.soil || {}),
-                moisture: cleanValue(data.soil?.moisture ?? prev.soil?.moisture),
-                temp: cleanValue(data.soil?.temp ?? prev.soil?.temp),
-                ph: cleanValue(data.soil?.ph ?? prev.soil?.ph),
+                moisture: getVal(s, ['moisture', 'm', 'moist', 'soil_m', 'soil_moisture'], prev.soil.moisture),
+                temp: getVal(s, ['temep', 'temp', 't', 'temperature', 'soil_temp', 'st'], prev.soil.temp),
+                ph: getVal(s, ['ph', 'soil_ph', 'p_h'], prev.soil.ph),
                 npk: {
-                  n: cleanValue(data.soil?.npk?.n ?? prev.soil?.npk?.n),
-                  p: cleanValue(data.soil?.npk?.p ?? prev.soil?.npk?.p),
-                  k: cleanValue(data.soil?.npk?.k ?? prev.soil?.npk?.k)
+                  n: getVal(s, ['n', 'nit', 'nitrogen', 'npk_n'], prev.soil.npk.n),
+                  p: getVal(s, ['p', 'phos', 'phosphorus', 'npk_p'], prev.soil.npk.p),
+                  k: getVal(s, ['k', 'pot', 'potassium', 'npk_k'], prev.soil.npk.k)
                 }
               };
               
               newSoil.healthIndex = calculateSoilIndex(newSoil);
 
-              const updatedData = {
+              return {
                 ...prev,
                 soil: newSoil,
                 weather: { 
                   ...prev.weather, 
-                  ...(data.weather || {}),
-                  temp: cleanValue(data.weather?.temp ?? prev.weather?.temp),
-                  humidity: cleanValue(data.weather?.humidity ?? prev.weather?.humidity),
-                  lightIntensity: cleanValue(data.weather?.lightIntensity ?? prev.weather?.lightIntensity),
-                  isRaining: data.weather?.isRaining ?? prev.weather?.isRaining,
-                  rainLevel: cleanValue(data.weather?.rainLevel ?? prev.weather?.rainLevel)
+                  temp: getVal(w, ['temep', 'temp', 't', 'temperature', 'ambient_temp', 'at'], prev.weather.temp),
+                  humidity: getVal(w, ['humiddty', 'humidity', 'h', 'hum', 'ambient_hum', 'ah'], prev.weather.humidity),
+                  lightIntensity: getVal(w, ['ldr', 'light', 'lux', 'li', 'lightIntensity'], prev.weather.lightIntensity),
+                  isRaining: root.isRaining ?? root.rain ?? root.r ?? root.raian ?? prev.weather.isRaining,
+                  rainLevel: getVal(w, ['rainLevel', 'rl', 'precipitation', 'raian_falll'], prev.weather.rainLevel)
                 },
                 water: { 
                   ...prev.water, 
-                  ...(data.water || {}),
-                  level: cleanValue(data.water?.level ?? prev.water?.level),
-                  tankLevel: cleanValue(data.water?.tankLevel ?? prev.water?.tankLevel),
-                  flowRate: cleanValue(data.water?.flowRate ?? prev.water?.flowRate),
-                  totalUsage: cleanValue(data.water?.totalUsage ?? prev.water?.totalUsage)
+                  level: getVal(wt, ['level', 'l', 'water_level', 'wl'], prev.water.level),
+                  tankLevel: getVal(wt, ['tankLevel', 'tl', 'tank_level'], prev.water.tankLevel),
+                  flowRate: getVal(wt, ['flowRate', 'fr', 'flow', 'f'], prev.water.flowRate),
+                  totalUsage: getVal(wt, ['totalUsage', 'tu', 'usage'], prev.water.totalUsage)
                 },
                 storage: { 
                   ...prev.storage, 
-                  ...(data.storage || {}),
-                  temp: cleanValue(data.storage?.temp ?? prev.storage?.temp),
-                  humidity: cleanValue(data.storage?.humidity ?? prev.storage?.humidity),
-                  mq135: cleanValue(data.storage?.mq135 ?? prev.storage?.mq135),
-                  freshnessScore: data.storage?.mq135 ? (data.storage.mq135 < 3 ? 98 : 75) : (prev.storage?.freshnessScore || 100)
+                  temp: getVal(st, ['storage_temp', 'stemp', 'temp', 't', 'temep'], prev.storage.temp),
+                  humidity: getVal(st, ['storage_humidity', 'shum', 'humidity', 'h', 'humiddty'], prev.storage.humidity),
+                  mq135: getVal(st, ['mq135', 'gas', 'g', 'air_quality', 'aqi'], prev.storage.mq135),
+                  freshnessScore: root.mq135 ? (root.mq135 < 3 ? 98 : 75) : (prev.storage.freshnessScore || 100)
                 },
                 solar: {
                   ...prev.solar, 
-                  ...(data.solar || {}),
-                  power: cleanValue(data.solar?.power ?? prev.solar?.power),
-                  voltage: cleanValue(data.solar?.voltage ?? prev.solar?.voltage),
-                  current: cleanValue(data.solar?.current ?? prev.solar?.current)
+                  power: getVal(sl, ['power', 'p', 'wattage', 'w'], prev.solar.power),
+                  voltage: getVal(sl, ['voltage', 'v', 'volts'], prev.solar.voltage),
+                  current: getVal(sl, ['current', 'c', 'amps', 'a'], prev.solar.current)
                 }
               };
-
-              setFarmHealthScore(calculateHealthScore(updatedData));
-              return updatedData;
             });
             setIsDataLoading(false);
             setLastGlobalUpdate(new Date().toLocaleTimeString());
@@ -289,7 +309,7 @@ export const AppProvider = ({ children }) => {
       const now = Date.now();
       const diff = now - lastSensorUpdate.current;
       
-      if (diff > 30000) { // 30 seconds of silence
+      if (diff > 180000) { // 3 minutes of silence (Field Safe)
         console.warn(`MQTT: Hardware Silence Detected (${Math.round(diff/1000)}s). Triggering Offline UI.`);
         // Systematically Nullify Critical Sensors to trigger "Offline" UI components
         setSensorData(prev => ({
@@ -306,66 +326,76 @@ export const AppProvider = ({ children }) => {
     return () => clearInterval(pulse);
   }, [MASTER_CONFIG.USE_MOCK_DATA]);
 
-  // ☁️ GLOBAL WEATHER API ENGINE (Atmospheric Conditions)
+  // ☁️ GLOBAL WEATHER API ENGINE (Atmospheric Conditions via OpenWeather)
   useEffect(() => {
-    if (MASTER_CONFIG.OPENWEATHER_API_KEY) {
-      const fetchWeather = async () => {
-        try {
-          const wUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${MASTER_CONFIG.MAP_LAT}&lon=${MASTER_CONFIG.MAP_LNG}&units=metric&appid=${MASTER_CONFIG.OPENWEATHER_API_KEY}`;
-          const aUrl = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${MASTER_CONFIG.MAP_LAT}&lon=${MASTER_CONFIG.MAP_LNG}&appid=${MASTER_CONFIG.OPENWEATHER_API_KEY}`;
-          const fUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${MASTER_CONFIG.MAP_LAT}&lon=${MASTER_CONFIG.MAP_LNG}&units=metric&appid=${MASTER_CONFIG.OPENWEATHER_API_KEY}`;
-          
-          const [wRes, aRes, fRes] = await Promise.all([fetch(wUrl), fetch(aUrl), fetch(fUrl)]);
-          const [wData, aData, fData] = await Promise.all([wRes.json(), aRes.json(), fRes.json()]);
-          
-          // 1. Current Weather
-          if (wData.main) {
-            setApiWeather({
-              temp: Math.round(wData.main.temp),
-              humidity: wData.main.humidity,
-              pressure: wData.main.pressure,
-              windSpeed: wData.wind?.speed,
-              windDeg: wData.wind?.deg,
-              windGust: wData.wind?.gust,
-              condition: wData.weather?.[0]?.main,
-              description: wData.weather?.[0]?.description,
-              city: wData.name,
-              feelsLike: Math.round(wData.main.feels_like),
-              tempMin: Math.round(wData.main.temp_min),
-              tempMax: Math.round(wData.main.temp_max),
-              visibility: (wData.visibility / 1000).toFixed(1),
-              clouds: wData.clouds?.all,
-              seaLevel: wData.main?.sea_level,
-              grndLevel: wData.main?.grnd_level,
-              apiRain: wData.rain?.['1h'] || 0,
-              aqi: aData.list?.[0]?.main?.aqi || null,
-              pollutants: aData.list?.[0]?.components || {},
-              sunrise: wData.sys?.sunrise ? new Date(wData.sys.sunrise * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--',
-              sunset: wData.sys?.sunset ? new Date(wData.sys.sunset * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'
-            });
-          }
+    if (!MASTER_CONFIG.OPENWEATHER_API_KEY || MASTER_CONFIG.OPENWEATHER_API_KEY.includes("YOUR_")) return;
 
-          // 2. 5-Day Forecast Processing (Filter for 12:00 PM each day)
-          if (fData.list) {
-            const dailyForecast = fData.list.filter(item => item.dt_txt.includes("12:00:00")).map(item => ({
-              date: new Date(item.dt * 1000).toLocaleDateString([], { weekday: 'short' }),
-              temp: Math.round(item.main.temp),
-              condition: item.weather[0].main,
-              icon: item.weather[0].icon,
-              pop: Math.round(item.pop * 100) // Convert 0-1 to 0-100%
-            }));
-            setApiForecast(dailyForecast);
-          }
-
-        } catch (e) {
-          console.error("API Weather Retrieval Failure:", e);
+    const fetchWeather = async () => {
+      try {
+        const lat = MASTER_CONFIG.MAP_LAT;
+        const lon = MASTER_CONFIG.MAP_LNG;
+        const key = MASTER_CONFIG.OPENWEATHER_API_KEY;
+        
+        // 1. Current Weather
+        const wUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${key}&units=metric`;
+        const wRes = await fetch(wUrl);
+        const wData = await wRes.json();
+        
+        if (wData.main) {
+          setApiWeather({
+            temp: Math.round(wData.main.temp),
+            humidity: wData.main.humidity,
+            pressure: wData.main.pressure,
+            windSpeed: wData.wind?.speed,
+            condition: wData.weather?.[0]?.main || 'Clear',
+            description: wData.weather?.[0]?.description || 'Clear sky',
+            city: wData.name || MASTER_CONFIG.WEATHER_CITY,
+            feelsLike: Math.round(wData.main.feels_like),
+            clouds: wData.clouds?.all,
+            sunrise: (wData.sys?.sunrise && !isNaN(new Date(wData.sys.sunrise * 1000).getTime())) ? new Date(wData.sys.sunrise * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--',
+            sunset: (wData.sys?.sunset && !isNaN(new Date(wData.sys.sunset * 1000).getTime())) ? new Date(wData.sys.sunset * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--',
+            uv: 'Low', // Standard API doesn't include UV
+            aqi: 1
+          });
         }
-      };
-      fetchWeather();
-      const interval = setInterval(fetchWeather, 600000); // 10m refresh
-      return () => clearInterval(interval);
-    }
-  }, [MASTER_CONFIG.OPENWEATHER_API_KEY]);
+
+        // 2. 5-Day Forecast
+        const fUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${key}&units=metric`;
+        const fRes = await fetch(fUrl);
+        const fData = await fRes.json();
+        
+        if (fData.list) {
+          const daily = fData.list.filter(item => item.dt_txt.includes("12:00:00")).slice(0, 5).map(item => ({
+            date: (item.dt && !isNaN(new Date(item.dt * 1000).getTime())) ? new Date(item.dt * 1000).toLocaleDateString([], { weekday: 'short' }) : '---',
+            temp: Math.round(item.main.temp),
+            condition: item.weather?.[0]?.main || 'Clear',
+            pop: Math.round((item.pop || 0) * 100)
+          }));
+          setApiForecast(daily || []);
+        }
+
+        // 3. Air Quality Index (AQI)
+        const aUrl = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${key}`;
+        const aRes = await fetch(aUrl);
+        const aData = await aRes.json();
+        
+        if (aData.list?.[0]) {
+          setApiWeather(prev => ({ ...prev, aqi: aData.list[0].main.aqi }));
+        }
+
+      } catch (e) {
+        console.warn("Weather API Sync Failure:", e);
+        setApiWeather(prev => ({ ...prev, condition: 'Sync Error' }));
+      }
+    };
+
+    const bootTimer = setTimeout(fetchWeather, 1000);
+    const interval = setInterval(fetchWeather, 600000); // 10m refresh
+    return () => {
+      clearTimeout(bootTimer);
+      clearInterval(interval);
+    };
+  }, []);
 
   // Login Logic: Multi-User Awareness
   const login = (id, pass) => {
@@ -399,6 +429,10 @@ export const AppProvider = ({ children }) => {
   const toggleActuator = (key) => {
     const newState = !actuators[key];
     setActuators(prev => ({ ...prev, [key]: newState }));
+    
+    // ⚡ Optimistic feedback to mitigate perceived MQTT latency
+    setCloudSyncStatus('Processing...');
+    setTimeout(() => setCloudSyncStatus('Active'), 2000);
     
     if (!MASTER_CONFIG.USE_MOCK_DATA) {
       const commands = MASTER_CONFIG.ACTUATOR_COMMANDS[key];

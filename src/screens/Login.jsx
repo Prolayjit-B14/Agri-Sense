@@ -35,6 +35,14 @@ const LoginV3 = () => {
     }
   };
 
+  const particles = React.useMemo(() => Array.from({ length: 20 }).map((_, i) => ({
+    id: i,
+    y: [0, -1000],
+    x: [0, (Math.random() - 0.5) * 200],
+    duration: 10 + Math.random() * 20,
+    left: `${Math.random() * 100}%`
+  })), []);
+
   return (
     <div style={{ 
       background: COLORS.bgGradient, minHeight: '100vh', 
@@ -44,13 +52,13 @@ const LoginV3 = () => {
       
       {/* BACKGROUND PARTICLES SIMULATION */}
       <div style={{ position: 'absolute', inset: 0, opacity: 0.2, pointerEvents: 'none' }}>
-        {Array.from({length: 20}).map((_, i) => (
+        {particles.map((p) => (
           <motion.div 
-            key={i}
-            animate={{ y: [0, -1000], x: [0, (Math.random() - 0.5) * 200] }}
-            transition={{ duration: 10 + Math.random() * 20, repeat: Infinity, ease: 'linear' }}
+            key={p.id}
+            animate={{ y: p.y, x: p.x }}
+            transition={{ duration: p.duration, repeat: Infinity, ease: 'linear' }}
             style={{ 
-              position: 'absolute', bottom: -20, left: `${Math.random() * 100}%`,
+              position: 'absolute', bottom: -20, left: p.left,
               width: '2px', height: '2px', background: 'white', borderRadius: '50%' 
             }}
           />
