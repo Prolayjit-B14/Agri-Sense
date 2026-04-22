@@ -7,7 +7,7 @@ import {
   FileText, Activity, Network,
   CloudRain, Archive,
   LogOut, FlaskConical, Camera,
-  User as UserIcon
+  User as UserIcon, Cpu
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -43,6 +43,14 @@ const Sidebar = () => {
         { name: 'Feild map', path: '/map-view', icon: Map },
         { name: 'Field Vision', path: '/camera', icon: Camera },
       ]
+    },
+    {
+      title: 'Infrastructure',
+      links: [
+        { name: 'Device Management', path: '/device-area', icon: Network },
+        { name: 'Settings', path: '/settings', icon: SettingsIcon },
+        { name: 'Precision Test', path: '/precision-soil-testing', icon: FlaskConical },
+      ]
     }
   ];
 
@@ -72,7 +80,7 @@ const Sidebar = () => {
           borderRight: '1px solid rgba(255,255,255,0.03)'
         }}
       >
-        {/* TOP SECTION: PROFILE (Tighter & Cleaner) */}
+        {/* TOP SECTION: PROFILE */}
         <div style={{
           padding: '24px 20px 20px',
           borderBottom: `1px solid ${COLORS.border}`,
@@ -105,7 +113,7 @@ const Sidebar = () => {
           </div>
         </div>
 
-        {/* MIDDLE SECTION: NAVIGATION (Tighter Spacing & Perfect Alignment) */}
+        {/* MIDDLE SECTION: NAVIGATION */}
         <div style={{ padding: '16px 10px', overflowY: 'auto', flex: 1 }} className="no-scrollbar">
           {sidebarGroups.map((group, gi) => (
             <div key={gi} style={{ marginBottom: '16px' }}>
@@ -150,7 +158,7 @@ const Sidebar = () => {
           ))}
         </div>
 
-        {/* BOTTOM SECTION: VERSION (Clean & Subdued) */}
+        {/* BOTTOM SECTION: VERSION */}
         <div style={{ 
           padding: '16px 20px', 
           borderTop: `1px solid ${COLORS.border}`,
@@ -158,7 +166,7 @@ const Sidebar = () => {
         }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '0.62rem', color: '#FFF', fontWeight: 700, letterSpacing: '0.06em', opacity: 0.15 }}>
-              PLATFORM ENGINE V{farmInfo?.version || "2.8.0"}
+              PLATFORM ENGINE V{farmInfo?.version || "2.9.0"}
             </div>
             <div style={{ fontSize: '0.55rem', color: COLORS.primary, fontWeight: 800, marginTop: '2px', letterSpacing: '0.15em', textTransform: 'uppercase', opacity: 0.3 }}>
               AgriSense Industrial
@@ -176,4 +184,3 @@ const Sidebar = () => {
 };
 
 export default Sidebar;
-
