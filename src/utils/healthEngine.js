@@ -80,6 +80,23 @@ const getParamScore = (value, idealMin, idealMax, maxRange = 50) => {
   return Math.max(0, Math.min(100, Math.round(score)));
 };
 
+export const calculateOverallHealth = (systemHealth) => {
+  const scores = Object.values(systemHealth).filter(s => s !== null);
+  if (scores.length === 0) return null;
+
+  const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+  const min = Math.min(...scores);
+
+  // Safety-First Logic: Overall health is a weighted mix of Average and Minimum.
+  // If the minimum score is critical (< 40), it pulls the overall health down by 70%.
+  if (min < 40) {
+    return Math.round((avg * 0.3) + (min * 0.7));
+  }
+  
+  // Otherwise, it's a standard weighted average (60% Avg, 40% Min) to emphasize potential issues
+  return Math.round((avg * 0.6) + (min * 0.4));
+};
+
 export const calculateNodeHealth = (nodeType, data) => {
   if (!data) return null;
   
@@ -93,14 +110,13 @@ export const calculateNodeHealth = (nodeType, data) => {
       const pScore = getParamScore(s.ph, 6.0, 7.5, 3);
       const tScore = getParamScore(s.temp, 18, 30, 15);
       
-      // NPK Score: Average of N, P, K scores (Ideal 40-100)
       const n = getParamScore(s.npk?.n, 40, 100, 40);
       const p = getParamScore(s.npk?.p, 40, 100, 40);
       const k = getParamScore(s.npk?.k, 40, 100, 40);
       const npkScore = (n !== null && p !== null && k !== null) ? Math.round((n + p + k) / 3) : null;
 
-      if (mScore !== null) { scores.push(mScore); weights.push(0.35); }
-      if (pScore !== null) { scores.push(pScore); weights.push(0.25); }
+      if (mScore !== null) { scores.push(mScore); weights.push(0.40); } // Higher weight for moisture
+      if (pScore !== null) { scores.push(pScore); weights.push(0.20); }
       if (npkScore !== null) { scores.push(npkScore); weights.push(0.25); }
       if (tScore !== null) { scores.push(tScore); weights.push(0.15); }
       break;
@@ -109,21 +125,21 @@ export const calculateNodeHealth = (nodeType, data) => {
       const w = data;
       const tScore = getParamScore(w.temp, 20, 32, 15);
       const hScore = getParamScore(w.humidity, 40, 80, 40);
-      const rScore = getParamScore(w.rainLevel, 0, 5, 20); // 0-5mm is moderate
-      const lScore = getParamScore(w.lightIntensity, 500, 2000, 1000); // Lux
+      const rScore = getParamScore(w.rainLevel, 0, 5, 20); 
+      const lScore = getParamScore(w.lightIntensity, 500, 2000, 1000); 
 
       if (tScore !== null) { scores.push(tScore); weights.push(0.30); }
-      if (hScore !== null) { scores.push(hScore); weights.push(0.25); }
-      if (rScore !== null) { scores.push(rScore); weights.push(0.25); }
+      if (hScore !== null) { scores.push(hScore); weights.push(0.30); }
+      if (rScore !== null) { scores.push(rScore); weights.push(0.20); }
       if (lScore !== null) { scores.push(lScore); weights.push(0.20); }
       break;
     }
     case 'storage': {
       const st = data;
-      const gScore = getParamScore(st.mq135, 0, 300, 500); // Safe gas levels
+      const gScore = getParamScore(st.mq135, 0, 300, 500); 
       const tScore = getParamScore(st.temp, 15, 25, 15);
       const hScore = getParamScore(st.humidity, 40, 60, 40);
-      const aScore = getParamScore(st.mq135, 0, 100, 200); // AQI < 100
+      const aScore = getParamScore(st.mq135, 0, 100, 200); 
 
       if (gScore !== null) { scores.push(gScore); weights.push(0.35); }
       if (tScore !== null) { scores.push(tScore); weights.push(0.25); }
@@ -134,13 +150,10 @@ export const calculateNodeHealth = (nodeType, data) => {
     case 'irrigation': {
       const ir = data;
       const lScore = getParamScore(ir.level, 30, 100, 50);
-      // Mocking pump/button as working if node is online
-      const pScore = lScore !== null ? 100 : null; 
-      const bScore = lScore !== null ? 100 : null;
+      const pScore = ir.pumpActive !== undefined ? (ir.pumpActive ? 100 : 90) : null; 
 
-      if (lScore !== null) { scores.push(lScore); weights.push(0.50); }
+      if (lScore !== null) { scores.push(lScore); weights.push(0.70); }
       if (pScore !== null) { scores.push(pScore); weights.push(0.30); }
-      if (bScore !== null) { scores.push(bScore); weights.push(0.20); }
       break;
     }
     default: return null;
@@ -148,11 +161,9 @@ export const calculateNodeHealth = (nodeType, data) => {
 
   if (scores.length === 0) return null;
   
-  // If >50% sensors offline, node is offline
-  const totalPossible = { soil: 4, weather: 4, storage: 4, irrigation: 3 }[nodeType];
-  if (scores.length < totalPossible / 2) return null;
+  const totalPossible = { soil: 4, weather: 4, storage: 4, irrigation: 2 }[nodeType];
+  if (scores.length < 1) return null; // Allow single sensor nodes to show health
 
-  // Normalized weight calculation
   const currentTotalWeight = weights.reduce((a, b) => a + b, 0);
   const health = scores.reduce((acc, score, idx) => acc + (score * (weights[idx] / currentTotalWeight)), 0);
   

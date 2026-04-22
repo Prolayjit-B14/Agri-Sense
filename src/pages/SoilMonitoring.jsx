@@ -21,7 +21,7 @@ import { getHealthColor } from '../utils/healthEngine';
 const COLORS = {
   bg: '#F8FAFC',
   card: '#FFFFFF',
-  primary: '#10B981', 
+  primary: '#10B981', // Emerald Green
   secondary: '#3B82F6',
   warning: '#F59E0B',
   critical: '#EF4444',

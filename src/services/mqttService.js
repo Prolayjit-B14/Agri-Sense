@@ -91,7 +91,7 @@ class MqttService {
    */
   publishCommand(action) {
     if (this.client) {
-      const topic = 'agrisense/field_a/commands';
+      const topic = 'agrisense/field_a/water/commands';
       const message = JSON.stringify(action);
       this.client.publish(topic, message);
       console.log(`MQTT: Command Published:`, action);

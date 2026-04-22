@@ -24,67 +24,42 @@ export const processMqttMessage = (topic, data, prev) => {
   const parts = topic.split('/');
   if (parts.length < 2) return prev;
 
-  const nodeId = parts[1];
-  const sensorType = parts[2];
-  
   const newState = JSON.parse(JSON.stringify(prev));
-  let target = null;
   
-  if (nodeId.includes('soil')) target = 'soil';
-  else if (nodeId.includes('weather')) target = 'weather';
-  else if (nodeId.includes('storage')) target = 'storage';
-  else if (nodeId.includes('irrigation') || nodeId.includes('water')) target = 'water';
-  
-  if (!target) return prev;
+  // 🛰️ NODE DETECTION VIA TOPIC PATH
+  // Topics: agrisense/field_a/soil, agrisense/field_a/weather, agrisense/field_a/water
+  const nodeType = parts[parts.length - 1]; 
 
-  const rawData = data;
-  
-  if (sensorType) {
-    const fieldMap = {
-      'temperature': 'temp', 'temp': 'temp', 't': 'temp',
-      'moisture': 'moisture', 'm': 'moisture',
-      'humidity': 'humidity', 'h': 'humidity',
-      'ph': 'ph', 'rainfall': 'rainLevel', 'rain': 'rainLevel',
-      'light': 'lightIntensity', 'ldr': 'lightIntensity', 'lux': 'lightIntensity',
-      'aqi': 'mq135', 'gas': 'mq135', 'air': 'mq135',
-      'water_level': 'level', 'level': 'level'
-    };
-    
-    const field = fieldMap[sensorType] || sensorType;
-    const val = getVal(rawData, [], null);
-
-    if (target === 'soil' && ['n', 'p', 'k'].includes(sensorType)) {
-      newState.soil.npk[sensorType] = val;
-    } else {
-      newState[target][field] = val;
+  if (nodeType === 'soil') {
+    newState.soil.moisture = getVal(data, ['moisture', 'm'], prev.soil.moisture);
+    newState.soil.temp = getVal(data, ['temp', 't'], prev.soil.temp);
+    newState.soil.ph = getVal(data, ['ph'], prev.soil.ph);
+    if (data.npk) {
+      newState.soil.npk.n = getVal(data.npk, ['n'], prev.soil.npk.n);
+      newState.soil.npk.p = getVal(data.npk, ['p'], prev.soil.npk.p);
+      newState.soil.npk.k = getVal(data.npk, ['k'], prev.soil.npk.k);
     }
-  } else {
-    const s = rawData;
-    if (target === 'soil') {
-      newState.soil.moisture = getVal(s, ['moisture', 'm', 'moist', 'soil_m'], prev.soil.moisture);
-      newState.soil.temp = getVal(s, ['temp', 't', 'soil_temp', 'st'], prev.soil.temp);
-      newState.soil.ph = getVal(s, ['ph', 'soil_ph'], prev.soil.ph);
-      newState.soil.npk = {
-        n: getVal(s, ['n', 'nit'], prev.soil.npk.n),
-        p: getVal(s, ['p', 'phos'], prev.soil.npk.p),
-        k: getVal(s, ['k', 'pot'], prev.soil.npk.k)
-      };
-    } else if (target === 'weather') {
-      newState.weather.temp = getVal(s, ['temp', 't', 'ambient_temp'], prev.weather.temp);
-      newState.weather.humidity = getVal(s, ['humidity', 'h', 'ambient_hum'], prev.weather.humidity);
-      newState.weather.lightIntensity = getVal(s, ['ldr', 'light', 'lux'], prev.weather.lightIntensity);
-      newState.weather.rainLevel = getVal(s, ['rainLevel', 'rain', 'rl'], prev.weather.rainLevel);
-      newState.weather.isRaining = s.isRaining ?? s.rain ?? (s.rainLevel > 0) ?? prev.weather.isRaining;
-    } else if (target === 'storage') {
-      newState.storage.temp = getVal(s, ['temp', 'st_t'], prev.storage.temp);
-      newState.storage.humidity = getVal(s, ['humidity', 'st_h'], prev.storage.humidity);
-      newState.storage.mq135 = getVal(s, ['mq135', 'gas', 'aqi'], prev.storage.mq135);
-    } else if (target === 'water') {
-      newState.water.level = getVal(s, ['level', 'l', 'water_level'], prev.water.level);
-      newState.water.flowRate = getVal(s, ['flowRate', 'flow'], prev.water.flowRate);
-    }
+    newState.soil.healthIndex = calculateNodeHealth('soil', newState.soil);
+  } 
+  else if (nodeType === 'weather') {
+    newState.weather.temp = getVal(data, ['temp', 't'], prev.weather.temp);
+    newState.weather.humidity = getVal(data, ['humidity', 'h'], prev.weather.humidity);
+    newState.weather.lightIntensity = getVal(data, ['light', 'ldr'], prev.weather.lightIntensity);
+    newState.weather.rainLevel = getVal(data, ['rain', 'rainfall'], prev.weather.rainLevel);
+    newState.weather.isRaining = data.isRaining ?? (data.humidity > 95) ?? prev.weather.isRaining;
+    newState.weather.healthIndex = calculateNodeHealth('weather', newState.weather);
+  }
+  else if (nodeType === 'water' || nodeType === 'irrigation') {
+    newState.water.level = getVal(data, ['level', 'l'], prev.water.level);
+    newState.water.flowRate = getVal(data, ['flowRate', 'flow'], prev.water.flowRate);
+    newState.water.healthIndex = calculateNodeHealth('irrigation', newState.water);
+  }
+  else if (nodeType === 'storage') {
+    newState.storage.temp = getVal(data, ['temp', 't'], prev.storage.temp);
+    newState.storage.humidity = getVal(data, ['humidity', 'h'], prev.storage.humidity);
+    newState.storage.mq135 = getVal(data, ['mq135', 'aqi', 'gas'], prev.storage.mq135);
+    newState.storage.healthIndex = calculateNodeHealth('storage', newState.storage);
   }
 
-  if (target === 'soil') newState.soil.healthIndex = calculateNodeHealth('soil', newState.soil);
   return newState;
 };

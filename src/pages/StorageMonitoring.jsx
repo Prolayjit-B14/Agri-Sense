@@ -21,7 +21,7 @@ const THEME = {
   warning: { color: '#F59E0B', bg: '#FFFBEB', light: '#FEF3C7' },
   danger: { color: '#EF4444', bg: '#FEF2F2', light: '#FEE2E2' },
   offline: { color: '#94A3B8', bg: '#F8FAFC', light: '#F1F5F9' },
-  primary: '#8B5CF6',
+  primary: '#8B5CF6', // Royal Purple
   surface: '#FFFFFF',
   background: '#F8FAFC',
   text: '#0F172A',
@@ -91,7 +91,7 @@ const StorageMonitoring = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
         style={{
-          background: !isOnline ? 'linear-gradient(135deg, #94A3B8 0%, #64748B 100%)' : (storageScore > 75 ? 'linear-gradient(135deg, #7C3AED 0%, #8B5CF6 100%)' : 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'),
+          background: !isOnline ? 'linear-gradient(135deg, #94A3B8 0%, #64748B 100%)' : (storageScore > 75 ? 'linear-gradient(135deg, #5B21B6 0%, #8B5CF6 100%)' : 'linear-gradient(135deg, #7C3AED 0%, #F59E0B 100%)'),
           borderRadius: '32px', padding: '1.75rem', color: 'white',
           boxShadow: '0 20px 40px -10px rgba(0,0,0,0.15)',
           marginBottom: '1.5rem', position: 'relative', overflow: 'hidden'

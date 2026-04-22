@@ -53,7 +53,7 @@ const Sidebar = () => {
         {isSidebarOpen && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{ position: 'fixed', inset: 0, zIndex: 10001, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+            style={{ position: 'fixed', inset: 0, zIndex: 10001, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }}
             onClick={close}
           />
         )}
@@ -65,45 +65,60 @@ const Sidebar = () => {
         animate={{ x: isSidebarOpen ? 0 : '-100%' }}
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         style={{
-          position: 'fixed', top: 0, left: 0, bottom: 0, width: '280px', zIndex: 10002,
+          position: 'fixed', top: 0, left: 0, bottom: 0, width: '270px', zIndex: 10002,
           background: 'linear-gradient(165deg, #064E3B 0%, #022C22 100%)', display: 'flex', flexDirection: 'column',
-          boxShadow: '20px 0 60px rgba(0,0,0,0.3)'
+          justifyContent: 'space-between',
+          boxShadow: '20px 0 60px rgba(0,0,0,0.4)',
+          borderRight: '1px solid rgba(255,255,255,0.03)'
         }}
       >
-        {/* HEADER */}
+        {/* TOP SECTION: PROFILE (Tighter & Cleaner) */}
         <div style={{
-          padding: '24px 24px 16px',
+          padding: '24px 20px 20px',
           borderBottom: `1px solid ${COLORS.border}`,
           position: 'relative'
         }}>
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={close}
-            style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '10px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+            style={{ position: 'absolute', top: 14, right: 14, background: 'rgba(255,255,255,0.03)', border: 'none', borderRadius: '10px', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
           >
-            <X size={18} color="rgba(255,255,255,0.6)" />
+            <X size={16} color="rgba(255,255,255,0.3)" />
           </motion.button>
 
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${COLORS.border}` }}>
-              <UserIcon size={24} color="rgba(255,255,255,0.7)" strokeWidth={1.5} />
+            <div style={{ position: 'relative' }}>
+              <img 
+                src={user?.photo || 'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&q=80&w=200'} 
+                style={{ width: '48px', height: '48px', borderRadius: '14px', objectFit: 'cover', border: `1px solid ${COLORS.border}` }} 
+              />
+              <div style={{ position: 'absolute', bottom: -1, right: -1, width: '10px', height: '10px', borderRadius: '50%', background: COLORS.primary, border: '2px solid #064E3B' }} />
             </div>
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: '1rem', fontWeight: 600, color: '#FFFFFF', margin: 0, letterSpacing: '-0.01em' }}>
-                {user?.name || 'Guest User'}
+              <div style={{ fontSize: '1rem', fontWeight: 700, color: '#FFFFFF', margin: 0, letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {user?.name || 'Guest Farmer'}
               </div>
-              <div style={{ fontSize: '0.75rem', color: COLORS.textMuted, marginTop: '1px' }}>
-                Field A-1
+              <div style={{ fontSize: '0.68rem', color: COLORS.textMuted, marginTop: '1px', fontWeight: 600, opacity: 0.7, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {user?.location || 'Set farm location'}
               </div>
             </div>
           </div>
         </div>
 
-        {/* NAVIGATION GROUPS */}
-        <div style={{ padding: '16px 12px', overflowY: 'auto', flex: 1 }} className="no-scrollbar">
+        {/* MIDDLE SECTION: NAVIGATION (Tighter Spacing & Perfect Alignment) */}
+        <div style={{ padding: '16px 10px', overflowY: 'auto', flex: 1 }} className="no-scrollbar">
           {sidebarGroups.map((group, gi) => (
-            <div key={gi} style={{ marginBottom: '24px' }}>
-              <p style={{ fontSize: '0.65rem', fontWeight: 600, color: COLORS.textMuted, padding: '0 10px', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+            <div key={gi} style={{ marginBottom: '16px' }}>
+              <p style={{ 
+                fontSize: '0.62rem', 
+                fontWeight: 800, 
+                color: '#FFFFFF', 
+                opacity: 0.35, 
+                padding: '0 12px', 
+                marginBottom: '6px', 
+                textTransform: 'uppercase', 
+                letterSpacing: '0.08em' 
+              }}>
                 {group.title}
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
@@ -113,15 +128,19 @@ const Sidebar = () => {
                   return (
                     <NavLink key={li} to={link.path} onClick={close}
                       style={{
-                        display: 'flex', alignItems: 'center', gap: '12px',
-                        padding: '10px 12px', borderRadius: '12px',
+                        display: 'flex', alignItems: 'center', gap: '4px',
+                        padding: '9px 12px', borderRadius: '10px',
                         background: isActive ? COLORS.activeBg : 'transparent',
-                        color: isActive ? COLORS.primary : 'rgba(255,255,255,0.7)',
-                        textDecoration: 'none', fontWeight: isActive ? 600 : 500,
-                        fontSize: '0.9rem', transition: '0.2s ease-in-out'
+                        color: isActive ? COLORS.primary : 'rgba(255,255,255,0.75)',
+                        textDecoration: 'none', 
+                        fontWeight: isActive ? 700 : 600,
+                        fontSize: '0.88rem', 
+                        transition: '0.2s cubic-bezier(0.4, 0, 0.2, 1)'
                       }}
                     >
-                      <NavIcon size={18} strokeWidth={isActive ? 2 : 1.8} />
+                      <div style={{ width: '32px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        <NavIcon size={18} strokeWidth={isActive ? 2.5 : 1.8} />
+                      </div>
                       <span style={{ flex: 1 }}>{link.name}</span>
                     </NavLink>
                   );
@@ -131,10 +150,19 @@ const Sidebar = () => {
           ))}
         </div>
 
-        {/* VERSION FOOTER */}
-        <div style={{ padding: '16px', textAlign: 'center', opacity: 0.15 }}>
-          <div style={{ fontSize: '0.65rem', color: '#FFF', fontWeight: 600, letterSpacing: '0.05em' }}>
-            AGRISENSE V{farmInfo?.version || "2.8.0"}
+        {/* BOTTOM SECTION: VERSION (Clean & Subdued) */}
+        <div style={{ 
+          padding: '16px 20px', 
+          borderTop: `1px solid ${COLORS.border}`,
+          background: 'rgba(0,0,0,0.12)'
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '0.62rem', color: '#FFF', fontWeight: 700, letterSpacing: '0.06em', opacity: 0.15 }}>
+              PLATFORM ENGINE V{farmInfo?.version || "2.8.0"}
+            </div>
+            <div style={{ fontSize: '0.55rem', color: COLORS.primary, fontWeight: 800, marginTop: '2px', letterSpacing: '0.15em', textTransform: 'uppercase', opacity: 0.3 }}>
+              AgriSense Industrial
+            </div>
           </div>
         </div>
       </motion.div>

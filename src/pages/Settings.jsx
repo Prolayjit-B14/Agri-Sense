@@ -6,7 +6,7 @@ import {
   RefreshCw, Globe, Moon, Sun, 
   Info, Cpu, Terminal, CheckCircle2,
   ChevronRight, LogOut, Code, User,
-  Smartphone, Database, Palette
+  Smartphone, Database, Palette, Brain
 } from 'lucide-react';
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────
@@ -64,99 +64,103 @@ const SettingItem = ({ icon: Icon, label, value, type = 'text', onClick, enabled
 
 // ─── MAIN SCREEN ──────────────────────────────────────────────────────────
 
-const SettingsV4_0 = () => {
-  const { logout, isDarkMode, toggleTheme, farmInfo, updateBranding } = useApp();
+const Settings = () => {
+  const { logout, isDarkMode, toggleTheme, farmInfo, updateBranding, profileMeta, updateProfileMeta } = useApp();
 
   return (
-    <div style={{ padding: '1.25rem', background: COLORS.bg, minHeight: '100vh', paddingBottom: '100px' }}>
+    <div style={{ padding: '1.5rem', background: COLORS.bg, minHeight: '100vh', paddingBottom: '100px' }}>
       
       <header style={{ marginBottom: '2.5rem' }}>
-        <h2 style={{ fontSize: '1.75rem', fontWeight: 950, color: COLORS.text, margin: 0 }}>Settings</h2>
-        <p style={{ color: COLORS.subtext, fontSize: '0.85rem', fontWeight: 700, marginTop: '4px' }}>System Configuration & Meta</p>
+        <h2 style={{ fontSize: '1.75rem', fontWeight: 950, color: COLORS.text, margin: 0, letterSpacing: '-0.02em' }}>Platform Config</h2>
+        <p style={{ color: COLORS.subtext, fontSize: '0.8rem', fontWeight: 700, marginTop: '4px' }}>Industrial System v{farmInfo?.version || '2.8.0'}</p>
       </header>
 
-      {/* 1. BRANDING HUB */}
-      <SettingSection title="App Identity" icon={Palette}>
-        <div style={{ padding: '1.25rem' }}>
-           <div style={{ display: 'grid', gap: '15px' }}>
+      {/* 1. CORE BRANDING */}
+      <SettingSection title="Engine Identity" icon={Palette}>
+        <div style={{ padding: '16px' }}>
+           <div style={{ display: 'grid', gap: '16px' }}>
               <div>
-                 <p style={{ fontSize: '0.6rem', fontWeight: 950, color: COLORS.subtext, marginBottom: '6px', textTransform: 'uppercase' }}>Master Project Name</p>
+                 <p style={{ fontSize: '0.55rem', fontWeight: 900, color: COLORS.subtext, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Project Codename</p>
                  <input 
                     type="text" value={farmInfo?.projectName || ''} 
                     onChange={(e) => updateBranding({ projectName: e.target.value })}
-                    style={{ width: '100%', padding: '12px', borderRadius: '14px', border: `1px solid ${COLORS.border}`, background: '#F8FAFC', fontWeight: 800, color: COLORS.text, fontSize: '0.9rem', outline: 'none' }} 
+                    style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: `1px solid ${COLORS.border}`, background: '#F8FAFC', fontWeight: 700, color: COLORS.text, fontSize: '0.9rem', outline: 'none' }} 
                  />
               </div>
               <div>
-                 <p style={{ fontSize: '0.6rem', fontWeight: 950, color: COLORS.subtext, marginBottom: '6px', textTransform: 'uppercase' }}>Farm / Client Identifier</p>
+                 <p style={{ fontSize: '0.55rem', fontWeight: 900, color: COLORS.subtext, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Client Identifier</p>
                  <input 
                     type="text" value={farmInfo?.name || ''} 
                     onChange={(e) => updateBranding({ name: e.target.value })}
-                    style={{ width: '100%', padding: '12px', borderRadius: '14px', border: `1px solid ${COLORS.border}`, background: '#F8FAFC', fontWeight: 800, color: COLORS.text, fontSize: '0.9rem', outline: 'none' }} 
+                    style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: `1px solid ${COLORS.border}`, background: '#F8FAFC', fontWeight: 700, color: COLORS.text, fontSize: '0.9rem', outline: 'none' }} 
                  />
-              </div>
-              <div style={{ padding: '10px', background: `${COLORS.primary}08`, borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                 <Shield size={14} color={COLORS.primary} />
-                 <span style={{ fontSize: '0.65rem', fontWeight: 800, color: COLORS.primary }}>Identity changes are persistent and localized.</span>
               </div>
            </div>
         </div>
       </SettingSection>
 
-      {/* 2. PREFERENCES */}
-      <SettingSection title="System Preferences" icon={SettingsIcon}>
+      {/* 2. INTERFACE & AI */}
+      <SettingSection title="Interface & Intelligence" icon={Cpu}>
         <SettingItem icon={isDarkMode ? Moon : Sun} label="Interstellar Dark Mode" type="toggle" enabled={isDarkMode} onClick={toggleTheme} />
+        
+        <div style={{ padding: '14px 20px', borderBottom: `1px solid ${COLORS.border}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Brain size={16} color="#8B5CF6" />
+            </div>
+            <div>
+              <h4 style={{ fontSize: '0.85rem', fontWeight: 800, margin: 0 }}>AI Sensory Control</h4>
+              <p style={{ fontSize: '0.65rem', color: COLORS.subtext, fontWeight: 600, margin: 0 }}>Current Sensitivity: <span style={{ color: COLORS.primary }}>{profileMeta.aiSensitivity}</span></p>
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px', background: '#F1F5F9', padding: '3px', borderRadius: '10px' }}>
+            {['Low', 'Balanced', 'High'].map(lv => (
+              <button key={lv} onClick={() => updateProfileMeta({ aiSensitivity: lv })} style={{ padding: '8px', borderRadius: '8px', border: 'none', background: profileMeta.aiSensitivity === lv ? 'white' : 'transparent', color: profileMeta.aiSensitivity === lv ? COLORS.primary : COLORS.subtext, fontSize: '0.7rem', fontWeight: 800, cursor: 'pointer', transition: '0.2s' }}>{lv}</button>
+            ))}
+          </div>
+        </div>
+
         <SettingItem icon={Bell} label="Push Notifications" type="toggle" enabled={true} />
-        <SettingItem icon={Globe} label="Localization" value="Metric (SI)" onClick={() => {}} />
-        <SettingItem icon={RefreshCw} label="Gateway Sync Rate" value="1.5s" onClick={() => {}} />
+        <SettingItem icon={RefreshCw} label="Telemetry Sync Rate" value="1.5s" />
       </SettingSection>
 
-      {/* 3. CONNECTIVITY */}
+      {/* 3. SYSTEM PROTOCOLS */}
       <SettingSection title="Protocol Matrix" icon={Terminal}>
-        <SettingItem icon={Database} label="MQTT Architecture" value="v3.1.1 (Secure)" />
-        <SettingItem icon={Smartphone} label="Capacitor Engine" value="v8.0.2" />
-        <SettingItem icon={Cpu} label="Hardware Bridge" value="ESP32-S3" />
+        <SettingItem icon={Database} label="MQTT Gateway" value="Secure (TLS)" />
+        <SettingItem icon={Globe} label="Region" value="Global/India" />
+        <SettingItem icon={Info} label="Build Environment" value="Production" />
       </SettingSection>
 
-      {/* 4. DEVELOPER CREDIT */}
-      <motion.div 
-        whileTap={{ scale: 0.98 }}
-        style={{ 
-          background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)', borderRadius: '32px', 
-          color: 'white', marginTop: '2rem', padding: '1.75rem',
-          boxShadow: '0 20px 40px -12px rgba(15, 23, 42, 0.3)', position: 'relative', overflow: 'hidden'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '1.5rem' }}>
-          <div style={{ width: '50px', height: '50px', borderRadius: '16px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Code size={26} color={COLORS.primary} />
+      {/* 4. INDUSTRIAL FOOTER */}
+      <div style={{ 
+        background: '#0F172A', borderRadius: '28px', padding: '24px', 
+        color: 'white', marginTop: '2rem', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.2)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Code size={24} color={COLORS.primary} />
           </div>
           <div>
-            <p style={{ fontSize: '0.65rem', fontWeight: 900, opacity: 0.6, textTransform: 'uppercase', margin: 0, letterSpacing: '0.05em' }}>Engineering Lead</p>
-            <h4 style={{ fontSize: '1.3rem', fontWeight: 950, margin: 0 }}>Prolayjit Biswas</h4>
+            <p style={{ fontSize: '0.55rem', fontWeight: 800, opacity: 0.5, textTransform: 'uppercase', margin: 0, letterSpacing: '0.1em' }}>Platform Architect</p>
+            <h4 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0 }}>Prolayjit Biswas</h4>
           </div>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-          <span style={{ fontSize: '0.75rem', fontWeight: 800, opacity: 0.8 }}>Relase Version</span>
-          <span style={{ fontSize: '0.8rem', fontWeight: 950, color: COLORS.primary }}>v{farmInfo?.version || '2.8.0'} ULTRA</span>
+        <div style={{ paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: '0.75rem', fontWeight: 600, opacity: 0.6 }}>Engine Version</span>
+          <span style={{ fontSize: '0.85rem', fontWeight: 800, color: COLORS.primary }}>v{farmInfo?.version || '2.8.0'}</span>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
-          <span style={{ fontSize: '0.75rem', fontWeight: 800, opacity: 0.8 }}>System Integrity</span>
-          <span style={{ fontSize: '0.8rem', fontWeight: 950 }}>VERIFIED</span>
-        </div>
-      </motion.div>
+      </div>
 
-      {/* LOGOUT */}
       <motion.button 
-        whileTap={{ scale: 0.95 }}
+        whileTap={{ scale: 0.96 }}
         onClick={logout}
-        style={{ width: '100%', height: '58px', background: '#FEE2E2', color: '#DC2626', border: 'none', borderRadius: '20px', fontWeight: 950, fontSize: '1rem', marginTop: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+        style={{ width: '100%', padding: '16px', background: '#FEE2E2', color: '#DC2626', border: 'none', borderRadius: '16px', fontWeight: 800, fontSize: '0.9rem', marginTop: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' }}
       >
-        <LogOut size={20} /> Terminate Session
+        <LogOut size={18} /> TERMINATE SESSION
       </motion.button>
 
     </div>
   );
 };
 
-export default SettingsV4_0;
+export default Settings;

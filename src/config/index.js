@@ -13,7 +13,7 @@ export const MASTER_CONFIG = {
   FARM_NAME: "MAKAUT, WB",
   TAGLINE: "For Better Farming",
   FOOTER_CREDIT: "by Prolayjit Biswas",
-  VERSION: "2.8.0",
+  VERSION: "2.9.0",
   
   // 🔐 AUTHORIZED INVESTIGATORS
   AUTHORIZED_USERS: [

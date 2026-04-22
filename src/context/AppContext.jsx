@@ -13,8 +13,9 @@ import {
   INITIAL_SYSTEM_HEALTH 
 } from '../models/sensorModel';
 import { 
-  getAIv2Recommendations, 
+  getAIv2Recommendations,
   calculateNodeHealth, 
+  calculateOverallHealth,
   ACTUATORS 
 } from '../utils/healthEngine';
 import { processMqttMessage } from '../controllers/sensorController';
@@ -27,7 +28,15 @@ export const AppProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     try {
       const saved = localStorage.getItem('agrisense_user');
-      return saved ? JSON.parse(saved) : null;
+      const defaultUser = { 
+        name: 'Guest Farmer', 
+        email: 'guest@agrisense.io', 
+        phone: '+91 98765 43210',
+        location: 'Kalyani Sector A-12 • Field Alpha',
+        photo: 'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&q=80&w=200',
+        isGuest: true
+      };
+      return saved ? JSON.parse(saved) : defaultUser;
     } catch (e) {
       console.error("Auth Persistence Failure:", e);
       return null;
@@ -98,12 +107,23 @@ export const AppProvider = ({ children }) => {
 
   const updateProfileMeta = (newData) => setProfileMeta(prev => ({ ...prev, ...newData }));
 
+  const updateUser = (newUserData) => {
+    const updated = { ...user, ...newUserData, isGuest: false };
+    setUser(updated);
+    localStorage.setItem('agrisense_user', JSON.stringify(updated));
+  };
+
   const login = (id, pass) => {
     const matchedUser = MASTER_CONFIG.AUTHORIZED_USERS.find(
       u => u.email.toLowerCase() === id?.trim().toLowerCase() && u.password === pass?.trim()
     );
     if (matchedUser || id === 'guest') {
-      const userData = matchedUser || { email: 'guest', name: 'Guest Farmer' };
+      const userData = matchedUser || { 
+        email: 'guest@agrisense.io', 
+        name: 'Guest Farmer',
+        location: 'Kalyani Sector A-12',
+        isGuest: true
+      };
       setUser(userData);
       localStorage.setItem('agrisense_user', JSON.stringify(userData));
       return true;
@@ -112,8 +132,13 @@ export const AppProvider = ({ children }) => {
   };
 
   const logout = () => { 
-    setUser(null); 
-    localStorage.removeItem('agrisense_user'); 
+    const defaultUser = { 
+      name: 'Guest Farmer', 
+      email: 'guest@agrisense.io', 
+      isGuest: true 
+    };
+    setUser(defaultUser); 
+    localStorage.setItem('agrisense_user', JSON.stringify(defaultUser));
   };
 
   const toggleActuator = (key) => {
@@ -144,14 +169,9 @@ export const AppProvider = ({ children }) => {
       const iIdx = calculateNodeHealth('irrigation', sensorData.water);
 
       setSystemHealth({ soil: sIdx, weather: wIdx, storage: stIdx, water: iIdx });
-
-      if (sIdx === null && wIdx === null && stIdx === null && iIdx === null) {
-        setFarmHealthScore(null);
-      } else {
-        const scores = [sIdx, wIdx, stIdx, iIdx].filter(s => s !== null);
-        const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-        setFarmHealthScore(Math.round(avg));
-      }
+      
+      const overallScore = calculateOverallHealth({ soil: sIdx, weather: wIdx, storage: stIdx, water: iIdx });
+      setFarmHealthScore(overallScore);
     }
   }, [sensorData]);
 
@@ -306,7 +326,7 @@ export const AppProvider = ({ children }) => {
   // ─── EXPORT RENDER ───────────────────────────────────────────────────────
   return (
     <AppContext.Provider value={{
-      user, login, logout, farmInfo, updateBranding,
+      user, login, logout, updateUser, farmInfo, updateBranding,
       isDarkMode, toggleTheme, sensorData, apiWeather, apiForecast, recommendations, sensorHistory,
       actuators, toggleActuator, isSidebarOpen, setIsSidebarOpen, ACTUATORS,
       farmHealthScore, systemHealth, connectivityStatus, cloudSyncStatus, profileMeta, updateProfileMeta,

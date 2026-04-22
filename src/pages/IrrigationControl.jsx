@@ -19,7 +19,7 @@ import { useApp } from '../context/AppContext';
 const COLORS = {
   bg: '#F8FAFC',
   card: '#FFFFFF',
-  primary: '#3B82F6', 
+  primary: '#0EA5E9', // Ocean Blue
   success: '#10B981',
   warning: '#F59E0B',
   critical: '#EF4444',
@@ -80,7 +80,7 @@ const IrrigationControl = () => {
        <motion.div
          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
          style={{
-           background: stats.level === null ? 'linear-gradient(135deg, #94A3B8 0%, #64748B 100%)' : (stats.level > 30 ? 'linear-gradient(135deg, #1D4ED8 0%, #3B82F6 100%)' : 'linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)'),
+           background: stats.level === null ? 'linear-gradient(135deg, #94A3B8 0%, #64748B 100%)' : (stats.level > 30 ? 'linear-gradient(135deg, #0284C7 0%, #0EA5E9 100%)' : 'linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)'),
            borderRadius: '32px', padding: '1.75rem', color: 'white',
            boxShadow: '0 20px 40px -10px rgba(0,0,0,0.15)',
            marginBottom: '1.5rem', position: 'relative', overflow: 'hidden'

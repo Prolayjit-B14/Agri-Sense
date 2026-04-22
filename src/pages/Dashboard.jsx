@@ -60,10 +60,10 @@ const HealthOverview = ({ score, systemHealth }) => {
   const healthColor = getHealthColor(score);
 
   const systems = [
-    { label: 'Soil', score: systemHealth.soil },
-    { label: 'Irrigation', score: systemHealth.water },
-    { label: 'Weather', score: systemHealth.weather },
-    { label: 'Storage', score: systemHealth.storage },
+    { label: 'Soil', score: systemHealth.soil, color: '#10B981' },
+    { label: 'Irrigation', score: systemHealth.water, color: '#0EA5E9' },
+    { label: 'Weather', score: systemHealth.weather, color: '#14B8A6' },
+    { label: 'Storage', score: systemHealth.storage, color: '#8B5CF6' },
   ];
 
   return (
@@ -100,7 +100,10 @@ const HealthOverview = ({ score, systemHealth }) => {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
             {systems.map((s, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: getHealthColor(s.score) }} />
+                <div style={{ 
+                  width: '6px', height: '6px', borderRadius: '50%', 
+                  background: s.score !== null ? s.color : '#CBD5E1' 
+                }} />
                 <span style={{ fontSize: '0.75rem', fontWeight: 600, color: COLORS.textMuted }}>{s.label}</span>
               </div>
             ))}
@@ -120,9 +123,17 @@ const HealthOverview = ({ score, systemHealth }) => {
 /**
  * SensorCard: Navigational card for major monitoring nodes
  */
-const SensorCard = ({ title, value, icon: Icon, color, status, score, onClick }) => {
+const SensorCard = ({ title, value, icon: Icon, color, status, score, onClick, nodeType }) => {
   const isConnected = status === 'CONNECTED';
   const hColor = getHealthColor(score);
+
+  // Fail-safe color mapping to ensure they are NEVER all the same green
+  const themeColor = isConnected ? {
+    soil: '#10B981',      // Emerald Green
+    irrigation: '#0EA5E9', // Sky Blue
+    weather: '#14B8A6',    // Teal
+    storage: '#8B5CF6',    // Purple
+  }[nodeType] || color : '#CBD5E1';
 
   return (
     <motion.div
@@ -135,13 +146,23 @@ const SensorCard = ({ title, value, icon: Icon, color, status, score, onClick })
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ width: '46px', height: '46px', borderRadius: '14px', background: isConnected ? `${color}10` : '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Icon size={22} color={isConnected ? color : '#CBD5E1'} strokeWidth={2} />
+        <div style={{ 
+          width: '46px', height: '46px', borderRadius: '14px', 
+          background: isConnected ? `${themeColor}15` : '#F1F5F9', 
+          display: 'flex', alignItems: 'center', justifyContent: 'center' 
+        }}>
+          <Icon size={22} color={themeColor} strokeWidth={2.5} />
         </div>
       </div>
       <div>
         <div style={{ fontSize: '0.75rem', color: COLORS.textMuted, fontWeight: 500 }}>{title}</div>
-        <div style={{ fontSize: '1.45rem', fontWeight: 700, color: value === '---' ? '#CBD5E1' : hColor, marginTop: '2px', letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>{value}</div>
+        <div style={{ 
+          fontSize: '1.45rem', fontWeight: 800, 
+          color: value === '---' ? '#CBD5E1' : hColor, 
+          marginTop: '2px', letterSpacing: '-0.02em', whiteSpace: 'nowrap' 
+        }}>
+          {value}
+        </div>
       </div>
     </motion.div>
   );
@@ -185,19 +206,19 @@ const Dashboard = () => {
       <section style={{ marginBottom: '1.8rem', padding: '0 4px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h1 style={{ fontSize: '1rem', fontWeight: 500, color: COLORS.textMuted, margin: 0 }}>
+            <h1 style={{ fontSize: '0.9rem', fontWeight: 600, color: COLORS.textMuted, margin: 0 }}>
               {getGreeting()}
             </h1>
-            <h2 style={{ fontSize: '2.2rem', fontWeight: 700, color: COLORS.textMain, margin: '2px 0 0 0', letterSpacing: '-0.03em' }}>
-              {user?.name || 'Farmer'}
+            <h2 style={{ fontSize: '2.2rem', fontWeight: 800, color: COLORS.textMain, margin: '1px 0 0 0', letterSpacing: '-0.02em' }}>
+              {user?.name || 'Guest Farmer'}
             </h2>
           </div>
           <StatusBadge status={mqttStatus} />
         </div>
 
-        <div style={{ marginTop: '14px', display: 'flex', alignItems: 'center', gap: '6px', color: COLORS.textMuted, fontSize: '0.85rem' }}>
+        <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '6px', color: COLORS.textMuted, fontSize: '0.85rem', fontWeight: 600 }}>
           <MapPin size={15} color={COLORS.primary} />
-          <span>Kalyani Sector A-12 • Field Alpha</span>
+          <span>{user?.location || 'Set farm location'}</span>
         </div>
       </section>
 
@@ -207,23 +228,23 @@ const Dashboard = () => {
       {/* Core Monitoring Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.1rem', marginBottom: '1.8rem' }}>
         <SensorCard
-          title="Soil Health"
+          title="Soil Health" nodeType="soil"
           value={systemHealth.soil !== null ? `${systemHealth.soil} %` : '---'}
-          icon={Sprout} color={COLORS.primary}
+          icon={Sprout} color="#10B981"
           status={sensorData?.soil?.moisture !== null ? "CONNECTED" : "OFFLINE"}
           score={systemHealth.soil}
           onClick={() => navigate('/soil-monitoring')}
         />
         <SensorCard
-          title="Irrigation Health"
+          title="Irrigation Health" nodeType="irrigation"
           value={systemHealth.water !== null ? `${systemHealth.water} %` : '---'}
-          icon={Droplets} color={COLORS.secondary}
-          status={sensorData?.water?.level !== null ? "CONNECTED" : "OFFLINE"}
+          icon={Droplets} color="#0EA5E9"
+          status={sensorData?.water?.pumpActive !== undefined || sensorData?.water?.level !== null ? "CONNECTED" : "OFFLINE"}
           score={systemHealth.water}
           onClick={() => navigate('/irrigation')}
         />
         <SensorCard
-          title="Weather Health"
+          title="Weather Health" nodeType="weather"
           value={systemHealth.weather !== null ? `${systemHealth.weather} %` : '---'}
           icon={CloudRain} color="#14B8A6"
           status={sensorData?.weather?.temp !== null ? "CONNECTED" : "OFFLINE"}
@@ -231,7 +252,7 @@ const Dashboard = () => {
           onClick={() => navigate('/weather')}
         />
         <SensorCard
-          title="Storage Health"
+          title="Storage Health" nodeType="storage"
           value={systemHealth.storage !== null ? `${systemHealth.storage} %` : '---'}
           icon={Archive} color="#8B5CF6"
           status={sensorData?.storage?.temp !== null ? "CONNECTED" : "OFFLINE"}

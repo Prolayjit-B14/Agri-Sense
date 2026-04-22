@@ -19,7 +19,7 @@ import { useApp } from '../context/AppContext';
 
 // ─── DESIGN TOKENS ─────────────────────────────────────────────────────────
 const COLORS = {
-  primary: '#10B981', 
+  primary: '#14B8A6', // Teal Cyan
   secondary: '#3B82F6',
   warning: '#F59E0B',
   critical: '#EF4444',
@@ -104,7 +104,7 @@ const WeatherMonitoring = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
         style={{
-          background: !isOnline ? 'linear-gradient(135deg, #94A3B8 0%, #64748B 100%)' : (weatherScore > 75 ? 'linear-gradient(135deg, #0284C7 0%, #0EA5E9 100%)' : 'linear-gradient(135deg, #0D9488 0%, #14B8A6 100%)'),
+          background: !isOnline ? 'linear-gradient(135deg, #94A3B8 0%, #64748B 100%)' : (weatherScore > 75 ? 'linear-gradient(135deg, #0F766E 0%, #14B8A6 100%)' : 'linear-gradient(135deg, #0D9488 0%, #10B981 100%)'),
           borderRadius: '32px', padding: '1.75rem', color: 'white',
           boxShadow: '0 20px 40px -10px rgba(0,0,0,0.15)',
           marginBottom: '1.5rem', position: 'relative', overflow: 'hidden'
