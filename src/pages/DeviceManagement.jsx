@@ -1,244 +1,250 @@
 /**
- * AgriSense v3.30 Industrial IoT Management Suite
- * High-Density Device Diagnostics, Network Telemetry, and Smart Insight Engine.
+ * AgriSense v3.65 Industrial IoT Device Management
+ * Real-time Hero Summary and 2x2 Diagnostic Grid.
  */
 
-import React, { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { 
-  ShieldCheck, AlertCircle, Signal, Activity, Cpu, 
-  Wind, Droplets, Warehouse, RefreshCw, Zap, Settings, 
-  Search, Terminal, Database, Clock, Wifi, HardDrive
+  Server, Cpu, Wifi, Activity, 
+  RefreshCcw, Search, Settings, AlertTriangle, 
+  CheckCircle2, AlertCircle, SignalHigh, SignalLow, 
+  SignalMedium, Clock, HardDrive, Droplets, CloudRain,
+  Sprout, Thermometer, Zap
 } from 'lucide-react';
+import { useApp } from '../context/AppContext';
 
-// ─── DESIGN TOKENS ─────────────────────────────────────────────────────────
+// ─── DESIGN TOKENS ────────────────────────────────────────────────────────
 const COLORS = {
-  primary: '#10B981', secondary: '#3B82F6', warning: '#F59E0B', danger: '#EF4444',
-  text: '#0F172A', subtext: '#64748B', bg: '#F8FAFC', border: '#E2E8F0',
-  card: '#FFFFFF', surface: '#F1F5F9',
-  health: { optimal: '#10B981', stable: '#3B82F6', critical: '#EF4444' }
+  active: '#10B981', partial: '#F59E0B', offline: '#EF4444', 
+  bg: '#F8FAFC', card: '#FFFFFF', border: '#E2E8F0', text: '#0F172A', subtext: '#64748B'
 };
 
-// ─── MOCK ENGINE (Diagnostic Data) ────────────────────────────────────────
-const INITIAL_DEVICES = [
-  {
-    id: 'node-001', name: 'Soil Node Alpha', type: 'Soil Monitor', status: 'optimal',
-    rssi: -55, latency: 12, uptime: '14d 2h', packetLoss: 0,
-    sensors: [
-      { name: 'Moisture', active: true }, { name: 'pH', active: true }, 
-      { name: 'N-P-K', active: true }, { name: 'Temp', active: true }
-    ]
-  },
-  {
-    id: 'node-002', name: 'Weather Station 1', type: 'Climate Node', status: 'degraded',
-    rssi: -78, latency: 45, uptime: '3d 18h', packetLoss: 2.4,
-    reason: 'Anemometer not responding',
-    sensors: [
-      { name: 'Wind', active: false }, { name: 'Humidity', active: true }, 
-      { name: 'Pressure', active: true }, { name: 'UV', active: true }
-    ]
-  },
-  {
-    id: 'pump-001', name: 'Irrigation Controller', type: 'Flow System', status: 'offline',
-    rssi: 0, latency: 0, uptime: '0h', packetLoss: 100,
-    reason: 'Power failure • Last seen 12m ago',
-    sensors: [
-      { name: 'Flow', active: false }, { name: 'Pressure', active: false }, 
-      { name: 'Valve', active: false }
-    ]
-  },
-  {
-    id: 'store-001', name: 'Storage Unit B', type: 'Environment Control', status: 'optimal',
-    rssi: -42, latency: 8, uptime: '45d 6h', packetLoss: 0,
-    sensors: [
-      { name: 'Ethylene', active: true }, { name: 'CO2', active: true }, 
-      { name: 'Temp', active: true }
-    ]
-  }
-];
+// ─── COMPONENTS ───────────────────────────────────────────────────────────
 
-const DeviceManagement = () => {
-  const [devices] = useState(INITIAL_DEVICES);
-  const [activeTab, setActiveTab] = useState('all');
+const NodeCard = ({ device }) => {
+  const { status, metrics, sensors, issues, health_score, node_type, device_id } = device;
+  
+  const statusColor = status === 'ACTIVE' ? COLORS.active : (status === 'PARTIAL' ? COLORS.partial : COLORS.offline);
+  const iconMap = { soil: Sprout, weather: CloudRain, storage: HardDrive, water: Droplets, solar: Zap };
 
-  const systemHealth = useMemo(() => {
-    const offline = devices.filter(d => d.status === 'offline').length;
-    const degraded = devices.filter(d => d.status === 'degraded').length;
-    const total = devices.length;
-    const score = Math.round(((total - (offline + degraded * 0.5)) / total) * 100);
-    return { score, offline, degraded, status: score > 90 ? 'Optimal' : score > 60 ? 'Stable' : 'Critical' };
-  }, [devices]);
+  const NodeIcon = iconMap[node_type] || Cpu;
 
-  const insights = useMemo(() => {
-    const logs = [];
-    if (systemHealth.offline > 0) logs.push(`${systemHealth.offline} devices offline detected`);
-    devices.forEach(d => {
-      if (d.status === 'degraded') logs.push(`${d.name}: ${d.reason}`);
-    });
-    return logs;
-  }, [devices, systemHealth]);
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'optimal': return COLORS.health.optimal;
-      case 'degraded': return COLORS.warning;
-      case 'offline': return COLORS.danger;
-      default: return COLORS.subtext;
-    }
+  const getSignalIcon = (rssi) => {
+    if (rssi > -60) return <SignalHigh size={14} color={COLORS.active} />;
+    if (rssi > -80) return <SignalMedium size={14} color={COLORS.partial} />;
+    return <SignalLow size={14} color={COLORS.offline} />;
   };
 
-  const SignalBars = ({ rssi }) => {
-    const bars = rssi > -60 ? 4 : rssi > -75 ? 3 : rssi > -90 ? 2 : rssi === 0 ? 0 : 1;
-    return (
-      <div style={{ display: 'flex', gap: '2px', alignItems: 'flex-end', height: '10px' }}>
-        {[1, 2, 3, 4].map(b => (
-          <div key={b} style={{ width: '3px', height: `${b * 25}%`, background: b <= bars ? COLORS.primary : COLORS.border, borderRadius: '1px' }} />
-        ))}
-      </div>
-    );
+  const getStatusDot = (sStatus) => {
+    if (sStatus === 'ACTIVE') return '#10B981';
+    if (sStatus === 'STALE') return '#F59E0B';
+    if (sStatus === 'ERROR') return '#EF4444';
+    return '#94A3B8';
   };
 
   return (
-    <div style={{ background: COLORS.bg, minHeight: '100vh', padding: '1rem', fontFamily: "'Outfit', sans-serif", color: COLORS.text }}>
-      
-      {/* ─── SYSTEM OVERVIEW ─── */}
-      <section style={{ background: 'white', borderRadius: '24px', padding: '1.5rem', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', border: `1px solid ${COLORS.border}`, marginBottom: '1rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-               <ShieldCheck size={20} color={systemHealth.score > 60 ? COLORS.primary : COLORS.danger} />
-               <span style={{ fontSize: '0.9rem', fontWeight: 900 }}>System Integrity</span>
-            </div>
-            <h2 style={{ fontSize: '2.2rem', fontWeight: 950, margin: 0, color: getStatusColor(systemHealth.status.toLowerCase()) }}>{systemHealth.score}%</h2>
-            <p style={{ fontSize: '0.75rem', fontWeight: 800, color: COLORS.subtext, marginTop: '4px' }}>
-              {systemHealth.status} • {systemHealth.offline} Offline • {systemHealth.degraded} Degraded
-            </p>
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+      style={{ 
+        background: 'white', borderRadius: '24px', padding: '1.5rem', 
+        border: `1px solid ${COLORS.border}`, boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
+        display: 'flex', flexDirection: 'column', gap: '1.25rem'
+      }}
+    >
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ padding: '10px', borderRadius: '12px', background: `${statusColor}10` }}>
+            <NodeIcon size={20} color={statusColor} />
           </div>
-          <button style={{ padding: '10px 20px', borderRadius: '12px', background: `${COLORS.primary}10`, border: `1.5px solid ${COLORS.primary}`, color: COLORS.primary, fontSize: '0.8rem', fontWeight: 900, cursor: 'pointer' }}>
-            Run Diagnostics
-          </button>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 950, color: COLORS.text, textTransform: 'capitalize' }}>{node_type} Node</h3>
+            <p style={{ margin: 0, fontSize: '0.65rem', fontWeight: 800, color: COLORS.subtext }}>ID: {device_id}</p>
+          </div>
         </div>
-      </section>
+        <div style={{ padding: '6px 12px', borderRadius: '8px', background: `${statusColor}15`, color: statusColor, fontSize: '0.65rem', fontWeight: 950, letterSpacing: '0.05em' }}>
+          {status}
+        </div>
+      </div>
 
-      {/* ─── SMART INSIGHTS ─── */}
-      <AnimatePresence>
-        {insights.length > 0 && (
-          <motion.section initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ background: '#FFF7ED', borderRadius: '18px', padding: '1rem', border: '1px solid #FED7AA', marginBottom: '1.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-              <Activity size={16} color="#C2410C" />
-              <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#9A3412', textTransform: 'uppercase' }}>System Insights</span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {insights.map((msg, i) => (
-                <div key={i} style={{ fontSize: '0.75rem', color: '#9A3412', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#C2410C' }} /> {msg}
-                </div>
-              ))}
-            </div>
-          </motion.section>
-        )}
-      </AnimatePresence>
-
-      {/* ─── DEVICE GRID ─── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' }}>
-        {devices.map((device) => (
-          <motion.div key={device.id} layout style={{ background: 'white', borderRadius: '24px', padding: '1.2rem', border: `1px solid ${device.status === 'offline' ? COLORS.danger + '30' : COLORS.border}`, boxShadow: '0 2px 10px rgba(0,0,0,0.02)', position: 'relative' }}>
-            
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                <div style={{ width: '42px', height: '42px', borderRadius: '14px', background: COLORS.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {device.type.includes('Soil') ? <Database size={22} color={COLORS.primary} /> : 
-                   device.type.includes('Climate') ? <Wind size={22} color={COLORS.secondary} /> :
-                   device.type.includes('Flow') ? <Droplets size={22} color={COLORS.warning} /> :
-                   <Warehouse size={22} color={COLORS.subtext} />}
-                </div>
-                <div>
-                  <h3 style={{ fontSize: '1rem', fontWeight: 950, margin: 0 }}>{device.name}</h3>
-                  <p style={{ fontSize: '0.65rem', fontWeight: 800, color: COLORS.subtext, margin: 0 }}>{device.type.toUpperCase()}</p>
-                </div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', justifyContent: 'flex-end' }}>
-                   <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: getStatusColor(device.status) }} />
-                   <span style={{ fontSize: '0.65rem', fontWeight: 900, color: getStatusColor(device.status) }}>{device.status.toUpperCase()}</span>
-                </div>
-                {device.reason && <p style={{ fontSize: '0.6rem', color: COLORS.danger, fontWeight: 700, margin: '2px 0 0 0' }}>{device.reason}</p>}
-              </div>
-            </div>
-
-            {/* Sensors */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '1rem' }}>
-              {device.sensors.map((s, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '4px 10px', background: COLORS.bg, borderRadius: '8px', border: `1px solid ${COLORS.border}` }}>
-                  <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: s.active ? COLORS.primary : COLORS.subtext }} />
-                  <span style={{ fontSize: '0.6rem', fontWeight: 900, color: s.active ? COLORS.text : COLORS.subtext }}>{s.name}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Network Metrics */}
-            {device.status !== 'offline' && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', background: COLORS.bg, padding: '0.8rem', borderRadius: '16px', marginBottom: '1.2rem' }}>
-                <div style={{ textAlign: 'center' }}>
-                  <p style={{ fontSize: '0.55rem', fontWeight: 800, color: COLORS.subtext, marginBottom: '4px' }}>RSSI</p>
-                  <div style={{ display: 'flex', justifyContent: 'center' }}><SignalBars rssi={device.rssi} /></div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <p style={{ fontSize: '0.55rem', fontWeight: 800, color: COLORS.subtext, marginBottom: '4px' }}>LATENCY</p>
-                  <p style={{ fontSize: '0.7rem', fontWeight: 950, color: device.latency > 40 ? COLORS.warning : COLORS.primary }}>{device.latency}ms</p>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <p style={{ fontSize: '0.55rem', fontWeight: 800, color: COLORS.subtext, marginBottom: '4px' }}>UPTIME</p>
-                  <p style={{ fontSize: '0.7rem', fontWeight: 950 }}>{device.uptime}</p>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <p style={{ fontSize: '0.55rem', fontWeight: 800, color: COLORS.subtext, marginBottom: '4px' }}>LOSS</p>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
-                    {device.packetLoss > 0 && <AlertCircle size={10} color={COLORS.danger} />}
-                    <p style={{ fontSize: '0.7rem', fontWeight: 950, color: device.packetLoss > 0 ? COLORS.danger : COLORS.primary }}>{device.packetLoss}%</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Actions */}
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button style={{ flex: 1, height: '42px', borderRadius: '12px', border: `1.5px solid ${COLORS.border}`, background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.2s' }}>
-                <RefreshCw size={14} color={COLORS.subtext} />
-                <span style={{ fontSize: '0.75rem', fontWeight: 900, color: COLORS.subtext }}>Restart</span>
-              </button>
-              <button style={{ flex: 1, height: '42px', borderRadius: '12px', border: `1.5px solid ${COLORS.border}`, background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' }}>
-                <Activity size={14} color={COLORS.subtext} />
-                <span style={{ fontSize: '0.75rem', fontWeight: 900, color: COLORS.subtext }}>Ping</span>
-              </button>
-              <button style={{ width: '42px', height: '42px', borderRadius: '12px', border: `1.5px solid ${COLORS.border}`, background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                <Settings size={16} color={COLORS.subtext} />
-              </button>
-            </div>
-
-            {device.status === 'offline' && (
-              <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(1px)', borderRadius: '24px', zIndex: 1, display: 'flex', alignItems: 'flex-end', padding: '1rem', pointerEvents: 'none' }}>
-                <div style={{ background: '#FEF2F2', padding: '6px 12px', borderRadius: '10px', border: '1px solid #FECACA', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Wifi size={12} color={COLORS.danger} />
-                  <span style={{ fontSize: '0.65rem', fontWeight: 800, color: COLORS.danger }}>Disconnected • Sync failed</span>
-                </div>
-              </div>
-            )}
-          </motion.div>
+      {/* Sensor Row (Strict Single Line) */}
+      <div style={{ 
+        display: 'flex', gap: '8px', overflowX: 'auto', 
+        paddingBottom: '4px', whiteSpace: 'nowrap', msOverflowStyle: 'none', scrollbarWidth: 'none' 
+      }}>
+        {sensors.map((s, i) => (
+          <div key={i} style={{ 
+            display: 'flex', alignItems: 'center', gap: '5px', 
+            background: COLORS.bg, padding: '3px 7px', borderRadius: '6px', flexShrink: 0 
+          }}>
+            <span style={{ fontSize: '0.55rem', fontWeight: 900, color: COLORS.subtext }}>{s.name}</span>
+            <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: getStatusDot(s.status) }} />
+          </div>
         ))}
       </div>
 
-      {/* ─── NAVIGATION BAR (Floating) ─── */}
-      <nav style={{ position: 'fixed', bottom: '20px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(12px)', padding: '8px', borderRadius: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', border: `1px solid ${COLORS.border}`, display: 'flex', gap: '10px', zIndex: 1000 }}>
-        {['All', 'Nodes', 'Climate', 'Control'].map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab.toLowerCase())} style={{ padding: '10px 20px', borderRadius: '14px', border: 'none', background: activeTab === tab.toLowerCase() ? `${COLORS.primary}15` : 'transparent', color: activeTab === tab.toLowerCase() ? COLORS.primary : COLORS.subtext, fontWeight: 950, fontSize: '0.75rem', cursor: 'pointer', transition: 'all 0.3s' }}>
-            {tab}
-          </button>
+
+      {/* Metrics Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        <div style={{ background: COLORS.bg, padding: '10px', borderRadius: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+            <span style={{ fontSize: '0.6rem', fontWeight: 800, color: COLORS.subtext }}>RSSI</span>
+            {getSignalIcon(metrics.rssi)}
+          </div>
+          <span style={{ fontSize: '0.85rem', fontWeight: 950, color: COLORS.text }}>{metrics.rssi} <small style={{ fontWeight: 800, fontSize: '0.6rem' }}>dBm</small></span>
+        </div>
+        <div style={{ background: COLORS.bg, padding: '10px', borderRadius: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+            <span style={{ fontSize: '0.6rem', fontWeight: 800, color: COLORS.subtext }}>LATENCY</span>
+            <Activity size={12} color={metrics.latency > 100 ? COLORS.offline : COLORS.active} />
+          </div>
+          <span style={{ fontSize: '0.85rem', fontWeight: 950, color: COLORS.text }}>{metrics.latency} <small style={{ fontWeight: 800, fontSize: '0.6rem' }}>ms</small></span>
+        </div>
+        <div style={{ background: COLORS.bg, padding: '10px', borderRadius: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+            <span style={{ fontSize: '0.6rem', fontWeight: 800, color: COLORS.subtext }}>UPTIME</span>
+            <Clock size={12} color={COLORS.subtext} />
+          </div>
+          <span style={{ fontSize: '0.85rem', fontWeight: 950, color: COLORS.text }}>{(metrics.uptime / 60000).toFixed(1)} <small style={{ fontWeight: 800, fontSize: '0.6rem' }}>min</small></span>
+        </div>
+        <div style={{ background: COLORS.bg, padding: '10px', borderRadius: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+            <span style={{ fontSize: '0.6rem', fontWeight: 800, color: COLORS.subtext }}>PACKET LOSS</span>
+            <AlertTriangle size={12} color={metrics.packet_loss > 2 ? COLORS.offline : COLORS.active} />
+          </div>
+          <span style={{ fontSize: '0.85rem', fontWeight: 950, color: COLORS.text }}>{metrics.packet_loss} <small style={{ fontWeight: 800, fontSize: '0.6rem' }}>%</small></span>
+        </div>
+      </div>
+
+      {/* Issues */}
+      <div style={{ background: issues[0]?.includes('operational') ? `${COLORS.active}10` : `${COLORS.offline}10`, padding: '12px', borderRadius: '16px', minHeight: '60px' }}>
+        <p style={{ margin: 0, fontSize: '0.65rem', fontWeight: 900, color: COLORS.subtext, textTransform: 'uppercase', marginBottom: '4px' }}>Insights & Issues</p>
+        {issues.map((issue, i) => (
+          <p key={i} style={{ margin: 0, fontSize: '0.75rem', fontWeight: 700, color: issues[0]?.includes('operational') ? COLORS.active : COLORS.offline }}>• {issue}</p>
         ))}
-      </nav>
+      </div>
+
+      {/* Actions */}
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <button disabled={status === 'OFFLINE'} style={{ flex: 1, padding: '10px', borderRadius: '12px', background: COLORS.bg, border: 'none', color: COLORS.text, fontSize: '0.7rem', fontWeight: 950, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', opacity: status === 'OFFLINE' ? 0.4 : 1 }}>
+          <RefreshCcw size={14} /> RESTART
+        </button>
+        <button style={{ flex: 1, padding: '10px', borderRadius: '12px', background: COLORS.bg, border: 'none', color: COLORS.text, fontSize: '0.7rem', fontWeight: 950, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+          <Search size={14} /> DIAGNOSE
+        </button>
+        <button style={{ padding: '10px', borderRadius: '12px', background: COLORS.bg, border: 'none', color: COLORS.text }}>
+          <Settings size={14} />
+        </button>
+      </div>
+    </motion.div>
+  );
+};
+
+const DeviceManagement = () => {
+  const { devices = {}, systemOverview } = useApp();
+
+  if (!systemOverview || !devices) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: COLORS.bg }}>
+        <div style={{ textAlign: 'center' }}>
+          <Activity size={40} color={COLORS.active} className="spin-slow" />
+          <p style={{ marginTop: '1rem', fontWeight: 800, color: COLORS.subtext, fontSize: '0.8rem' }}>INITIALIZING DIAGNOSTIC LINK...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const statusColor = systemOverview.overall_status === 'HEALTHY' ? COLORS.active : (systemOverview.overall_status === 'DEGRADED' ? COLORS.partial : COLORS.offline);
+
+  const deviceList = Object.values(devices);
+
+  return (
+    <div style={{ background: COLORS.bg, minHeight: '100vh', padding: '1.25rem', fontFamily: "'Outfit', sans-serif" }}>
+      
+      {/* ─── SYSTEM HERO CARD ─── */}
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
+        style={{ 
+          background: 'white', borderRadius: '28px', padding: '2rem', 
+          border: `1px solid ${COLORS.border}`, boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
+          marginBottom: '1.5rem', position: 'relative', overflow: 'hidden'
+        }}
+      >
+        <div style={{ position: 'absolute', top: 0, right: 0, width: '200px', height: '200px', background: `${statusColor}08`, borderRadius: '50%', transform: 'translate(50%, -50%)' }} />
+        
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', zIndex: 2 }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <Server size={18} color={statusColor} />
+              <span style={{ fontSize: '0.75rem', fontWeight: 950, color: COLORS.subtext, textTransform: 'uppercase', letterSpacing: '0.1em' }}>System Health Overview</span>
+            </div>
+            <h1 style={{ margin: 0, fontSize: '2.4rem', fontWeight: 950, color: COLORS.text, letterSpacing: '-0.03em' }}>{systemOverview.overall_status}</h1>
+            <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', fontWeight: 700, color: COLORS.subtext }}>{systemOverview.health_percent}% operational capacity detected across {systemOverview.total_nodes} nodes.</p>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: '3.5rem', fontWeight: 950, color: statusColor, lineHeight: 1 }}>{systemOverview.health_percent}<small style={{ fontSize: '1rem', opacity: 0.4 }}>%</small></div>
+            <span style={{ fontSize: '0.65rem', fontWeight: 900, color: COLORS.subtext, textTransform: 'uppercase' }}>Network Integrity</span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '2rem', marginTop: '2rem', borderTop: `1px solid ${COLORS.border}`, paddingTop: '1.5rem' }}>
+          <div>
+            <div style={{ fontSize: '1.2rem', fontWeight: 950, color: COLORS.active }}>{systemOverview.active_nodes}</div>
+            <div style={{ fontSize: '0.6rem', fontWeight: 900, color: COLORS.subtext, textTransform: 'uppercase' }}>Active</div>
+          </div>
+          <div>
+            <div style={{ fontSize: '1.2rem', fontWeight: 950, color: COLORS.partial }}>{systemOverview.partial_nodes}</div>
+            <div style={{ fontSize: '0.6rem', fontWeight: 900, color: COLORS.subtext, textTransform: 'uppercase' }}>Partial</div>
+          </div>
+          <div>
+            <div style={{ fontSize: '1.2rem', fontWeight: 950, color: COLORS.offline }}>{systemOverview.offline_nodes}</div>
+            <div style={{ fontSize: '0.6rem', fontWeight: 900, color: COLORS.subtext, textTransform: 'uppercase' }}>Offline</div>
+          </div>
+          <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+            <button style={{ padding: '10px 20px', borderRadius: '100px', background: COLORS.text, color: 'white', border: 'none', fontSize: '0.7rem', fontWeight: 950, display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Activity size={14} /> RUN SYSTEM DIAGNOSTICS
+            </button>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* ─── 2x2 DEVICE GRID ─── */}
+      {deviceList.length > 0 ? (
+        <div className="device-grid">
+          {deviceList.map(dev => (
+            <NodeCard key={dev.device_id} device={dev} />
+          ))}
+        </div>
+      ) : (
+        <div style={{ padding: '4rem', textAlign: 'center', background: 'white', borderRadius: '32px', border: `1px dashed ${COLORS.border}` }}>
+          <p style={{ fontWeight: 800, color: COLORS.subtext }}>NO HARDWARE NODES REGISTERED</p>
+          <p style={{ fontSize: '0.7rem', color: COLORS.subtext }}>Waiting for MQTT telemetry handshake...</p>
+        </div>
+      )}
+
+      <style>{`
+        .device-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 1.25rem;
+        }
+        @media (max-width: 768px) {
+          .device-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+        .spin-slow {
+          animation: spin 3s linear infinite;
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };
+
 
 export default DeviceManagement;

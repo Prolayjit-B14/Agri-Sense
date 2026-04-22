@@ -19,6 +19,7 @@ import {
   ACTUATORS 
 } from '../utils/healthEngine';
 import { processMqttMessage } from '../controllers/sensorController';
+import { processDeviceState, calculateSystemOverview } from '../services/deviceService';
 
 // ─── CONTEXT INITIALIZATION ─────────────────────────────────────────────────
 const AppContext = createContext();
@@ -28,23 +29,32 @@ export const AppProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     try {
       const saved = localStorage.getItem('agrisense_user');
-      const defaultUser = { 
-        name: 'Guest Farmer', 
-        email: 'guest@agrisense.io', 
-        phone: '+91 98765 43210',
-        location: 'Kalyani Sector A-12 • Field Alpha',
-        photo: 'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&q=80&w=200',
-        isGuest: true
-      };
-      return saved ? JSON.parse(saved) : defaultUser;
+      return saved ? JSON.parse(saved) : null;
     } catch (e) {
       console.error("Auth Persistence Failure:", e);
       return null;
     }
   });
 
+
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [sensorData, setSensorData] = useState(INITIAL_SENSOR_DATA);
+  
+  // Initialize Mandatory Device Registry (Static 5 Nodes)
+  const [devices, setDevices] = useState({
+    'soil_node': processDeviceState('soil_node', 'soil', null),
+    'weather_node': processDeviceState('weather_node', 'weather', null),
+    'storage_node': processDeviceState('storage_node', 'storage', null),
+    'water_node': processDeviceState('water_node', 'water', null),
+    'solar_node': processDeviceState('solar_node', 'solar', null)
+  });
+
+  const [systemOverview, setSystemOverview] = useState({
+    total_nodes: 5, active_nodes: 0, partial_nodes: 0, offline_nodes: 5,
+    overall_status: 'CRITICAL', health_percent: 0, nodes: []
+  });
+
+
   const [apiWeather, setApiWeather] = useState(INITIAL_API_WEATHER);
   const [apiForecast, setApiForecast] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
@@ -236,7 +246,26 @@ export const AppProvider = ({ children }) => {
           (topic, data) => {
             if (!data) return;
             lastSensorUpdate.current = Date.now();
-            setSensorData(prev => processMqttMessage(topic, data, prev));
+            
+            setSensorData(prev => {
+              const updated = processMqttMessage(topic, data, prev);
+              
+              // Update Device Registry
+              const parts = topic.split('/');
+              const nodeType = parts[parts.length - 1] === 'sensors' ? 'soil' : parts[parts.length - 1];
+              if (['soil', 'weather', 'storage', 'water'].includes(nodeType)) {
+                setDevices(prevDevices => {
+                  const nodeId = data.device_id || `${nodeType}_node`;
+                  const newState = processDeviceState(nodeId, nodeType, data);
+                  const newDevices = { ...prevDevices, [nodeId]: newState };
+                  setSystemOverview(calculateSystemOverview(newDevices));
+                  return newDevices;
+                });
+              }
+              
+              return updated;
+            });
+            
             setIsDataLoading(false);
             setLastGlobalUpdate(new Date().toLocaleTimeString());
           },
@@ -244,24 +273,37 @@ export const AppProvider = ({ children }) => {
         );
         return () => mqttService.disconnect();
       } else {
+        // Initialize Mock Devices
+        const mockNodes = {
+          'soil_alpha': processDeviceState('soil_alpha', 'soil', { rssi: -65, latency: 20, packet_loss: 0.1, timestamp: Date.now(), moisture: 45, ph: 6.8 }),
+          'weather_alpha': processDeviceState('weather_alpha', 'weather', { rssi: -72, latency: 45, packet_loss: 0.5, timestamp: Date.now(), temperature: 28, humidity: 65 }),
+          'storage_alpha': processDeviceState('storage_alpha', 'storage', { rssi: -55, latency: 15, packet_loss: 0, timestamp: Date.now(), mq135: 120 }),
+          'water_alpha': processDeviceState('water_alpha', 'water', { rssi: -88, latency: 120, packet_loss: 4.5, timestamp: Date.now(), level: 80 })
+        };
+        setDevices(mockNodes);
+        setSystemOverview(calculateSystemOverview(mockNodes));
         setIsDataLoading(false);
       }
     }, 1000);
     return () => clearTimeout(bootTimer);
   }, [MASTER_CONFIG.USE_MOCK_DATA]);
 
-  // 6. Offline Detection Pulse
+  // 6. Device State Pulse (Recalculate status every 5s)
   useEffect(() => {
-    if (MASTER_CONFIG.USE_MOCK_DATA) return;
     const pulse = setInterval(() => {
-      const now = Date.now();
-      const lastUpdate = lastSensorUpdate.current || now;
-      if (now - lastUpdate > 180000) {
-        setSensorData(INITIAL_SENSOR_DATA);
-      }
+      setDevices(prevDevices => {
+        const updated = {};
+        Object.entries(prevDevices).forEach(([id, dev]) => {
+          // Re-process state to catch STALE/OFFLINE transitions
+          updated[id] = processDeviceState(id, dev.node_type, dev.metrics ? { ...dev.metrics, lastSeen: dev.lastSeen } : { lastSeen: dev.lastSeen });
+        });
+        setSystemOverview(calculateSystemOverview(updated));
+        return updated;
+      });
     }, 5000);
     return () => clearInterval(pulse);
-  }, [MASTER_CONFIG.USE_MOCK_DATA]);
+  }, []);
+
 
   // 7. Global Weather Sync
   useEffect(() => {
@@ -338,11 +380,13 @@ export const AppProvider = ({ children }) => {
       isDarkMode, toggleTheme, sensorData, apiWeather, apiForecast, recommendations, sensorHistory,
       actuators, toggleActuator, isSidebarOpen, setIsSidebarOpen, ACTUATORS,
       farmHealthScore, systemHealth, connectivityStatus, cloudSyncStatus, profileMeta, updateProfileMeta,
-      isDataLoading, lastGlobalUpdate, mqttStatus, syncData
+      isDataLoading, lastGlobalUpdate, mqttStatus, syncData,
+      devices, systemOverview
     }}>
       {children}
     </AppContext.Provider>
   );
+
 };
 
 export const useApp = () => useContext(AppContext);
