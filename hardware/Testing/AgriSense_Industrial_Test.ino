@@ -156,12 +156,17 @@ void loop() {
     display.printf("PUMP: %s\n", pumpState ? "ACTIVE" : "OFF");
     display.display();
 
+    // ─── MEASURE REAL-TIME LATENCY ──────────────────────────────────────────
+    uint32_t startPing = millis();
+    bool pingSuccess = client.publish("agrisense/v1/node/ping", "ping");
+    uint32_t nodeLatency = pingSuccess ? (millis() - startPing) : 0;
+
     // ─── 1. PUBLISH SOIL TELEMETRY ──────────────────────────────────────────
     StaticJsonDocument<512> soilDoc;
     soilDoc["device_id"] = "soil_node_alpha";
     soilDoc["timestamp"] = millis();
     soilDoc["rssi"] = WiFi.RSSI();
-    soilDoc["latency"] = 25; 
+    soilDoc["latency"] = nodeLatency;
     
     soilDoc["moisture"] = moist;
     soilDoc["ph"] = ph;
@@ -177,10 +182,12 @@ void loop() {
     weatherDoc["device_id"] = "weather_node_alpha";
     weatherDoc["timestamp"] = millis();
     weatherDoc["rssi"] = WiFi.RSSI();
-    weatherDoc["latency"] = 30; 
+    weatherDoc["latency"] = nodeLatency;
     
-    weatherDoc["temperature"] = temp; // DHT Ambient Temp
-    weatherDoc["humidity"] = hum;     // DHT Ambient Hum
+    // Physical Validation for DHT
+    if (!isnan(temp)) weatherDoc["temperature"] = temp;
+    if (!isnan(hum)) weatherDoc["humidity"] = hum;
+    
     weatherDoc["rain"] = isRaining ? 1.0 : 0.0;
     weatherDoc["ldr"] = ldr;
 
@@ -189,4 +196,6 @@ void loop() {
     client.publish(topic_weather, weatherBuffer);
   }
 }
+
+
 
