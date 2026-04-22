@@ -10,44 +10,48 @@ The application communicates exclusively via **MQTT** using **WebSockets (WSS)**
 
 ---
 
-## Publish Topics (App to Hardware)
+## 📡 Subscribe Topics (Hardware → App)
 
-### `agrisense/field_a/commands`
-Used by the frontend to trigger physical relays based on user input (e.g., turning on an irrigation pump).
+All nodes must publish to their specific topic structure: `agrisense/v1/node/[type]/telemetry`
+
+### 🏗️ Topic Matrix:
+- **Soil**: `agrisense/v1/node/soil/telemetry`
+- **Weather**: `agrisense/v1/node/weather/telemetry`
+- **Storage**: `agrisense/v1/node/storage/telemetry`
+- **Water**: `agrisense/v1/node/water/telemetry`
+- **Solar**: `agrisense/v1/node/solar/telemetry`
+
+### 📦 Clinical Payload Schema (JSON):
+Every telemetry packet must include the following forensic header:
+```json
+{
+  "device_id": "string (unique)",
+  "timestamp": "number (epoch ms)",
+  "rssi": "number (dBm)",
+  "latency": "number (ms)",
+  "packet_loss": "number (%)"
+}
+```
+
+**Node-Specific Metrics:**
+- **Soil**: `moisture`, `ph`, `npk: { n, p, k }`, `temperature`
+- **Weather**: `temperature`, `humidity`, `ldr`, `rain`
+- **Storage**: `temperature`, `humidity`, `mq135`
+- **Water**: `flow`, `level`, `pressure`
+- **Solar**: `voltage`, `battery`, `current`, `load`
+
+---
+
+## 🛰️ Publish Topics (App → Hardware)
+
+### `agrisense/v1/commands`
+Used by the frontend to trigger physical actuators (Pumps, Valves, Sprayers).
 **Payload Example:**
 ```json
 {
-  "device": "pump",
-  "action": "ON",
+  "device_id": "target_node_id",
+  "action": "PUMP_ON | PUMP_OFF | VALVE_OPEN | VALVE_CLOSE",
   "timestamp": 1718224523
 }
 ```
 
----
-
-## Subscribe Topics (Hardware to App)
-
-### `agrisense/field_a/sensors`
-Used by the App to ingest live telemetry from the `SoilNode` and `StorageNode`.
-**Expected Payload Example:**
-```json
-{
-  "moisture": 45.2,
-  "temperature": 28.5,
-  "humidity": 60.1,
-  "nitrogen": 12,
-  "phosphorus": 8,
-  "potassium": 15
-}
-```
-
-### `agrisense/field_a/camera`
-Ingests frames or event flags from the `CameraNode` (e.g., when an animal is detected).
-**Expected Payload Example:**
-```json
-{
-  "event": "ANIMAL_DETECTED",
-  "confidence": 0.85,
-  "frame_url": "https://..."
-}
-```
