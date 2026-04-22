@@ -191,7 +191,7 @@ const SoilMonitoring = () => {
   }, [isOnline, stats]);
 
   return (
-    <div style={{ padding: '1.25rem', paddingBottom: '40px', background: COLORS.bg, minHeight: '100vh', fontFamily: "'Outfit', sans-serif" }}>
+    <div style={{ padding: '1.25rem', paddingBottom: '10px', background: COLORS.bg, minHeight: 'auto', fontFamily: "'Outfit', sans-serif" }}>
       
       {/* ─── TINTED HERO CARD ─── */}
       <motion.div
@@ -290,7 +290,7 @@ const SoilMonitoring = () => {
         </AnimatePresence>
       </section>
 
-      <motion.button whileTap={{ scale: 0.95 }} onClick={() => navigate('/analytics', { state: { tab: 'Soil' } })} style={{ width: '100%', height: '64px', borderRadius: '100px', background: '#0F172A', border: 'none', color: 'white', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>View Detailed Analytics</motion.button>
+      <motion.button whileTap={{ scale: 0.95 }} onClick={() => navigate('/analytics', { state: { tab: 'Soil' } })} style={{ width: '100%', height: '52px', borderRadius: '100px', background: '#0F172A', border: 'none', color: 'white', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>View Detailed Analytics</motion.button>
 
     </div>
   );

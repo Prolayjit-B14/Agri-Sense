@@ -173,7 +173,7 @@ const AnalyticsHub = () => {
 
   // ─── RENDER ───────────────────────────────────────────────────────────────
   return (
-    <div style={{ background: COLORS.bg, minHeight: '100vh', padding: '1.25rem', paddingBottom: '40px' }}>
+    <div style={{ background: COLORS.bg, minHeight: 'auto', padding: '1.25rem', paddingBottom: '10px' }}>
       
       {/* Horizontal Tab Selector */}
       <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginBottom: '1.5rem', paddingBottom: '8px' }} className="no-scrollbar">

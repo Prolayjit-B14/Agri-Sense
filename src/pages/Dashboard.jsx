@@ -209,7 +209,7 @@ const Dashboard = () => {
 
   // ─── RENDER ───────────────────────────────────────────────────────────────
   return (
-    <div style={{ padding: '1.25rem', paddingBottom: '40px', background: COLORS.background, fontFamily: "'Outfit', sans-serif" }}>
+    <div style={{ padding: '1.25rem', paddingBottom: '10px', background: COLORS.background, fontFamily: "'Outfit', sans-serif" }}>
 
       {/* Header Section */}
       <section style={{ marginBottom: '1.8rem', padding: '0 4px' }}>
@@ -313,7 +313,7 @@ const Dashboard = () => {
       </section>
 
       {/* Footer Info */}
-      <footer style={{ textAlign: 'center', marginTop: '1.5rem', paddingBottom: '10px' }}>
+      <footer style={{ textAlign: 'center', marginTop: '1.5rem', paddingBottom: '5px' }}>
         <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#CBD5E1', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           AgriSense Industrial • v{farmInfo?.version || '2.8.0'}
         </div>
