@@ -34,11 +34,13 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 const char* ssid = "YOUR_WIFI_SSID";
 const char* password = "YOUR_WIFI_PASSWORD";
 const char* mqtt_server = "YOUR_MQTT_BROKER_URL"; // e.g., broker.emqx.io
-const char* node_id = "soil_node_alpha";
-const char* topic_telemetry = "agrisense/v1/node/soil/telemetry";
+const char* node_id = "agrisense_main_node";
+const char* topic_soil = "agrisense/v1/node/soil/telemetry";
+const char* topic_weather = "agrisense/v1/node/weather/telemetry";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
+
 
 // ─── GLOBAL STATE ───────────────────────────────────────────────────────────
 bool pumpState = false;
@@ -129,28 +131,37 @@ void loop() {
     display.printf("PUMP: %s\n", pumpState ? "ACTIVE" : "OFF");
     display.display();
 
-    // ─── PREPARE MQTT PAYLOAD ───────────────────────────────────────────────
-    StaticJsonDocument<512> doc;
-    doc["device_id"] = node_id;
-    doc["timestamp"] = millis(); // Simplified timestamp
-    doc["rssi"] = WiFi.RSSI();
-    doc["latency"] = 45; // Simulated latency
+    // ─── 1. PUBLISH SOIL TELEMETRY ──────────────────────────────────────────
+    StaticJsonDocument<512> soilDoc;
+    soilDoc["device_id"] = "soil_node_alpha";
+    soilDoc["timestamp"] = millis();
+    soilDoc["rssi"] = WiFi.RSSI();
+    soilDoc["latency"] = 25; 
     
-    doc["moisture"] = moist;
-    doc["ph"] = ph;
-    JsonObject npk = doc.createNestedObject("npk");
-    npk["n"] = n;
-    npk["p"] = p;
-    npk["k"] = k;
+    soilDoc["moisture"] = moist;
+    soilDoc["ph"] = ph;
+    JsonObject npk = soilDoc.createNestedObject("npk");
+    npk["n"] = n; npk["p"] = p; npk["k"] = k;
     
-    doc["temperature"] = temp;
-    doc["humidity"] = hum;
-    doc["rain"] = isRaining ? 1.0 : 0.0;
-    doc["ldr"] = ldr;
-    doc["pump_status"] = pumpState;
+    char soilBuffer[512];
+    serializeJson(soilDoc, soilBuffer);
+    client.publish(topic_soil, soilBuffer);
 
-    char buffer[512];
-    serializeJson(doc, buffer);
-    client.publish(topic_telemetry, buffer);
+    // ─── 2. PUBLISH WEATHER TELEMETRY ───────────────────────────────────────
+    StaticJsonDocument<512> weatherDoc;
+    weatherDoc["device_id"] = "weather_node_alpha";
+    weatherDoc["timestamp"] = millis();
+    weatherDoc["rssi"] = WiFi.RSSI();
+    weatherDoc["latency"] = 30; 
+    
+    weatherDoc["temperature"] = temp; // DHT Ambient Temp
+    weatherDoc["humidity"] = hum;     // DHT Ambient Hum
+    weatherDoc["rain"] = isRaining ? 1.0 : 0.0;
+    weatherDoc["ldr"] = ldr;
+
+    char weatherBuffer[512];
+    serializeJson(weatherDoc, weatherBuffer);
+    client.publish(topic_weather, weatherBuffer);
   }
 }
+

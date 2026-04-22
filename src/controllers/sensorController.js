@@ -27,11 +27,15 @@ export const processMqttMessage = (topic, data, prev) => {
   const newState = JSON.parse(JSON.stringify(prev));
   
   // 🛰️ NODE DETECTION VIA TOPIC PATH
-  // Topics: agrisense/field_a/soil, agrisense/field_a/weather, agrisense/field_a/sensors
-  const nodeType = parts[parts.length - 1]; 
+  // Supports: agrisense/v1/node/[type]/telemetry
+  let nodeType = parts[parts.length - 1]; 
+  if (nodeType === 'telemetry' && parts.length >= 3) {
+    nodeType = parts[parts.length - 2];
+  }
 
-  // Handle Unified Payload (from test.ino v6.2.0)
+  // Handle Unified Payload (from legacy test scripts)
   if (nodeType === 'sensors') {
+
     if (data.soil) {
       newState.soil.moisture = getVal(data.soil, ['moisture', 'm'], prev.soil.moisture);
       newState.soil.temp = getVal(data.soil, ['temp', 't'], prev.soil.temp);
