@@ -1,161 +1,97 @@
-# AgriSense
+# AgriSense v3.90: Scientific Intelligence Suite
 
-A comprehensive IoT-based smart agriculture monitoring system and cross-platform mobile application powered by React, Vite, and Capacitor.
-
----
-
-## Demo
-
-[Live Demo Link](#)
-
-*(Add images or GIF preview here)*
+An industrial-grade, IoT-driven precision agriculture platform. AgriSense v3.90 is a high-density monitoring ecosystem that bridges real-time hardware telemetry with scientific forensic diagnostics. Powered by **React 19**, **Vite**, and **Capacitor**, it delivers a zero-lag, zero-mock experience for professional farm management.
 
 ---
 
-## 📚 Documentation
+## 🚀 Key Innovations (v3.90)
 
-For an in-depth dive into the technical implementation, please review the extensive documentation prepared for technical teams and judges:
+### 📊 Scientific Intelligence Suite
+*   **21+ Diagnostic Charts**: Forensic-level visualization across Soil, Weather, Storage, Water, and Solar energy tabs.
+*   **Dual-Line Correlation Engine**: Advanced visual linking of environmental variables (e.g., Moisture vs. Temp) to visualize cause-and-effect field health.
+*   **Zero-Lag Stabilization**: Hardened Recharts implementation with disabled animations and locked Y-axis domains for flicker-free industrial monitoring.
 
-- 🏗️ **[System Architecture](docs/ARCHITECTURE.md)**: Explore the MQTT flow and node layout.
-- 🔌 **[Hardware Setup](docs/HARDWARE_SETUP.md)**: ESP32 Pin maps and wiring schematics.
-- ✨ **[Platform Features](docs/FEATURES.md)**: A complete breakdown of the App capability stack.
-- 📡 **[API Reference](docs/API_REFERENCE.md)**: WebSockets and MQTT payload definitions.
+### 📡 Five-Node Industrial Management
+*   **High-Density 2x2 Grid**: A compact, control-room interface for monitoring **Soil, Weather, Storage, Water, and Solar** nodes.
+*   **Single-Line Forensic HUD**: Ultra-compact status indicators (Moisture ● pH ● NPK ●) providing instant situational awareness without UI clutter.
+*   **Reactive Heartbeat Engine**: Real-time health scoring (0-100) and automated state transitions (Active → Stale → Offline).
 
----
-
-## Features
-
-- **Dashboard & Analytics:** Real-time data visualization with advanced charts.
-- **Smart Monitoring:** Integrated soil intelligence, solar power usage, and weather tracking.
-- **Automated Control:** Remote irrigation control and storage hub monitoring.
-- **AI & Advisory:** Crop recommendations, pest advisories, and market insights.
-- **Security & Vision:** Live camera feeds with automated animal detection.
-- **Cross-Platform:** Works seamlessly across Web and Android natively.
-- **Geospatial Tracking:** Map views for tracking devices across the farm.
+### 🛡️ Pure Telemetry Protocol
+*   **Zero-Mock Data Engine**: Strictly event-driven history plotting. No placeholder values; every coordinate is anchored to a physical MQTT sensor packet.
+*   **Clinical Offline Guards**: Advanced null-handling and forensic "---" fallbacks to ensure data integrity even during partial network outages.
 
 ---
 
-## Tech Stack
+## 📚 Technical Documentation
 
-**Frontend & Mobile App:**
-- React 19 (Vite Ecosystem)
-- Capacitor (for Android native builds)
-- React Router DOM
-- Framer Motion (Animations)
-- Recharts (Data Visualization)
-- Lucide-React (Icons)
-
-**IoT & Hardware:**
-- ESP32 Microcontrollers
-- Multi-Sensor Modules (Soil, Weather, Solar, etc.)
-- Camera Module (for Animal Detection)
-- Custom PCBs
-
-**Protocols:**
-- MQTT (Real-time telemetry and hardware communication)
-- HTTP
+- 🏗️ **[System Architecture](docs/ARCHITECTURE.md)**: Explore the MQTT event-loop and 5-node telemetry flow.
+- 🔌 **[Hardware Setup](docs/HARDWARE_SETUP.md)**: ESP32 Pin maps for Soil, Weather, and Solar modules.
+- ✨ **[Diagnostic Suite](docs/FEATURES.md)**: Breakdown of the 21+ forensic charts and correlation models.
+- 📡 **[API Reference](docs/API_REFERENCE.md)**: MQTT topic structure and JSON payload definitions.
 
 ---
 
-## System Architecture
+## 🛠️ Tech Stack
 
-The following flow represents the data lifecycle for the system:
+**Frontend & Mobile:**
+- **React 19**: Modern reactive UI with strict purity.
+- **Capacitor**: Native Android deployment.
+- **Framer Motion**: Premium fluid transitions.
+- **Recharts**: Stabilized industrial data visualization.
 
-`Sensors/Cameras` → `ESP32` → `MQTT` → `Backend/Server` → `React/Mobile UI`
-
-*(Include diagram image here)*
-
----
-
-## Hardware Setup
-
-**Components:**
-- ESP32 Microcontroller
-- Sensor modules (Soil Moisture, Temperature/Humidity, NPK, etc.)
-- Vision module (e.g., ESP32-CAM)
-- Power supply / Solar panels
-
-**Pin connections:**
-*(Add pin mapping details here)*
-
-*(Optional: Add circuit diagram image here)*
+**Industrial Backend:**
+- **MQTT Protocol**: Real-time hardware telemetry bridge.
+- **Forensic Health Engine**: Weighted health scoring (RSSI, Latency, Packet Loss).
+- **Reactive Heartbeat Service**: Managed node status transitions.
 
 ---
 
-## Installation
+## ⚙️ Installation & Build
 
-Clone the repository:
-```bash
-git clone https://github.com/Prolayjit-B14/Agri_Sense-.git
-cd Agri_Sense-
-```
+1. **Clone & Install:**
+   ```bash
+   git clone https://github.com/Prolayjit-B14/Agri_Sense-.git
+   cd Agri_Sense-
+   npm install
+   ```
 
-Install dependencies:
-```bash
-npm install
-```
+2. **Development Mode:**
+   ```bash
+   npm run dev
+   ```
 
-Run the Web Application locally:
-```bash
-npm run dev
-```
-
-Build and Sync for Android App:
-```bash
-npm run production:sync
-npm run android:open
-```
+3. **Production Android Build:**
+   ```bash
+   npm run build
+   npx cap sync
+   cd android && ./gradlew assembleDebug
+   ```
 
 ---
 
-## Usage
-
-1. **Connect hardware** based on the provided pin connections.
-2. **Upload firmware** to the ESP32 devices.
-3. **Start the App:** Run the frontend development server and log in.
-4. **Monitor via App:** Navigate through Dashboard, Animal Detection, or Analytics Hub to visualize the real-time MQTT data directly from your farm.
-
----
-
-## Folder Structure
+## 📂 Project Structure
 
 ```text
 Agri_Sense-/
-├── android/             # Capacitor Android project files
-├── docs/                # Project API & Architecture Documentation
 ├── src/
-│   ├── components/      # Reusable UI components (Sidebar, TopBar)
-│   ├── context/         # React Context (Global state)
-│   ├── pages/           # App screens (Dashboard, AnimalDetection, etc.)
-│   └── App.jsx          # Main routing and navigation
-├── public/              # Static assets
-└── package.json         # Project metadata and dependencies
+│   ├── components/      # High-density UI components
+│   ├── context/         # Master AppContext & State Registry
+│   ├── services/        # Device Management & MQTT Logic
+│   ├── pages/           # Analytics Hub, Management, Diagnostics
+│   ├── utils/           # Scientific Health & Recommendation Engines
+│   └── App.jsx          # Forensic Routing & Auth Handover
+├── android/             # Capacitor Android Project
+└── public/              # Industrial Branding Assets
 ```
 
 ---
 
-## Screenshots
+## 🏆 Author
 
-*(Add images here)*
+**Prolayjit Biswas**  
+*Industrial IoT Developer & Precision Agriculture Architect*
 
-- Dashboard UI
-- Animal Detection Camera Feed
-- Analytics Hub & Soil Intelligence
-- Hardware setup & PCB design
-
----
-
-## Future Improvements
-
-- [ ] iOS App Deployment
-- [ ] Expanded AI prediction models
-- [ ] LoRaWAN support for remote areas without WiFi/GSM
-
----
-
-## Author
-
-**Prolayjit Biswas**
 - [LinkedIn](#)
 - [GitHub](https://github.com/Prolayjit-B14)
 - [Portfolio](#)
+
