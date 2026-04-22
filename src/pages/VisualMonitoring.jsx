@@ -1,15 +1,23 @@
+/**
+ * AgriSense v2.8.0 Visual Monitoring (Neural Vision)
+ * Real-time AI-driven incursion detection, neural feed analysis, and pest repellent control.
+ */
+
+// ─── IMPORTS ────────────────────────────────────────────────────────────────
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useApp } from '../context/AppContext';
 import { 
-  Camera, Play, Radio, Activity, 
-  Shield, Bell, ChevronRight, Eye, 
+  Camera, Radio, Activity, 
+  Bell, ChevronRight, Eye, 
   EyeOff, Video, Volume2, VolumeX,
-  Bug, Bird, Dog, Zap, Wind, Flame,
-  Clock, Target, Box, Wifi, Cpu
+  Bug, Bird, Dog, Zap, Wind,
+  Clock, Wifi, Cpu
 } from 'lucide-react';
 
-// ─── DESIGN TOKENS ────────────────────────────────────────────────────────
+// Context & Utils
+import { useApp } from '../context/AppContext';
+
+// ─── DESIGN TOKENS ─────────────────────────────────────────────────────────
 const COLORS = {
   primary: '#10B981',
   secondary: '#3B82F6',
@@ -22,7 +30,7 @@ const COLORS = {
   terminal: '#0F172A'
 };
 
-// ─── SUB-COMPONENTS ───────────────────────────────────────────────────────
+// ─── SUB-COMPONENTS ────────────────────────────────────────────────────────
 
 const ControlBtn = ({ icon: Icon, onClick, active, color = 'white' }) => (
   <motion.button 
@@ -48,7 +56,7 @@ const ActionCard = ({ icon: Icon, label, color, onClick }) => (
     style={{ 
       background: 'white', border: `1px solid ${color}30`, borderRadius: '20px', 
       padding: '14px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
-      boxShadow: `0 4px 15px ${color}08`, flex: 1
+      boxShadow: `0 4px 15px ${color}08`, flex: 1, cursor: 'pointer'
     }}
   >
     <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: `${color}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -58,13 +66,15 @@ const ActionCard = ({ icon: Icon, label, color, onClick }) => (
   </motion.button>
 );
 
-// ─── MAIN SCREEN ──────────────────────────────────────────────────────────
+// ─── MAIN COMPONENT ────────────────────────────────────────────────────────
 
-const Detection = () => {
+const VisualMonitoring = () => {
+  // ─── STATE ────────────────────────────────────────────────────────────────
   const [isAiOn, setIsAiOn] = useState(true);
   const [isRecording, setIsRecording] = useState(true);
   const [isAudioOn, setIsAudioOn] = useState(false);
   
+  // ─── DERIVED STATE ────────────────────────────────────────────────────────
   const activeDetections = useMemo(() => [
     { id: 1, type: 'Locust', confidence: 94, x: '20%', y: '35%', w: '100px', h: '100px', severity: 'High' },
     { id: 2, type: 'Pigeon', confidence: 88, x: '65%', y: '50%', w: '80px', h: '80px', severity: 'Med' }
@@ -76,8 +86,9 @@ const Detection = () => {
     { id: 3, event: 'Stray dog near gate', time: '17:10:05', cat: 'Security', icon: Dog, color: COLORS.secondary },
   ];
 
+  // ─── RENDER ───────────────────────────────────────────────────────────────
   return (
-    <div style={{ padding: '1.25rem', background: COLORS.bg, minHeight: '100vh', paddingBottom: '100px' }}>
+    <div style={{ padding: '1.25rem', background: COLORS.bg, minHeight: '100vh', paddingBottom: '100px', fontFamily: "'Outfit', sans-serif" }}>
       
       {/* 1. NEURAL FEED HERO */}
       <div style={{ position: 'relative', borderRadius: '32px', overflow: 'hidden', background: '#000', marginBottom: '2rem', boxShadow: '0 20px 50px rgba(0,0,0,0.3)', border: `2px solid ${COLORS.terminal}` }}>
@@ -87,14 +98,14 @@ const Detection = () => {
             style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }} 
            />
            
-           {/* 🎯 AI SCANNING SCANLINE */}
+           {/* AI SCANNING SCANLINE */}
            <motion.div 
             animate={{ top: ['0%', '100%', '0%'] }} 
             transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
             style={{ position: 'absolute', left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${COLORS.primary}, transparent)`, zIndex: 10, boxShadow: `0 0 15px ${COLORS.primary}` }}
            />
 
-           {/* 🧬 AI BBOX OVERLAYS */}
+           {/* AI BBOX OVERLAYS */}
            <AnimatePresence>
              {isAiOn && activeDetections.map((det) => (
                 <motion.div 
@@ -112,7 +123,7 @@ const Detection = () => {
              ))}
            </AnimatePresence>
 
-           {/* 🛠️ OVERLAY UI */}
+           {/* OVERLAY UI */}
            <div style={{ position: 'absolute', inset: 0, padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', zIndex: 20 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                  <div style={{ display: 'flex', gap: '10px' }}>
@@ -189,4 +200,4 @@ const Detection = () => {
   );
 };
 
-export default Detection;
+export default VisualMonitoring;

@@ -1,31 +1,42 @@
+/**
+ * AgriSense v2.8.0 Main Application Entry
+ * Handles routing, global layout, and capacitor event listeners.
+ */
+
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { App as CapApp } from '@capacitor/app';
 import { AnimatePresence, motion } from 'framer-motion';
-import { LayoutGrid, LineChart, Cpu, Camera, Bell, User, Settings as SettingsIcon, FlaskConical } from 'lucide-react';
+import {
+  LayoutGrid, LineChart, Cpu,
+  Camera, Bell, User,
+  Settings as SettingsIcon, FlaskConical
+} from 'lucide-react';
+
+// Context & State
 import { AppProvider, useApp } from './context/AppContext';
 
-// Components
+// Reusable Components
 import TopBar from './components/TopBar';
 import Sidebar from './components/Sidebar';
 
-// Screens
-import Login from './screens/Login';
-import Splash from './screens/Splash';
-import Dashboard from './screens/Dashboard';
-import SoilMonitoring from './screens/SoilMonitoring';
-import IrrigationControl from './screens/IrrigationControl';
-import VisualMonitoring from './screens/VisualMonitoring';
-import Profile from './screens/Profile';
-import MapView from './screens/MapView';
-import Alerts from './screens/Alerts';
-import WeatherMonitoring from './screens/WeatherMonitoring';
-import DeviceManagement from './screens/DeviceManagement';
-import AnalyticsHub from './screens/AnalyticsHub';
-import Settings from './screens/Settings';
-import PrecisionSoilTesting from './screens/PrecisionSoilTesting';
-import Reports from './screens/Reports';
-import StorageMonitoring from './screens/StorageMonitoring';
+// Pages (Main Screens)
+import Login from './pages/Login';
+import Splash from './pages/Splash';
+import Dashboard from './pages/Dashboard';
+import SoilMonitoring from './pages/SoilMonitoring';
+import IrrigationControl from './pages/IrrigationControl';
+import VisualMonitoring from './pages/VisualMonitoring';
+import Profile from './pages/Profile';
+import MapView from './pages/MapView';
+import Alerts from './pages/Alerts';
+import WeatherMonitoring from './pages/WeatherMonitoring';
+import DeviceManagement from './pages/DeviceManagement';
+import AnalyticsHub from './pages/AnalyticsHub';
+import Settings from './pages/Settings';
+import PrecisionSoilTesting from './pages/PrecisionSoilTesting';
+import Reports from './pages/Reports';
+import StorageMonitoring from './pages/StorageMonitoring';
 
 const PageWrapper = ({ children }) => (
   <motion.div
@@ -52,9 +63,9 @@ const BottomNav = () => {
   ];
 
   return (
-    <nav style={{ 
+    <nav style={{
       position: 'relative', background: '#FFFFFF', borderTop: '1px solid #F1F5F9',
-      height: '75px', display: 'flex', justifyContent: 'space-around', 
+      height: '65px', display: 'flex', justifyContent: 'space-around',
       alignItems: 'center', padding: '0 10px', zIndex: 1000,
       boxShadow: '0 -4px 20px rgba(0,0,0,0.03)', flexShrink: 0
     }}>
@@ -66,16 +77,15 @@ const BottomNav = () => {
             key={item.path} whileTap={{ scale: 0.9 }}
             onClick={() => navigate(item.path)}
             style={{
-              background: 'transparent', border: 'none', display: 'flex', flexDirection: 'column', 
-              alignItems: 'center', gap: '4px', color: isActive ? '#10B981' : '#94A3B8', 
-              padding: '8px 0', flex: 1, cursor: 'pointer', transition: '0.3s'
+              background: 'transparent', border: 'none', display: 'flex', flexDirection: 'column',
+              alignItems: 'center', gap: '2px', color: isActive ? '#10B981' : '#94A3B8',
+              padding: '4px 0', flex: 1, cursor: 'pointer', transition: '0.3s'
             }}
           >
             <div style={{ position: 'relative' }}>
-              <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
-              {isActive && <motion.div layoutId="navTab" style={{ position: 'absolute', bottom: -12, left: '50%', transform: 'translateX(-50%)', width: '4px', height: '4px', borderRadius: '50%', background: '#10B981' }} />}
+              <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
             </div>
-            <span style={{ fontSize: '0.6rem', fontWeight: isActive ? 950 : 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{item.id}</span>
+            <span style={{ fontSize: '0.55rem', fontWeight: isActive ? 950 : 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{item.id}</span>
           </motion.button>
         );
       })}
@@ -94,18 +104,18 @@ const MainLayout = ({ children }) => {
   const titles = {
     '/dashboard': 'Dashboard',
     '/analytics': 'Analytics',
-    '/irrigation': 'Irrigation',
-    '/weather': 'Weather',
+    '/irrigation': 'Irigataion Control',
+    '/weather': 'Weather Station',
     '/soil-monitoring': 'Soil Monitor',
-    '/storage-hub': 'Storage',
-    '/device-area': 'Devices',
-    '/camera': 'Live Camera',
+    '/storage-hub': 'Storage Monitor',
+    '/device-area': 'Device Managmenet',
+    '/camera': 'Camera',
     '/alerts': 'Alerts',
     '/profile': 'Profile',
     '/settings': 'Settings',
-    '/reports': 'Reports',
-    '/map-view': 'Field Map',
-    '/precision-soil-testing': 'Soil Lab'
+    '/reports': 'Farm Report',
+    '/map-view': 'Feild map',
+    '/precision-soil-testing': 'Soil Test'
   };
 
   return (
@@ -132,14 +142,33 @@ const AppRoutes = () => {
   const location = useLocation();
 
   useEffect(() => {
-    CapApp.addListener('backButton', () => {
-      if (['/dashboard', '/login', '/'].includes(location.pathname)) CapApp.exitApp();
-      else navigate(-1);
-    });
-  }, [location, navigate]);
+    let listener;
+    const initListener = async () => {
+      try {
+        if (CapApp && typeof CapApp.addListener === 'function') {
+          listener = await CapApp.addListener('backButton', () => {
+            if (['/dashboard', '/login', '/'].includes(location.pathname)) {
+              CapApp.exitApp();
+            } else {
+              navigate(-1);
+            }
+          });
+        }
+      } catch (e) {
+        console.warn("Capacitor listener setup failed:", e);
+      }
+    };
+
+    initListener();
+    return () => {
+      if (listener && typeof listener.remove === 'function') {
+        listener.remove();
+      }
+    };
+  }, [location.pathname, navigate]);
 
   return (
-    <Routes location={location} key={location.pathname}>
+    <Routes>
       <Route path="/" element={<Splash />} />
       <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
       <Route path="/dashboard" element={<MainLayout><Dashboard /></MainLayout>} />

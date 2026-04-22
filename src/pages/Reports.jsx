@@ -139,7 +139,7 @@ const Reports = () => {
                </p>
             </div>
 
-            <div style={{ marginTop: '3rem', pt: '1.5rem', borderTop: `1px solid ${COLORS.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ marginTop: '3rem', paddingTop: '1.5rem', borderTop: `1px solid ${COLORS.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                <div style={{ width: '40px', height: '40px', background: COLORS.terminal, borderRadius: '8px' }} />
                <p style={{ fontSize: '0.6rem', fontWeight: 950, color: COLORS.subtext }}>AUTHORIZED SYSTEM DOCUMENT</p>
             </div>

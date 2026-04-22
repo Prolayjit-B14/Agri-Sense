@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useApp } from '../context/AppContext';
 import { 
-  Bell, Menu, Search, User
+  Bell, Menu, Search, User, ChevronRight
 } from 'lucide-react';
 
 const AgriSenseLogo = () => (
@@ -45,13 +45,23 @@ const TopBar = ({ title }) => {
 
       {/* LEFT: MENU & TITLE */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <motion.button 
-          whileTap={{ scale: 0.9 }}
-          onClick={() => setIsSidebarOpen(prev => !prev)}
-          style={{ background: '#F8FAFC', border: '1px solid #F1F5F9', color: '#1E293B', cursor: 'pointer', width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
-        >
-          <Menu size={19} strokeWidth={2.5} />
-        </motion.button>
+        {location.pathname === '/dashboard' ? (
+          <motion.button 
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setIsSidebarOpen(prev => !prev)}
+            style={{ background: '#F8FAFC', border: '1px solid #F1F5F9', color: '#1E293B', cursor: 'pointer', width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+          >
+            <Menu size={19} strokeWidth={2.5} />
+          </motion.button>
+        ) : (
+          <motion.button 
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setIsSidebarOpen(prev => !prev)}
+            style={{ background: '#F8FAFC', border: '1px solid #F1F5F9', color: '#1E293B', cursor: 'pointer', width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+          >
+            <Menu size={19} strokeWidth={2.5} />
+          </motion.button>
+        )}
         
         {location.pathname === '/dashboard' ? (
           <AgriSenseLogo />

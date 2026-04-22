@@ -82,7 +82,7 @@ const SettingsV4_0 = () => {
               <div>
                  <p style={{ fontSize: '0.6rem', fontWeight: 950, color: COLORS.subtext, marginBottom: '6px', textTransform: 'uppercase' }}>Master Project Name</p>
                  <input 
-                    type="text" value={farmInfo.projectName} 
+                    type="text" value={farmInfo?.projectName || ''} 
                     onChange={(e) => updateBranding({ projectName: e.target.value })}
                     style={{ width: '100%', padding: '12px', borderRadius: '14px', border: `1px solid ${COLORS.border}`, background: '#F8FAFC', fontWeight: 800, color: COLORS.text, fontSize: '0.9rem', outline: 'none' }} 
                  />
@@ -90,7 +90,7 @@ const SettingsV4_0 = () => {
               <div>
                  <p style={{ fontSize: '0.6rem', fontWeight: 950, color: COLORS.subtext, marginBottom: '6px', textTransform: 'uppercase' }}>Farm / Client Identifier</p>
                  <input 
-                    type="text" value={farmInfo.name} 
+                    type="text" value={farmInfo?.name || ''} 
                     onChange={(e) => updateBranding({ name: e.target.value })}
                     style={{ width: '100%', padding: '12px', borderRadius: '14px', border: `1px solid ${COLORS.border}`, background: '#F8FAFC', fontWeight: 800, color: COLORS.text, fontSize: '0.9rem', outline: 'none' }} 
                  />
@@ -138,7 +138,7 @@ const SettingsV4_0 = () => {
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
           <span style={{ fontSize: '0.75rem', fontWeight: 800, opacity: 0.8 }}>Relase Version</span>
-          <span style={{ fontSize: '0.8rem', fontWeight: 950, color: COLORS.primary }}>v{farmInfo.version} ULTRA</span>
+          <span style={{ fontSize: '0.8rem', fontWeight: 950, color: COLORS.primary }}>v{farmInfo?.version || '2.8.0'} ULTRA</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
           <span style={{ fontSize: '0.75rem', fontWeight: 800, opacity: 0.8 }}>System Integrity</span>

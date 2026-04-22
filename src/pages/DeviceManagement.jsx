@@ -1,14 +1,22 @@
-import React, { useState, useMemo, useEffect } from 'react';
+/**
+ * AgriSense v2.8.0 Device Management
+ * Comprehensive cluster infrastructure monitoring, hardware node diagnostics, and connection integrity analysis.
+ */
+
+// ─── IMPORTS ────────────────────────────────────────────────────────────────
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useApp } from '../context/AppContext';
 import { 
-  Cpu, Signal, Battery, RefreshCw, Sprout, 
-  Archive, AlertCircle, Power, Sliders, ShieldCheck,
-  Database, Activity, Wifi, Info, Zap, CloudRain,
-  Thermometer, Droplet, Gauge, Network, Clock, CheckCircle2, XCircle
+  RefreshCw, Sprout, Archive, AlertCircle, 
+  Power, Sliders, ShieldCheck, Database, 
+  Activity, Wifi, Zap, CloudRain, Network, 
+  Clock, CheckCircle2, XCircle
 } from 'lucide-react';
 
-// ─── DESIGN TOKENS ────────────────────────────────────────────────────────
+// Context & Utils
+import { useApp } from '../context/AppContext';
+
+// ─── DESIGN TOKENS ─────────────────────────────────────────────────────────
 const COLORS = {
   primary: '#10B981',
   secondary: '#3B82F6',
@@ -18,10 +26,10 @@ const COLORS = {
   subtext: '#64748B',
   bg: '#F8FAFC',
   border: '#F1F5F9',
-  glass: 'rgba(255, 255, 255, 0.7)'
+  terminal: '#0F172A'
 };
 
-// ─── SUB-COMPONENTS ───────────────────────────────────────────────────────
+// ─── SUB-COMPONENTS ────────────────────────────────────────────────────────
 
 const ActionBtn = ({ icon: Icon, label, onClick, disabled, color = COLORS.subtext }) => (
   <motion.button 
@@ -62,7 +70,6 @@ const SensorIndicator = ({ label, status }) => {
 
 const NodeCard = ({ node, index }) => {
   const isOffline = node.connectionState === 'OFFLINE';
-  const isPartial = node.connectionState === 'PARTIAL';
   
   const statusConfig = {
     CONNECTED: { label: 'Fully Connected', color: '#10B981', bg: '#DCFCE7' },
@@ -100,7 +107,7 @@ const NodeCard = ({ node, index }) => {
         </div>
       </div>
 
-      {/* Sensor List */}
+      {/* Sensor Matrix */}
       <div style={{ background: '#F8FAFC', borderRadius: '20px', padding: '1.25rem', marginBottom: '1.5rem' }}>
         <h5 style={{ fontSize: '0.65rem', fontWeight: 950, color: COLORS.subtext, textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.05em' }}>Sensor Matrix</h5>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
@@ -109,44 +116,26 @@ const NodeCard = ({ node, index }) => {
       </div>
 
       {/* Engineering Metrics */}
-      {!isOffline && (
+      {!isOffline ? (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '1.5rem' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.65rem', fontWeight: 800, color: COLORS.subtext }}>
-              <Wifi size={12} /> RSSI
-            </div>
-            <div style={{ fontSize: '0.85rem', fontWeight: 950, color: node.rssi < -80 ? COLORS.warning : COLORS.text }}>
-              {node.rssi} dBm {node.rssi < -80 && <span style={{ fontSize: '0.6rem', color: COLORS.warning }}>(Weak)</span>}
-            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.65rem', fontWeight: 800, color: COLORS.subtext }}><Wifi size={12} /> RSSI</div>
+            <div style={{ fontSize: '0.85rem', fontWeight: 950, color: node.rssi < -80 ? COLORS.warning : COLORS.text }}>{node.rssi} dBm</div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.65rem', fontWeight: 800, color: COLORS.subtext }}>
-              <Network size={12} /> Packet Loss
-            </div>
-            <div style={{ fontSize: '0.85rem', fontWeight: 950, color: node.packetLoss > 5 ? COLORS.danger : COLORS.text }}>
-              {node.packetLoss}%
-            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.65rem', fontWeight: 800, color: COLORS.subtext }}><Network size={12} /> Packet Loss</div>
+            <div style={{ fontSize: '0.85rem', fontWeight: 950, color: node.packetLoss > 5 ? COLORS.danger : COLORS.text }}>{node.packetLoss}%</div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.65rem', fontWeight: 800, color: COLORS.subtext }}>
-              <Activity size={12} /> Latency
-            </div>
-            <div style={{ fontSize: '0.85rem', fontWeight: 950, color: node.latency > 200 ? COLORS.danger : (node.latency > 80 ? COLORS.warning : COLORS.primary) }}>
-              {node.latency} ms
-            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.65rem', fontWeight: 800, color: COLORS.subtext }}><Activity size={12} /> Latency</div>
+            <div style={{ fontSize: '0.85rem', fontWeight: 950, color: node.latency > 200 ? COLORS.danger : (node.latency > 80 ? COLORS.warning : COLORS.primary) }}>{node.latency} ms</div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.65rem', fontWeight: 800, color: COLORS.subtext }}>
-              <Clock size={12} /> Uptime
-            </div>
-            <div style={{ fontSize: '0.85rem', fontWeight: 950, color: COLORS.text }}>
-              {node.uptime}
-            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.65rem', fontWeight: 800, color: COLORS.subtext }}><Clock size={12} /> Uptime</div>
+            <div style={{ fontSize: '0.85rem', fontWeight: 950, color: COLORS.text }}>{node.uptime}</div>
           </div>
         </div>
-      )}
-
-      {isOffline && (
+      ) : (
         <div style={{ padding: '1.5rem', background: '#FEF2F2', borderRadius: '20px', marginBottom: '1.5rem', textAlign: 'center' }}>
           <AlertCircle size={24} color={COLORS.danger} style={{ marginBottom: '8px' }} />
           <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 900, color: COLORS.danger }}>DEVICE DISCONNECTED</p>
@@ -164,68 +153,55 @@ const NodeCard = ({ node, index }) => {
   );
 };
 
-// ─── MAIN COMPONENT ───────────────────────────────────────────────────────
+// ─── MAIN COMPONENT ────────────────────────────────────────────────────────
 
 const DeviceManagement = () => {
-  const { sensorData, mqttStatus, lastGlobalUpdate } = useApp();
+  // ─── HOOKS & CONTEXT ──────────────────────────────────────────────────────
+  const { sensorData } = useApp();
+  
+  // ─── STATE ────────────────────────────────────────────────────────────────
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState(null);
 
-  // Validate Node Status Logic
-  const getSensorStatus = (val, range = null) => {
-    if (val === null || val === undefined) return 'inactive';
-    if (range && (val < range[0] || val > range[1])) return 'error';
-    return 'active';
-  };
-
+  // ─── DERIVED STATE ────────────────────────────────────────────────────────
   const processedNodes = useMemo(() => {
-    // 1. Soil Node
-    const soilSensors = [
-      { name: 'Moisture', status: getSensorStatus(sensorData.soil?.moisture, [0, 100]) },
-      { name: 'NPK', status: getSensorStatus(sensorData.soil?.npk?.n, [0, 1000]) },
-      { name: 'pH', status: getSensorStatus(sensorData.soil?.ph, [0, 14]) }
-    ];
-    const isSoilOnline = sensorData.soil?.moisture !== null;
-    
-    // 2. Weather Node
-    const weatherSensors = [
-      { name: 'Temperature', status: getSensorStatus(sensorData.weather?.temp, [-40, 85]) },
-      { name: 'Humidity', status: getSensorStatus(sensorData.weather?.humidity, [0, 100]) },
-      { name: 'Rainfall', status: getSensorStatus(sensorData.weather?.rainLevel, [0, 1000]) },
-      { name: 'LDR', status: getSensorStatus(sensorData.weather?.lightIntensity, [0, 10000]) }
-    ];
-    const isWeatherOnline = sensorData.weather?.temp !== null;
+    const getSensorStatus = (val, range = null) => {
+      if (val === null || val === undefined) return 'inactive';
+      if (range && (val < range[0] || val > range[1])) return 'error';
+      return 'active';
+    };
 
-    // 3. Storage Node
-    const storageSensors = [
-      { name: 'AQI', status: getSensorStatus(sensorData.storage?.aqi, [0, 500]) },
-      { name: 'Gas', status: getSensorStatus(sensorData.storage?.mq135, [0, 1000]) },
-      { name: 'Temperature', status: getSensorStatus(sensorData.storage?.temp, [-40, 85]) },
-      { name: 'Humidity', status: getSensorStatus(sensorData.storage?.humidity, [0, 100]) }
-    ];
-    const isStorageOnline = sensorData.storage?.temp !== null;
-
-    // 4. Irrigation Node
-    const irrigationSensors = [
-      { name: 'Water Level', status: getSensorStatus(sensorData.water?.level, [0, 100]) },
-      { name: 'Pump Control', status: 'active' } // Virtual sensor for control state
-    ];
-    const isIrrigationOnline = sensorData.water?.level !== null;
-
-    const nodesMetadata = [
-      { id: 'soil', name: 'Soil Node Alpha', model: 'ESP32-S3', purpose: 'Precision Agriculture', sensors: soilSensors, isOnline: isSoilOnline, icon: Sprout, color: '#10B981', rssi: -62, latency: 24, packetLoss: 0, uptime: '12d 4h', lastSeen: '2s ago' },
-      { id: 'weather', name: 'Weather Station', model: 'ESP32', purpose: 'Environmental Monitoring', sensors: weatherSensors, isOnline: isWeatherOnline, icon: CloudRain, color: '#3B82F6', rssi: -45, latency: 18, packetLoss: 1, uptime: '45d 2h', lastSeen: 'Just now' },
-      { id: 'storage', name: 'Storage Vault', model: 'ESP32-C3', purpose: 'Preservation Safety', sensors: storageSensors, isOnline: isStorageOnline, icon: Archive, color: '#8B5CF6', rssi: -82, latency: 145, packetLoss: 4, uptime: '8d 14h', lastSeen: '15s ago' },
-      { id: 'irrigation', name: 'Irrigation Matrix', model: 'ESP32-WROOM', purpose: 'Hydration Control', sensors: irrigationSensors, isOnline: isIrrigationOnline, icon: Zap, color: '#F59E0B', rssi: -55, latency: 42, packetLoss: 0, uptime: '22d 8h', lastSeen: '5s ago' }
+    const nodes = [
+      { id: 'soil', name: 'Soil Node Alpha', model: 'ESP32-S3', purpose: 'Precision Agriculture', icon: Sprout, color: '#10B981', isOnline: sensorData.soil?.moisture !== null, sensors: [
+        { name: 'Moisture', status: getSensorStatus(sensorData.soil?.moisture, [0, 100]) },
+        { name: 'NPK', status: getSensorStatus(sensorData.soil?.npk?.n, [0, 1000]) },
+        { name: 'pH', status: getSensorStatus(sensorData.soil?.ph, [0, 14]) }
+      ]},
+      { id: 'weather', name: 'Weather Station', model: 'ESP32', purpose: 'Environmental Monitoring', icon: CloudRain, color: '#3B82F6', isOnline: sensorData.weather?.temp !== null, sensors: [
+        { name: 'Temperature', status: getSensorStatus(sensorData.weather?.temp, [-40, 85]) },
+        { name: 'Humidity', status: getSensorStatus(sensorData.weather?.humidity, [0, 100]) },
+        { name: 'Rainfall', status: getSensorStatus(sensorData.weather?.rainLevel, [0, 1000]) },
+        { name: 'LDR', status: getSensorStatus(sensorData.weather?.lightIntensity, [0, 10000]) }
+      ]},
+      { id: 'storage', name: 'Storage Vault', model: 'ESP32-C3', purpose: 'Preservation Safety', icon: Archive, color: '#8B5CF6', isOnline: sensorData.storage?.temp !== null, sensors: [
+        { name: 'AQI', status: getSensorStatus(sensorData.storage?.aqi, [0, 500]) },
+        { name: 'Gas', status: getSensorStatus(sensorData.storage?.mq135, [0, 1000]) },
+        { name: 'Temperature', status: getSensorStatus(sensorData.storage?.temp, [-40, 85]) },
+        { name: 'Humidity', status: getSensorStatus(sensorData.storage?.humidity, [0, 100]) }
+      ]},
+      { id: 'irrigation', name: 'Irrigation Matrix', model: 'ESP32-WROOM', purpose: 'Hydration Control', icon: Zap, color: '#F59E0B', isOnline: sensorData.water?.level !== null, sensors: [
+        { name: 'Water Level', status: getSensorStatus(sensorData.water?.level, [0, 100]) },
+        { name: 'Pump Control', status: 'active' }
+      ]}
     ];
 
-    return nodesMetadata.map(node => {
+    return nodes.map(node => {
       let state = 'OFFLINE';
       if (node.isOnline) {
         const allActive = node.sensors.every(s => s.status === 'active');
         state = allActive ? 'CONNECTED' : 'PARTIAL';
       }
-      return { ...node, connectionState: state };
+      return { ...node, connectionState: state, rssi: -62, latency: 24, packetLoss: 0, uptime: '12d 4h', lastSeen: '2s ago' };
     });
   }, [sensorData]);
 
@@ -235,11 +211,10 @@ const DeviceManagement = () => {
     const fullyHealthy = processedNodes.filter(n => n.connectionState === 'CONNECTED').length;
     const degraded = processedNodes.filter(n => n.connectionState === 'PARTIAL').length;
     const offline = processedNodes.filter(n => n.connectionState === 'OFFLINE').length;
-    const integrity = Math.round((online / total) * 100);
-
-    return { total, integrity, fullyHealthy, degraded, offline };
+    return { total, integrity: Math.round((online / total) * 100), fullyHealthy, degraded, offline };
   }, [processedNodes]);
 
+  // ─── HANDLERS ─────────────────────────────────────────────────────────────
   const handleScan = () => {
     setIsScanning(true);
     setScanResult(null);
@@ -249,8 +224,9 @@ const DeviceManagement = () => {
     }, 2000);
   };
 
+  // ─── RENDER ───────────────────────────────────────────────────────────────
   return (
-    <div style={{ padding: '1.25rem', background: COLORS.bg, minHeight: '100vh', paddingBottom: '100px' }}>
+    <div style={{ padding: '1.25rem', background: COLORS.bg, minHeight: '100vh', paddingBottom: '100px', fontFamily: "'Outfit', sans-serif" }}>
       
       {/* 1. CLUSTER HEALTH SUMMARY */}
       <motion.div 
@@ -262,7 +238,6 @@ const DeviceManagement = () => {
         }}
       >
         <div style={{ position: 'absolute', top: '-10%', right: '-10%', opacity: 0.05 }}><Wifi size={240} /></div>
-        
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', zIndex: 1 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
@@ -304,9 +279,7 @@ const DeviceManagement = () => {
         <h3 style={{ fontSize: '0.9rem', fontWeight: 950, color: COLORS.text, margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
           <Database size={20} color={COLORS.primary} /> ACTIVE NODE MATRIX
         </h3>
-        <div style={{ fontSize: '0.7rem', fontWeight: 800, color: COLORS.subtext }}>
-          {processedNodes.length} DEPLOYED
-        </div>
+        <div style={{ fontSize: '0.7rem', fontWeight: 800, color: COLORS.subtext }}>{processedNodes.length} DEPLOYED</div>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '2.5rem' }}>
@@ -316,8 +289,7 @@ const DeviceManagement = () => {
       {/* 3. DIAGNOSTIC CONTROL */}
       <motion.button 
         whileTap={{ scale: 0.97 }}
-        onClick={handleScan}
-        disabled={isScanning}
+        onClick={handleScan} disabled={isScanning}
         style={{ 
           width: '100%', height: '64px', borderRadius: '24px', 
           background: isScanning ? '#E2E8F0' : `linear-gradient(135deg, ${COLORS.primary}, #065F46)`,
@@ -340,7 +312,6 @@ const DeviceManagement = () => {
           <ShieldCheck size={20} /> {scanResult}
         </motion.div>
       )}
-
     </div>
   );
 };

@@ -1,9 +1,15 @@
-import mqtt from 'mqtt';
+/**
+ * AgriSense v2.8.0 MQTT Service
+ * Manages real-time telemetry stream and command publishing to hardware nodes.
+ */
+
+// ─── IMPORTS ────────────────────────────────────────────────────────────────
+import * as mqttModule from 'mqtt';
 import { MASTER_CONFIG } from '../config';
 
-/**
- * Agri Sense v6.0.0 MQTT Real-Time Linkage Service
- */
+// ─── CONFIGURATION ──────────────────────────────────────────────────────────
+const mqtt = mqttModule.default || mqttModule;
+const { connect } = mqtt;
 
 const MQTT_CONFIG = {
   host: MASTER_CONFIG.MQTT_BROKER,
@@ -12,50 +18,56 @@ const MQTT_CONFIG = {
   path: '/mqtt'
 };
 
+// ─── CORE SERVICE CLASS ──────────────────────────────────────────────────────
+
 class MqttService {
   constructor() {
     this.client = null;
+    this.onMessage = null;
+    this.onStatus = null;
   }
 
+  /**
+   * Establishes a connection to the MQTT broker and subscribes to the telemetry wildcard.
+   * @param {Function} onMessageCallback - Handler for incoming telemetry.
+   * @param {Function} onStatusCallback - Handler for connection status updates.
+   */
   connect(onMessageCallback, onStatusCallback) {
-    // 🔗 Sync callbacks
     this.onMessage = onMessageCallback;
     this.onStatus = onStatusCallback;
 
+    if (typeof connect !== 'function') {
+      console.error("MQTT: Library instantiation failure.");
+      if (this.onStatus) this.onStatus('error');
+      return;
+    }
+
     if (this.client && this.client.connected) {
-      console.log("MQTT: Already connected. Callbacks synced.");
       if (this.onStatus) this.onStatus('connected');
       return;
     }
     
-    console.log("MQTT: Initializing Field Connection...");
-    
-    // Connect with Reconnection Strategy
-    this.client = mqtt.connect(`wss://${MQTT_CONFIG.host}:${MQTT_CONFIG.port}${MQTT_CONFIG.path}`, {
+    // Initialize connection with industrial-grade resilience
+    this.client = connect(`wss://${MQTT_CONFIG.host}:${MQTT_CONFIG.port}${MQTT_CONFIG.path}`, {
       reconnectPeriod: 5000,
       connectTimeout: 30 * 1000,
       keepalive: 60
     });
 
+    // ─── EVENT HANDLERS ─────────────────────────────────────────────────────
+    
     this.client.on('connect', () => {
-      console.log("MQTT: Connected to Agri Sense Cloud Broker ✅");
+      console.log("MQTT: Connected to AgriSense Cloud Broker ✅");
       if (this.onStatus) this.onStatus('connected');
-      this.client.subscribe('agrisense/field_a/sensors');
-      this.client.subscribe('agrisense/field_a/camera');
+      this.client.subscribe('agrisense/#'); // Wildcard for all nodes
     });
 
     this.client.on('reconnect', () => {
-      console.log("MQTT: Attempting Reconnection... 🔄");
       if (this.onStatus) this.onStatus('reconnecting');
     });
 
     this.client.on('offline', () => {
-      console.log("MQTT: Broker Offline ⚠️");
       if (this.onStatus) this.onStatus('offline');
-    });
-
-    this.client.on('close', () => {
-      if (this.onStatus) this.onStatus('closed');
     });
 
     this.client.on('message', (topic, message) => {
@@ -73,22 +85,30 @@ class MqttService {
     });
   }
 
-  // Publish Commands (e.g. Turn Pump ON)
+  /**
+   * Publishes a control command to the hardware nodes.
+   * @param {Object} action - The command payload (e.g., { action: "PUMP_ON" })
+   */
   publishCommand(action) {
     if (this.client) {
       const topic = 'agrisense/field_a/commands';
       const message = JSON.stringify(action);
       this.client.publish(topic, message);
-      console.log(`MQTT: Command Published to ${topic}:`, action);
+      console.log(`MQTT: Command Published:`, action);
     }
   }
 
+  /**
+   * Gracefully terminates the MQTT connection.
+   */
   disconnect() {
     if (this.client) {
       this.client.end();
     }
   }
 }
+
+// ─── EXPORT ──────────────────────────────────────────────────────────────────
 
 const mqttService = new MqttService();
 export default mqttService;

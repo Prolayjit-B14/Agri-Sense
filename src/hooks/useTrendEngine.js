@@ -77,21 +77,23 @@ const analyzeNPK = (nSeries, pSeries, kSeries) => {
 
 // --- 5️⃣ WEIGHTED SOIL HEALTH SCORE ---
 const computeHealthScore = (moistureSeries, tempSeries, phSeries, nSeries, pSeries, kSeries) => {
-  if (moistureSeries.length < 3) return null;
+  // CRITICAL: Moisture is the lifeline of the score
+  if (moistureSeries.length < 2) return null;
 
   const lastM = moistureSeries[moistureSeries.length - 1];
   const mScore = (lastM >= 35 && lastM <= 65) ? 100 : (lastM >= 25 && lastM <= 80 ? 70 : 30);
 
   const lastT = tempSeries.length > 0 ? tempSeries[tempSeries.length - 1] : null;
-  const tScore = lastT !== null ? (lastT < 30 ? 100 : lastT < 38 ? 60 : 20) : 0;
+  const tScore = lastT !== null ? (lastT < 30 ? 100 : lastT < 38 ? 60 : 20) : null;
 
   const lastPH = phSeries.length > 0 ? phSeries[phSeries.length - 1] : null;
-  const pHScore = lastPH !== null ? (lastPH >= 6.0 && lastPH <= 7.5 ? 100 : 60) : 0;
+  const pHScore = lastPH !== null ? (lastPH >= 6.0 && lastPH <= 7.5 ? 100 : 60) : null;
 
   const lastN = nSeries.length > 0 ? nSeries[nSeries.length - 1] : null;
   const lastP = pSeries.length > 0 ? pSeries[pSeries.length - 1] : null;
   const lastK = kSeries.length > 0 ? kSeries[kSeries.length - 1] : null;
-  let npkScore = 0;
+  
+  let npkScore = null;
   if (lastN !== null && lastP !== null && lastK !== null) {
     const total = lastN + lastP + lastK;
     if (total > 0) {
@@ -100,12 +102,18 @@ const computeHealthScore = (moistureSeries, tempSeries, phSeries, nSeries, pSeri
     }
   }
 
-  // Weightage: M 30% | T 25% | pH 25% | NPK 20%
-  // BUT: if any critical sensor is 0 (offline), the score should reflect that.
-  if (tScore === 0 || pHScore === 0) return null; // Incomplete data
+  // Weightage: M 35% | T 25% | pH 20% | NPK 20%
+  // If a score is null, we distribute its weight or keep the final score as null if critical
+  if (mScore === null) return null;
 
-  const weighted = (mScore * 0.30) + (tScore * 0.25) + (pHScore * 0.25) + (npkScore * 0.20);
-  return Math.round(weighted);
+  let totalWeight = 35;
+  let finalScore = mScore * 0.35;
+
+  if (tScore !== null) { finalScore += tScore * 0.25; totalWeight += 25; }
+  if (pHScore !== null) { finalScore += pHScore * 0.20; totalWeight += 20; }
+  if (npkScore !== null) { finalScore += npkScore * 0.20; totalWeight += 20; }
+
+  return Math.round((finalScore / totalWeight) * 100);
 };
 
 const scoreLabel = (score) => {

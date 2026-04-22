@@ -1,20 +1,27 @@
+/**
+ * AgriSense v2.8.0 Analytics Hub
+ * Pattern-based trend synthesis, forensic telemetry charts, and regional data modeling.
+ */
+
+// ─── IMPORTS ────────────────────────────────────────────────────────────────
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useApp } from '../context/AppContext';
 import { 
-  Sprout, Droplets, Archive, CloudRain, Sun, 
-  ExternalLink, Activity, ArrowRight, Zap,
-  BarChart3, LineChart as LineChartIcon, ShieldCheck
+  Sprout, Archive, CloudRain, 
+  Activity, ArrowRight, LineChart as LineChartIcon 
 } from 'lucide-react';
 import { 
   ResponsiveContainer, AreaChart, Area, 
   XAxis, YAxis, Tooltip, BarChart, Bar, Cell, LineChart, Line,
   CartesianGrid
 } from 'recharts';
+
+// Context & Utils
+import { useApp } from '../context/AppContext';
 import * as Engine from '../utils/analyticsEngine';
 
-// ─── DESIGN TOKENS ────────────────────────────────────────────────────────
+// ─── DESIGN TOKENS ─────────────────────────────────────────────────────────
 const COLORS = {
   soil: '#10B981',
   water: '#3B82F6',
@@ -27,19 +34,7 @@ const COLORS = {
   border: '#F1F5F9'
 };
 
-// ─── SUB-COMPONENTS ───────────────────────────────────────────────────────
-
-const StatusBadge = ({ isOnline }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: isOnline ? `${COLORS.soil}10` : '#F1F5F9', padding: '6px 12px', borderRadius: '12px' }}>
-    <motion.div 
-      animate={isOnline ? { opacity: [1, 0.4, 1] } : {}} transition={{ duration: 2, repeat: Infinity }}
-      style={{ width: '8px', height: '8px', borderRadius: '50%', background: isOnline ? COLORS.soil : COLORS.subtext }} 
-    />
-    <span style={{ fontSize: '0.65rem', fontWeight: 950, color: isOnline ? COLORS.soil : COLORS.subtext, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-      {isOnline ? 'Network Active' : 'Offline'}
-    </span>
-  </div>
-);
+// ─── SUB-COMPONENTS ────────────────────────────────────────────────────────
 
 const TrendCard = ({ data }) => (
   <motion.div 
@@ -51,8 +46,8 @@ const TrendCard = ({ data }) => (
     }}
   >
     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
-      <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: `${COLORS.soil}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Activity size={16} color={COLORS.soil} />
+      <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: !data.summary ? '#F1F5F9' : `${COLORS.soil}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Activity size={16} color={!data.summary ? '#CBD5E1' : COLORS.soil} />
       </div>
       <h3 style={{ fontSize: '0.8rem', fontWeight: 950, color: COLORS.text, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Forensic Synthesis</h3>
     </div>
@@ -131,20 +126,25 @@ const AnalyticsChart = ({ title, type = 'area', data, dataKeys, colors, unit = '
   );
 };
 
-// ─── MAIN SCREEN ──────────────────────────────────────────────────────────
+// ─── MAIN COMPONENT ────────────────────────────────────────────────────────
 
 const AnalyticsHub = () => {
-  const { sensorHistory } = useApp();
+  // ─── HOOKS & CONTEXT ──────────────────────────────────────────────────────
   const navigate = useNavigate();
   const location = useLocation();
+  const { sensorHistory } = useApp();
+  
+  // ─── STATE ────────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState(location.state?.tab || 'Soil');
   
+  // ─── EFFECTS ──────────────────────────────────────────────────────────────
   useEffect(() => {
     if (location.state?.tab) {
       setActiveTab(location.state.tab);
     }
   }, [location.state]);
   
+  // ─── DERIVED STATE ────────────────────────────────────────────────────────
   const analysis = useMemo(() => ({
     soil: Engine.analyzeSoil(sensorHistory || []),
     weather: Engine.analyzeWeather(sensorHistory || []),
@@ -171,10 +171,11 @@ const AnalyticsHub = () => {
     { id: 'Storage', icon: Archive, color: COLORS.storage },
   ];
 
+  // ─── RENDER ───────────────────────────────────────────────────────────────
   return (
-    <div style={{ background: COLORS.bg, minHeight: '100vh', padding: '1.25rem', paddingBottom: '100px' }}>
+    <div style={{ background: COLORS.bg, minHeight: '100vh', padding: '1.25rem', paddingBottom: '40px' }}>
       
-      {/* HORIZONTAL TAB SELECTOR */}
+      {/* Horizontal Tab Selector */}
       <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginBottom: '1.5rem', paddingBottom: '8px' }} className="no-scrollbar">
         {tabs.map(tab => (
           <motion.button
@@ -211,17 +212,12 @@ const AnalyticsHub = () => {
               <AnalyticsChart title="Gas (MQ135)" data={chartData} dataKeys="gas" colors={COLORS.storage} unit="ppm" insight={analysis.storage.gas.insight} />
               <AnalyticsChart title="Internal Stability" type="line" data={chartData} dataKeys={['gas']} colors={[COLORS.storage]} insight="Storage environment metrics." />
             </>}
-
           </div>
 
           <motion.button
             whileTap={{ scale: 0.98 }}
             onClick={() => {
-              const mapping = {
-                'Soil': '/soil-monitoring',
-                'Weather': '/weather',
-                'Storage': '/storage-hub',
-              };
+              const mapping = { 'Soil': '/soil-monitoring', 'Weather': '/weather', 'Storage': '/storage-hub' };
               navigate(mapping[activeTab]);
             }}
             style={{ width: '100%', padding: '1.25rem', borderRadius: '24px', background: 'white', border: `1px solid ${COLORS.border}`, color: COLORS.text, fontSize: '0.9rem', fontWeight: 950, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginTop: '1.5rem', cursor: 'pointer' }}

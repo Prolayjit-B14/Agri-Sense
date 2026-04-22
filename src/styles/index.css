@@ -1,5 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 
+html {
+  scroll-behavior: smooth;
+}
+
 :root {
   /* Hyper-Emerald 4.0 Pro Palette */
   --primary: #059669;
@@ -50,13 +54,11 @@ body {
   margin: 0;
   padding: 0;
   width: 100%;
-  height: 100%;
-  overflow: hidden; /* Lock the body */
+  min-height: 100vh;
   background-color: #F8FAFC;
   font-family: 'Outfit', system-ui, -apple-system, sans-serif;
   color: #0f172a;
   -webkit-font-smoothing: antialiased;
-  position: fixed; /* Hard lock for mobile */
 }
 
 #root {
