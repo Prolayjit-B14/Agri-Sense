@@ -33,7 +33,7 @@ const THEME = {
 
 const SensorDot = ({ label, status }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: status === 'active' ? '#34D399' : '#EF4444', opacity: status === 'active' ? 1 : 0.5 }} />
+    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: status === 'active' ? '#34D399' : '#94A3B8', opacity: status === 'active' ? 1 : 0.6 }} />
     <span style={{ fontSize: '0.6rem', fontWeight: 800, color: 'white', opacity: 0.8 }}>{label}</span>
   </div>
 );
@@ -101,16 +101,16 @@ const StorageMonitoring = () => {
         
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', zIndex: 2 }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.15)', padding: '4px 10px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)', marginBottom: '12px', width: 'fit-content' }}>
-              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: isOnline ? '#34D399' : '#EF4444' }} />
-              <span style={{ fontSize: '0.6rem', fontWeight: 950, textTransform: 'uppercase' }}>NODE {isOnline ? 'ACTIVE' : 'OFFLINE'}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.15)', padding: '6px 12px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)', marginBottom: '16px', width: 'fit-content' }}>
+              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: isOnline ? '#34D399' : '#94A3B8' }} />
+              <span style={{ fontSize: '0.6rem', fontWeight: 950, textTransform: 'uppercase', letterSpacing: '0.1em' }}>NODE {isOnline ? 'ACTIVE' : 'OFFLINE'}</span>
             </div>
-            <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 800, opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Storage Stability</p>
-            <h1 style={{ margin: '4px 0', fontSize: '3.5rem', fontWeight: 950, letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>{storageScore !== null ? storageScore : '--'} <span style={{ fontSize: '1.2rem', opacity: 0.6 }}>%</span></h1>
+            <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 800, opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.12em' }}>Storage Stability</p>
+            <h1 style={{ margin: '4px 0', fontSize: '3.8rem', fontWeight: 950, letterSpacing: '-0.03em', whiteSpace: 'nowrap', lineHeight: 1 }}>{storageScore !== null ? storageScore : '--'}<span style={{ fontSize: '1.4rem', opacity: 0.6, marginLeft: '4px' }}>%</span></h1>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <p style={{ margin: 0, fontSize: '0.6rem', fontWeight: 800, opacity: 0.6 }}>LAST SYNC</p>
-            <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 900 }}>{lastGlobalUpdate || '--:--'}</p>
+            <p style={{ margin: 0, fontSize: '0.6rem', fontWeight: 800, opacity: 0.6, letterSpacing: '0.05em' }}>LAST SYNC</p>
+            <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 900 }}>{lastGlobalUpdate || '--:--'}</p>
           </div>
         </div>
 
@@ -126,8 +126,8 @@ const StorageMonitoring = () => {
 
       {/* ─── DIAGNOSTIC GRID ─── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-        <SensorCard title="Temperature" value={stats.temp} unit="°C" icon={Thermometer} color="#EF4444" isOffline={!isOnline} statusText={stats.temp > 12 ? 'High' : 'Safe'} />
-        <SensorCard title="Humidity" value={stats.hum} unit="%" icon={Droplet} color="#3B82F6" isOffline={!isOnline} statusText={stats.hum > 95 ? 'High' : 'Optimal'} />
+        <SensorCard title="Temperature" value={stats.temp} unit="°C" icon={Thermometer} color="#F43F5E" isOffline={!isOnline} statusText={stats.temp > 12 ? 'High' : 'Safe'} />
+        <SensorCard title="Humidity" value={stats.hum} unit="%" icon={Droplet} color="#0EA5E9" isOffline={!isOnline} statusText={stats.hum > 95 ? 'High' : 'Optimal'} />
         <SensorCard title="Gas Level" value={stats.gas} unit="ppm" icon={Wind} color="#F59E0B" isOffline={!isOnline} statusText={stats.gas > 400 ? 'Warning' : 'Normal'} />
         <SensorCard title="Air Quality" value={isOnline ? '98' : '--'} unit="%" icon={ShieldCheck} color="#10B981" isOffline={!isOnline} statusText="Protected" />
       </div>

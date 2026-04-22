@@ -36,7 +36,7 @@ const TANK_CAPACITY = 6000; // Total Liters
 
 const SensorDot = ({ label, status }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: status === 'active' ? '#34D399' : '#EF4444', opacity: status === 'active' ? 1 : 0.5 }} />
+    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: status === 'active' ? '#34D399' : '#94A3B8', opacity: status === 'active' ? 1 : 1 }} />
     <span style={{ fontSize: '0.6rem', fontWeight: 800, color: 'white', opacity: 0.8 }}>{label}</span>
   </div>
 );
@@ -91,7 +91,7 @@ const IrrigationControl = () => {
          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', zIndex: 2 }}>
            <div>
              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.15)', padding: '4px 10px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)', marginBottom: '12px', width: 'fit-content' }}>
-               <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: stats.level !== null ? '#34D399' : '#EF4444' }} />
+               <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: stats.level !== null ? '#34D399' : '#94A3B8' }} />
                <span style={{ fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase' }}>TANK {stats.level !== null ? 'ONLINE' : 'OFFLINE'}</span>
              </div>
              <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 800, opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Water Reserve</p>

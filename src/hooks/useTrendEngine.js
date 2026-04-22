@@ -22,57 +22,54 @@ const extractSeries = (history, selector) => {
 
 // --- 1️⃣ MOISTURE TREND ---
 const analyzeMoisture = (series) => {
-  if (series.length < 3) return { trend: 'offline', insight: '---', color: '#CBD5E1' };
+  if (series.length < 2) return { trend: 'offline', insight: '---', color: '#CBD5E1' };
 
   const rate = rateOfChange(series);
   const vari = variation(series);
   const lastVal = series[series.length - 1];
 
   if (vari > 15) return { trend: 'unstable', insight: 'Fluctuating moisture detected', color: '#F59E0B' };
-  if (rate > 5) return { trend: 'increasing', insight: 'Moisture gradually improving', color: '#10B981' };
-  if (rate < -5) return { trend: 'decreasing', insight: 'Moisture gradually dropping', color: '#EF4444' };
-  if (lastVal >= 35 && lastVal <= 65) return { trend: 'stable', insight: 'Moisture stable in optimal range', color: '#10B981' };
+  if (rate > 0.1) return { trend: 'increasing', insight: 'Moisture gradually improving', color: '#10B981' };
+  if (rate < -0.1) return { trend: 'decreasing', insight: 'Moisture gradually dropping', color: '#EF4444' };
+  if (lastVal >= 30 && lastVal <= 60) return { trend: 'stable', insight: 'Moisture stable in optimal range', color: '#10B981' };
   return { trend: 'stable', insight: 'Soil hydration level stable', color: '#64748B' };
 };
 
 // --- 2️⃣ TEMPERATURE TREND ---
 const analyzeTemperature = (series) => {
-  if (series.length < 3) return { trend: 'offline', insight: '---', color: '#CBD5E1' };
+  if (series.length < 2) return { trend: 'offline', insight: '---', color: '#CBD5E1' };
 
   const rate = rateOfChange(series);
-  const lastVal = series[series.length - 1];
-
-  if (rate > 3) return { trend: 'rising', insight: 'Soil temperature rising gradually', color: '#F59E0B' };
-  if (rate < -3) return { trend: 'cooling', insight: 'Soil temperature cooling', color: '#3B82F6' };
+  
+  if (rate > 0.1) return { trend: 'increasing', insight: 'Soil temperature rising gradually', color: '#F59E0B' };
+  if (rate < -0.1) return { trend: 'decreasing', insight: 'Soil temperature cooling', color: '#3B82F6' };
   return { trend: 'stable', insight: 'Root zone temperature stable', color: '#10B981' };
 };
 
 // --- 3️⃣ pH TREND ---
 const analyzePH = (series) => {
-  if (series.length < 3) return { trend: 'offline', insight: '---', color: '#CBD5E1' };
+  if (series.length < 2) return { trend: 'offline', insight: '---', color: '#CBD5E1' };
 
-  const average = avg(series);
-  if (average >= 6.0 && average <= 7.5) return { trend: 'optimal', insight: 'pH stable in neutral range', color: '#10B981' };
-  if (average < 6.0) return { trend: 'acidic', insight: 'Low pH detected (acidic)', color: '#F59E0B' };
-  return { trend: 'alkaline', insight: 'High pH detected (alkaline)', color: '#F59E0B' };
+  const rate = rateOfChange(series);
+  const lastVal = series[series.length - 1];
+
+  if (rate > 0.02) return { trend: 'increasing', insight: 'pH increasing (Alkalization)', color: '#F59E0B' };
+  if (rate < -0.02) return { trend: 'decreasing', insight: 'pH dropping (Acidification)', color: '#EF4444' };
+  if (lastVal >= 6.0 && lastVal <= 7.5) return { trend: 'stable', insight: 'Optimal chemical balance', color: '#10B981' };
+  return { trend: 'stable', insight: 'Soil pH stable', color: '#64748B' };
 };
 
-// --- 4️⃣ NPK BALANCE ---
-const analyzeNPK = (nSeries, pSeries, kSeries) => {
-  const lastN = nSeries.length > 0 ? nSeries[nSeries.length - 1] : null;
-  const lastP = pSeries.length > 0 ? pSeries[pSeries.length - 1] : null;
-  const lastK = kSeries.length > 0 ? kSeries[kSeries.length - 1] : null;
+// --- 4️⃣ NPK TREND ---
+const analyzeNPK = (n, p, k) => {
+  if (n.length < 2) return { trend: 'offline', insight: '---', color: '#CBD5E1' };
 
-  if (lastN === null || lastP === null || lastK === null) {
-    return { trend: 'offline', insight: '---', color: '#CBD5E1' };
-  }
+  const nRate = rateOfChange(n);
+  const pRate = rateOfChange(p);
+  const kRate = rateOfChange(k);
 
-  const total = lastN + lastP + lastK;
-  if (total === 0) return { trend: 'offline', insight: '---', color: '#CBD5E1' };
-
-  const spread = Math.max(lastN/total, lastP/total, lastK/total) - Math.min(lastN/total, lastP/total, lastK/total);
-  if (spread < 0.15) return { trend: 'balanced', insight: 'Balanced nutrient profile', color: '#10B981' };
-  return { trend: 'imbalanced', insight: 'Nutrient imbalance detected', color: '#F59E0B' };
+  if (nRate > 0.1 || pRate > 0.1 || kRate > 0.1) return { trend: 'increasing', insight: 'Nutrient levels rising', color: '#10B981' };
+  if (nRate < -0.1 || pRate < -0.1 || kRate < -0.1) return { trend: 'decreasing', insight: 'Nutrient depletion detected', color: '#EF4444' };
+  return { trend: 'stable', insight: 'Nutrient balance maintained', color: '#64748B' };
 };
 
 // --- 5️⃣ WEIGHTED SOIL HEALTH SCORE ---
@@ -126,7 +123,8 @@ const scoreLabel = (score) => {
 
 // --- MAIN HOOK ---
 const useTrendEngine = (sensorHistory) => {
-  const window = (sensorHistory || []).slice(-WINDOW_SIZE);
+  const history = sensorHistory || [];
+  const window = history.slice(-WINDOW_SIZE);
 
   const moistureSeries = extractSeries(window, e => e.soil?.moisture);
   const tempSeries = extractSeries(window, e => e.soil?.temp);
@@ -135,21 +133,37 @@ const useTrendEngine = (sensorHistory) => {
   const pSeries = extractSeries(window, e => e.soil?.npk?.p);
   const kSeries = extractSeries(window, e => e.soil?.npk?.k);
 
+  const hasInitialData = moistureSeries.length >= 1;
+
   const moisture = analyzeMoisture(moistureSeries);
   const temperature = analyzeTemperature(tempSeries);
   const ph = analyzePH(phSeries);
   const npk = analyzeNPK(nSeries, pSeries, kSeries);
+
+  // Parameter-specific calibration logic
+  const patchStatus = (obj, series) => {
+    if (obj.trend === 'offline' && series.length >= 1) {
+      const lastVal = series[series.length - 1];
+      return { 
+        ...obj, 
+        trend: 'calibrating', 
+        insight: `Baseline established at ${lastVal}. Monitoring for drift...` 
+      };
+    }
+    return obj;
+  };
+
   const healthScore = computeHealthScore(moistureSeries, tempSeries, phSeries, nSeries, pSeries, kSeries);
   const scoreInfo = scoreLabel(healthScore);
 
   return {
-    moisture,
-    temperature,
-    ph,
-    npk,
+    moisture: patchStatus(moisture, moistureSeries),
+    temperature: patchStatus(temperature, tempSeries),
+    ph: patchStatus(ph, phSeries),
+    npk: patchStatus(npk, nSeries),
     healthScore,
     scoreInfo,
-    hasData: moistureSeries.length >= 3,
+    hasData: moistureSeries.length >= 1,
     dataPoints: moistureSeries.length
   };
 };

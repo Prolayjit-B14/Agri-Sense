@@ -102,7 +102,7 @@ const HealthOverview = ({ score, systemHealth }) => {
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{ 
                   width: '6px', height: '6px', borderRadius: '50%', 
-                  background: s.score !== null ? s.color : '#CBD5E1' 
+                  background: s.score !== null ? s.color : '#94A3B8' 
                 }} />
                 <span style={{ fontSize: '0.75rem', fontWeight: 600, color: COLORS.textMuted }}>{s.label}</span>
               </div>
@@ -111,7 +111,7 @@ const HealthOverview = ({ score, systemHealth }) => {
           <div style={{ marginTop: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <ShieldCheck size={16} color={healthColor} />
             <span style={{ fontSize: '0.8rem', fontWeight: 700, color: COLORS.textMain }}>
-              {isOffline ? 'System Offline' : (score < 40 ? 'Critical Attention' : score < 80 ? 'Action Recommended' : 'All Systems Optimal')}
+              {isOffline ? 'Calibrating Telemetry...' : (score < 40 ? 'Critical Attention' : score < 80 ? 'Action Recommended' : 'All Systems Optimal')}
             </span>
           </div>
         </div>
@@ -155,11 +155,12 @@ const SensorCard = ({ title, value, icon: Icon, color, status, score, onClick, n
         </div>
       </div>
       <div>
-        <div style={{ fontSize: '0.75rem', color: COLORS.textMuted, fontWeight: 500 }}>{title}</div>
+        <div style={{ fontSize: '0.65rem', color: COLORS.textMuted, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>{title}</div>
         <div style={{ 
-          fontSize: '1.45rem', fontWeight: 800, 
+          fontSize: '1.65rem', fontWeight: 950, 
           color: value === '---' ? '#CBD5E1' : hColor, 
-          marginTop: '2px', letterSpacing: '-0.02em', whiteSpace: 'nowrap' 
+          letterSpacing: '-0.02em', whiteSpace: 'nowrap',
+          lineHeight: 1
         }}>
           {value}
         </div>
@@ -169,6 +170,7 @@ const SensorCard = ({ title, value, icon: Icon, color, status, score, onClick, n
 };
 
 // ─── MAIN COMPONENT ────────────────────────────────────────────────────────
+import { RefreshCw } from 'lucide-react';
 
 const Dashboard = () => {
   // ─── HOOKS & CONTEXT ──────────────────────────────────────────────────────
@@ -176,10 +178,11 @@ const Dashboard = () => {
   const {
     sensorData, farmHealthScore, systemHealth,
     toggleActuator, actuators, ACTUATORS,
-    user, farmInfo, mqttStatus
+    user, farmInfo, mqttStatus, syncData
   } = useApp();
 
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // ─── EFFECTS ──────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -188,6 +191,12 @@ const Dashboard = () => {
   }, []);
 
   // ─── HANDLERS ─────────────────────────────────────────────────────────────
+  const handleSync = () => {
+    setIsSyncing(true);
+    syncData();
+    setTimeout(() => setIsSyncing(false), 2000);
+  };
+
   const isPumpActive = actuators ? actuators[ACTUATORS?.PUMP] : false;
 
   const getGreeting = () => {
@@ -213,7 +222,23 @@ const Dashboard = () => {
               {user?.name || 'Guest Farmer'}
             </h2>
           </div>
-          <StatusBadge status={mqttStatus} />
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={handleSync}
+              style={{ 
+                cursor: 'pointer', padding: '10px 18px', borderRadius: '18px', 
+                background: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(0,0,0,0.05)',
+                boxShadow: '0 8px 25px rgba(0,0,0,0.04)', display: 'flex', alignItems: 'center', gap: '10px'
+              }}
+            >
+              <motion.div animate={{ rotate: isSyncing ? 360 : 0 }} transition={{ duration: 1, repeat: isSyncing ? Infinity : 0, ease: "linear" }}>
+                <RefreshCw size={18} color={isSyncing ? COLORS.primary : COLORS.textMuted} />
+              </motion.div>
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: COLORS.textMuted, letterSpacing: '0.05em' }}>SYNC</span>
+            </motion.button>
+          </div>
         </div>
 
         <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '6px', color: COLORS.textMuted, fontSize: '0.85rem', fontWeight: 600 }}>

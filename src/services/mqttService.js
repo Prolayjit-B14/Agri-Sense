@@ -3,11 +3,9 @@
  * Manages real-time telemetry stream and command publishing to hardware nodes.
  */
 
-// ─── IMPORTS ────────────────────────────────────────────────────────────────
 import * as mqttModule from 'mqtt';
 import { MASTER_CONFIG } from '../config';
 
-// ─── CONFIGURATION ──────────────────────────────────────────────────────────
 const mqtt = mqttModule.default || mqttModule;
 const { connect } = mqtt;
 
@@ -18,8 +16,6 @@ const MQTT_CONFIG = {
   path: '/mqtt'
 };
 
-// ─── CORE SERVICE CLASS ──────────────────────────────────────────────────────
-
 class MqttService {
   constructor() {
     this.client = null;
@@ -27,88 +23,91 @@ class MqttService {
     this.onStatus = null;
   }
 
-  /**
-   * Establishes a connection to the MQTT broker and subscribes to the telemetry wildcard.
-   * @param {Function} onMessageCallback - Handler for incoming telemetry.
-   * @param {Function} onStatusCallback - Handler for connection status updates.
-   */
   connect(onMessageCallback, onStatusCallback) {
+    if (this.client) return;
+    
     this.onMessage = onMessageCallback;
     this.onStatus = onStatusCallback;
 
-    if (typeof connect !== 'function') {
-      console.error("MQTT: Library instantiation failure.");
-      if (this.onStatus) this.onStatus('error');
-      return;
+    console.log('📡 MQTT: Initiating connection to', MQTT_CONFIG.host);
+    this.onStatus?.('connecting');
+
+    try {
+      this.client = connect(`wss://${MQTT_CONFIG.host}:${MQTT_CONFIG.port}${MQTT_CONFIG.path}`, {
+        reconnectPeriod: 3000,
+        connectTimeout: 30 * 1000,
+        keepalive: 60,
+        clientId: 'agrisense_web_' + Math.random().toString(16).slice(2, 10),
+        clean: true
+      });
+
+      this.client.on('connect', () => {
+        console.log('✅ MQTT: Cloud Bridge Established');
+        this.onStatus?.('connected');
+        this.client.subscribe('agrisense/#', (err) => {
+          if (!err) console.log('🛰️ MQTT: Subscribed to Wildcard [agrisense/#]');
+          else console.error('❌ MQTT: Subscription Failed', err);
+        });
+      });
+
+      this.client.on('message', (topic, message) => {
+        try {
+          const rawData = message.toString();
+          const parsedData = JSON.parse(rawData);
+          console.log(`📥 MQTT [${topic}]:`, parsedData);
+          if (this.onMessage) this.onMessage(topic, parsedData);
+        } catch (e) {
+          console.warn('⚠️ MQTT: Received malformed JSON on', topic);
+        }
+      });
+
+      this.client.on('error', (err) => {
+        console.error('❌ MQTT: Connection Error', err);
+        this.onStatus?.('error');
+      });
+
+      this.client.on('close', () => {
+        console.warn('🔌 MQTT: Connection Closed');
+        this.onStatus?.('disconnected');
+      });
+      
+      this.client.on('reconnect', () => {
+        console.log('🔄 MQTT: Attempting Reconnection...');
+        this.onStatus?.('reconnecting');
+      });
+
+    } catch (err) {
+      console.error('💥 MQTT: Critical Failure', err);
+      this.onStatus?.('error');
     }
-
-    if (this.client && this.client.connected) {
-      if (this.onStatus) this.onStatus('connected');
-      return;
-    }
-    
-    // Initialize connection with industrial-grade resilience
-    this.client = connect(`wss://${MQTT_CONFIG.host}:${MQTT_CONFIG.port}${MQTT_CONFIG.path}`, {
-      reconnectPeriod: 5000,
-      connectTimeout: 30 * 1000,
-      keepalive: 60
-    });
-
-    // ─── EVENT HANDLERS ─────────────────────────────────────────────────────
-    
-    this.client.on('connect', () => {
-      console.log("MQTT: Connected to AgriSense Cloud Broker ✅");
-      if (this.onStatus) this.onStatus('connected');
-      this.client.subscribe('agrisense/#'); // Wildcard for all nodes
-    });
-
-    this.client.on('reconnect', () => {
-      if (this.onStatus) this.onStatus('reconnecting');
-    });
-
-    this.client.on('offline', () => {
-      if (this.onStatus) this.onStatus('offline');
-    });
-
-    this.client.on('message', (topic, message) => {
-      try {
-        const payload = JSON.parse(message.toString());
-        if (this.onMessage) this.onMessage(topic, payload);
-      } catch (e) {
-        console.error("MQTT JSON Parse Error:", e);
-      }
-    });
-
-    this.client.on('error', (err) => {
-      console.error("MQTT Connection Error:", err);
-      if (this.onStatus) this.onStatus('error');
-    });
   }
 
-  /**
-   * Publishes a control command to the hardware nodes.
-   * @param {Object} action - The command payload (e.g., { action: "PUMP_ON" })
-   */
   publishCommand(action) {
     if (this.client) {
       const topic = 'agrisense/field_a/water/commands';
       const message = JSON.stringify(action);
       this.client.publish(topic, message);
-      console.log(`MQTT: Command Published:`, action);
+      console.log(`🕹️ MQTT: Command Published:`, action);
     }
   }
 
-  /**
-   * Gracefully terminates the MQTT connection.
-   */
   disconnect() {
     if (this.client) {
       this.client.end();
+      this.client = null;
     }
   }
-}
 
-// ─── EXPORT ──────────────────────────────────────────────────────────────────
+  refresh() {
+    console.log("🔄 MQTT: Manual Refresh Triggered");
+    const oldCb = this.onMessage;
+    const oldSt = this.onStatus;
+    this.disconnect();
+    setTimeout(() => {
+      this.connect(oldCb, oldSt);
+    }, 500);
+  }
+}
 
 const mqttService = new MqttService();
 export default mqttService;

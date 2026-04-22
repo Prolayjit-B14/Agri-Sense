@@ -27,10 +27,46 @@ export const processMqttMessage = (topic, data, prev) => {
   const newState = JSON.parse(JSON.stringify(prev));
   
   // 🛰️ NODE DETECTION VIA TOPIC PATH
-  // Topics: agrisense/field_a/soil, agrisense/field_a/weather, agrisense/field_a/water
+  // Topics: agrisense/field_a/soil, agrisense/field_a/weather, agrisense/field_a/sensors
   const nodeType = parts[parts.length - 1]; 
 
-  if (nodeType === 'soil') {
+  // Handle Unified Payload (from test.ino v6.2.0)
+  if (nodeType === 'sensors') {
+    if (data.soil) {
+      newState.soil.moisture = getVal(data.soil, ['moisture', 'm'], prev.soil.moisture);
+      newState.soil.temp = getVal(data.soil, ['temp', 't'], prev.soil.temp);
+      newState.soil.ph = getVal(data.soil, ['ph'], prev.soil.ph);
+      if (data.soil.npk) {
+        newState.soil.npk.n = getVal(data.soil.npk, ['n'], prev.soil.npk.n);
+        newState.soil.npk.p = getVal(data.soil.npk, ['p'], prev.soil.npk.p);
+        newState.soil.npk.k = getVal(data.soil.npk, ['k'], prev.soil.npk.k);
+      }
+      newState.soil.healthIndex = calculateNodeHealth('soil', newState.soil);
+    }
+    if (data.weather) {
+      newState.weather.temp = getVal(data.weather, ['temp', 't'], prev.weather.temp);
+      newState.weather.humidity = getVal(data.weather, ['humidity', 'h'], prev.weather.humidity);
+      newState.weather.lightIntensity = getVal(data.weather, ['lightIntensity', 'light', 'ldr'], prev.weather.lightIntensity);
+      newState.weather.rainLevel = getVal(data.weather, ['rainLevel', 'rain', 'rainfall'], prev.weather.rainLevel);
+      newState.weather.isRaining = data.weather.isRaining ?? (data.weather.humidity > 95) ?? prev.weather.isRaining;
+      newState.weather.healthIndex = calculateNodeHealth('weather', newState.weather);
+    }
+    if (data.water || data.irrigation) {
+      const wData = data.water || data.irrigation;
+      newState.water.level = getVal(wData, ['level', 'l'], prev.water.level);
+      newState.water.flowRate = getVal(wData, ['flowRate', 'flow'], prev.water.flowRate);
+      newState.water.pumpActive = wData.pumpActive ?? prev.water.pumpActive;
+      newState.water.healthIndex = calculateNodeHealth('irrigation', newState.water);
+    }
+    if (data.storage) {
+      newState.storage.temp = getVal(data.storage, ['temp', 't'], prev.storage.temp);
+      newState.storage.humidity = getVal(data.storage, ['humidity', 'h'], prev.storage.humidity);
+      newState.storage.mq135 = getVal(data.storage, ['mq135', 'aqi', 'gas'], prev.storage.mq135);
+      newState.storage.healthIndex = calculateNodeHealth('storage', newState.storage);
+    }
+  }
+  // Handle Discrete Node Topics
+  else if (nodeType === 'soil') {
     newState.soil.moisture = getVal(data, ['moisture', 'm'], prev.soil.moisture);
     newState.soil.temp = getVal(data, ['temp', 't'], prev.soil.temp);
     newState.soil.ph = getVal(data, ['ph'], prev.soil.ph);

@@ -68,7 +68,7 @@ const Sidebar = () => {
           position: 'fixed', top: 0, left: 0, bottom: 0, width: '270px', zIndex: 10002,
           background: 'linear-gradient(165deg, #064E3B 0%, #022C22 100%)', display: 'flex', flexDirection: 'column',
           justifyContent: 'space-between',
-          boxShadow: '20px 0 60px rgba(0,0,0,0.4)',
+          boxShadow: isSidebarOpen ? '20px 0 60px rgba(0,0,0,0.4)' : 'none',
           borderRight: '1px solid rgba(255,255,255,0.03)'
         }}
       >

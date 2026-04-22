@@ -35,7 +35,7 @@ const COLORS = {
 
 const SensorDot = ({ label, status }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: status === 'active' ? '#34D399' : '#CBD5E1', opacity: status === 'active' ? 1 : 0.5 }} />
+    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: status === 'active' ? '#34D399' : '#94A3B8', opacity: status === 'active' ? 1 : 0.6 }} />
     <span style={{ fontSize: '0.6rem', fontWeight: 800, color: 'white', opacity: 0.8 }}>{label}</span>
   </div>
 );
@@ -115,7 +115,7 @@ const WeatherMonitoring = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', zIndex: 2 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.15)', padding: '4px 10px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)', marginBottom: '12px', width: 'fit-content' }}>
-              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: isOnline ? '#34D399' : '#EF4444' }} />
+              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: isOnline ? '#34D399' : '#94A3B8' }} />
               <span style={{ fontSize: '0.6rem', fontWeight: 950, textTransform: 'uppercase' }}>NODE {isOnline ? 'ACTIVE' : 'OFFLINE'}</span>
             </div>
             <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 800, opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Climate Stability</p>
@@ -143,7 +143,7 @@ const WeatherMonitoring = () => {
         <WeatherCard title="Field Temp" value={displayStats.temp} unit="°C" icon={Thermometer} color={COLORS.primary} isOffline={!isOnline} />
         <WeatherCard title="Field Humidity" value={displayStats.humidity} unit="%" icon={Droplet} color={COLORS.secondary} isOffline={!isOnline} />
         <WeatherCard title="Solar Intensity" value={displayStats.light} unit="lux" icon={Sun} color={COLORS.warning} isOffline={weather.lightIntensity === null} />
-        <WeatherCard title="Rain Level" value={displayStats.rainLevel} unit="mm" icon={CloudRain} color="#8B5CF6" isOffline={weather.rainLevel === null} statusMsg={displayStats.rainLevel !== null ? (weather.isRaining ? 'Raining' : 'Dry') : null} />
+        <WeatherCard title="Rain Level" value={displayStats.rainLevel} unit="mm" icon={CloudRain} color="#0EA5E9" isOffline={weather.rainLevel === null} />
       </div>
 
       {/* ─── REGIONAL DATA GRID ─── */}

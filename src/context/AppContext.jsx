@@ -158,6 +158,12 @@ export const AppProvider = ({ children }) => {
 
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
+  const syncData = () => {
+    setConnectivityStatus('Syncing...');
+    mqttService.refresh();
+    setTimeout(() => setConnectivityStatus('Online'), 2000);
+  };
+
   // ─── CORE BUSINESS LOGIC ──────────────────────────────────────────────────
 
   // 1. Health Scoring Engine
@@ -187,10 +193,12 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     if (sensorData && (sensorData.soil || sensorData.weather)) {
       setSensorHistory(prev => {
-        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const timestamp = Date.now();
+        // Prevent duplicate logs if data hasn't changed (optional but safer)
         const lastEntry = prev[prev.length - 1];
-        if (lastEntry?.time === time) return prev; 
-        return [...prev, { ...sensorData, time }].slice(-50);
+        if (lastEntry && JSON.stringify(lastEntry.soil) === JSON.stringify(sensorData.soil)) return prev;
+        
+        return [...prev, { ...sensorData, timestamp }].slice(-100);
       });
     }
   }, [sensorData]);
@@ -330,7 +338,7 @@ export const AppProvider = ({ children }) => {
       isDarkMode, toggleTheme, sensorData, apiWeather, apiForecast, recommendations, sensorHistory,
       actuators, toggleActuator, isSidebarOpen, setIsSidebarOpen, ACTUATORS,
       farmHealthScore, systemHealth, connectivityStatus, cloudSyncStatus, profileMeta, updateProfileMeta,
-      isDataLoading, lastGlobalUpdate, mqttStatus
+      isDataLoading, lastGlobalUpdate, mqttStatus, syncData
     }}>
       {children}
     </AppContext.Provider>
