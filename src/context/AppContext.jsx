@@ -252,8 +252,14 @@ export const AppProvider = ({ children }) => {
               
               // Update Device Registry
               const parts = topic.split('/');
-              const nodeType = parts[parts.length - 1] === 'sensors' ? 'soil' : parts[parts.length - 1];
-              if (['soil', 'weather', 'storage', 'water'].includes(nodeType)) {
+              let nodeType = parts[parts.length - 1];
+              if (nodeType === 'telemetry' && parts.length >= 3) {
+                nodeType = parts[parts.length - 2];
+              } else if (nodeType === 'sensors') {
+                nodeType = 'soil';
+              }
+
+              if (['soil', 'weather', 'storage', 'water', 'solar'].includes(nodeType)) {
                 setDevices(prevDevices => {
                   const nodeId = data.device_id || `${nodeType}_node`;
                   const newState = processDeviceState(nodeId, nodeType, data);
@@ -265,6 +271,7 @@ export const AppProvider = ({ children }) => {
               
               return updated;
             });
+
             
             setIsDataLoading(false);
             setLastGlobalUpdate(new Date().toLocaleTimeString());
