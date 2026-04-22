@@ -22,27 +22,27 @@ An industrial-grade, IoT-driven precision agriculture platform. AgriSense v3.90 
 
 ---
 
-## 📚 Technical Documentation
+## 📚 Technical Documentation Matrix
 
-- 🏗️ **[System Architecture](docs/ARCHITECTURE.md)**: Explore the MQTT event-loop and 5-node telemetry flow.
+For an in-depth dive into the technical implementation, please review the extensive documentation suite:
+
+- 🏗️ **[System Architecture](docs/ARCHITECTURE.md)**: Explore the 5-node MQTT event-loop and reactive heartbeat flow.
 - 🔌 **[Hardware Setup](docs/HARDWARE_SETUP.md)**: ESP32 Pin maps for Soil, Weather, and Solar modules.
+- 🛠️ **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)**: Forensic procedures for OFFLINE node recovery.
+- 📐 **[Calibration Manual](docs/CALIBRATION_GUIDE.md)**: Clinical procedures for sensor normalization.
 - ✨ **[Diagnostic Suite](docs/FEATURES.md)**: Breakdown of the 21+ forensic charts and correlation models.
 - 📡 **[API Reference](docs/API_REFERENCE.md)**: MQTT topic structure and JSON payload definitions.
 
 ---
 
-## 🛠️ Tech Stack
+## 🏗️ Whole-System Integration
 
-**Frontend & Mobile:**
-- **React 19**: Modern reactive UI with strict purity.
-- **Capacitor**: Native Android deployment.
-- **Framer Motion**: Premium fluid transitions.
-- **Recharts**: Stabilized industrial data visualization.
+AgriSense v3.94 operates as a unified agricultural monitoring instrument, integrating three core engineering layers:
 
-**Industrial Backend:**
-- **MQTT Protocol**: Real-time hardware telemetry bridge.
-- **Forensic Health Engine**: Weighted health scoring (RSSI, Latency, Packet Loss).
-- **Reactive Heartbeat Service**: Managed node status transitions.
+1.  **Hardware Fabric (v2.9.0)**: Five modular ESP32 nodes (Soil, Weather, Storage, Water, Solar) broadcasting clinical telemetry via MQTT.
+2.  **Service Layer**: Reactive heartbeat engines and health scoring services (`deviceService.js`) that manage node status and network integrity.
+3.  **Forensic UI (v3.90)**: A high-density React 19 dashboard featuring 21+ stabilized charts and a 5-node management HUD.
+
 
 ---
 
