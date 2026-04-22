@@ -22,6 +22,13 @@
 #define PIN_LED_STATUS  2
 #define PIN_RELAY_PUMP  27
 
+// NPK RS485 (Modbus) Configuration
+#define RXD2 16
+#define TXD2 17
+const byte npk_query[] = {0x01, 0x03, 0x00, 0x1e, 0x00, 0x03, 0x65, 0xcd};
+byte npk_response[11];
+
+
 // ─── SENSOR CONFIG ──────────────────────────────────────────────────────────
 #define DHTTYPE DHT11
 DHT dht(PIN_DHT, DHTTYPE);
@@ -70,9 +77,27 @@ void setup() {
 
   setup_wifi();
   client.setServer(mqtt_server, 1883);
+
+  // Initialize NPK Serial
+  Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
+}
+
+void readNPK(int &n, int &p, int &k) {
+  Serial2.write(npk_query, sizeof(npk_query));
+  uint32_t startTime = millis();
+  int i = 0;
+  while ((millis() - startTime < 500) && i < 11) {
+    if (Serial2.available()) npk_response[i++] = Serial2.read();
+  }
+  if (i == 11) {
+    n = (npk_response[3] << 8) | npk_response[4];
+    p = (npk_response[5] << 8) | npk_response[6];
+    k = (npk_response[7] << 8) | npk_response[8];
+  }
 }
 
 void setup_wifi() {
+
   delay(10);
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
@@ -116,12 +141,12 @@ void loop() {
     int ldr = map(analogRead(PIN_LDR), 0, 4095, 100, 0);
     bool isRaining = digitalRead(PIN_RAIN) == LOW;
 
-    // Mock NPK (Replace with RS485 read logic if using hardware NPK)
-    int n = random(10, 50);
-    int p = random(5, 30);
-    int k = random(20, 80);
+    // Read Physical NPK via RS485/Modbus
+    int n = 0, p = 0, k = 0;
+    readNPK(n, p, k);
 
     // ─── UPDATE OLED ────────────────────────────────────────────────────────
+
     display.clearDisplay();
     display.setCursor(0,0);
     display.println("--- DIAGNOSTICS ---");

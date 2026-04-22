@@ -60,13 +60,20 @@ export const processMqttMessage = (topic, data, prev) => {
       newState.water.level = getVal(wData, ['level', 'l'], prev.water.level);
       newState.water.flowRate = getVal(wData, ['flowRate', 'flow'], prev.water.flowRate);
       newState.water.pumpActive = wData.pumpActive ?? prev.water.pumpActive;
-      newState.water.healthIndex = calculateNodeHealth('irrigation', newState.water);
+      newState.water.healthIndex = calculateNodeHealth('water', newState.water);
     }
     if (data.storage) {
       newState.storage.temp = getVal(data.storage, ['temp', 't'], prev.storage.temp);
       newState.storage.humidity = getVal(data.storage, ['humidity', 'h'], prev.storage.humidity);
       newState.storage.mq135 = getVal(data.storage, ['mq135', 'aqi', 'gas'], prev.storage.mq135);
       newState.storage.healthIndex = calculateNodeHealth('storage', newState.storage);
+    }
+    if (data.solar) {
+      newState.solar.voltage = getVal(data.solar, ['voltage', 'v'], prev.solar.voltage);
+      newState.solar.battery = getVal(data.solar, ['battery', 'bat', 'b'], prev.solar.battery);
+      newState.solar.current = getVal(data.solar, ['current', 'a'], prev.solar.current);
+      newState.solar.load = getVal(data.solar, ['load', 'w'], prev.solar.load);
+      newState.solar.healthIndex = calculateNodeHealth('solar', newState.solar);
     }
   }
   // Handle Discrete Node Topics
@@ -92,7 +99,7 @@ export const processMqttMessage = (topic, data, prev) => {
   else if (nodeType === 'water' || nodeType === 'irrigation') {
     newState.water.level = getVal(data, ['level', 'l'], prev.water.level);
     newState.water.flowRate = getVal(data, ['flowRate', 'flow'], prev.water.flowRate);
-    newState.water.healthIndex = calculateNodeHealth('irrigation', newState.water);
+    newState.water.healthIndex = calculateNodeHealth('water', newState.water);
   }
   else if (nodeType === 'storage') {
     newState.storage.temp = getVal(data, ['temp', 't'], prev.storage.temp);
@@ -100,6 +107,14 @@ export const processMqttMessage = (topic, data, prev) => {
     newState.storage.mq135 = getVal(data, ['mq135', 'aqi', 'gas'], prev.storage.mq135);
     newState.storage.healthIndex = calculateNodeHealth('storage', newState.storage);
   }
+  else if (nodeType === 'solar') {
+    newState.solar.voltage = getVal(data, ['voltage', 'v'], prev.solar.voltage);
+    newState.solar.battery = getVal(data, ['battery', 'bat', 'b'], prev.solar.battery);
+    newState.solar.current = getVal(data, ['current', 'a'], prev.solar.current);
+    newState.solar.load = getVal(data, ['load', 'w'], prev.solar.load);
+    newState.solar.healthIndex = calculateNodeHealth('solar', newState.solar);
+  }
+
 
   return newState;
 };
