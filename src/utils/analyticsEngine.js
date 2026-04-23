@@ -1,6 +1,6 @@
 /**
  * 🧠 Universal Analytics Trend Engine
- * Used by all 5 Analytics tabs: Soil, Weather, Storage, Irrigation, Solar
+ * Used by all 4 Analytics tabs: Soil, Weather, Storage, Irrigation
  * Ensures: accurate insights, no fake interpretation, smooth realtime meaning.
  */
 
@@ -159,7 +159,7 @@ export const analyzeWeather = (history) => {
     increasingMsg: 'Sunlight intensity increasing',
     decreasingMsg: 'Sunlight decreasing — possible cloud cover',
     stableMsg: 'Sunlight exposure stable',
-    lowMsg: 'Low solar exposure detected',
+    lowMsg: 'Low sunlight exposure detected',
   });
 
   let rain = { trend: null, insight: 'Collecting enough data for trend', color: '#94A3B8' };
@@ -270,50 +270,7 @@ export const analyzeIrrigation = (history) => {
   return { flow, usage, activity, efficiency, isOnline, summary };
 };
 
-// ─── SOLAR TAB ───────────────────────────────────────────────────────────────
-export const analyzeSolar = (history) => {
-  const powerS = extractSeries(history, h => h.solar?.power);
-  const voltS = extractSeries(history, h => h.solar?.voltage);
-  const ldrS = extractSeries(history, h => h.weather?.lightIntensity);
 
-  const power = makeInsight(powerS, {
-    stableThresh: 10, spikeThresh: 100,
-    increasingMsg: 'Power output increasing during peak sun hours',
-    decreasingMsg: 'Power output decreasing',
-    stableMsg: 'Power generation stability maintained',
-    fluctuatingMsg: 'Fluctuation indicates cloud cover',
-  });
-
-  const voltage = makeInsight(voltS, {
-    stableThresh: 0.2, spikeThresh: 1,
-    increasingMsg: 'Voltage rising with solar input',
-    stableMsg: 'Voltage stable',
-    fluctuatingMsg: 'Voltage fluctuation detected',
-  });
-
-  const powerAvg = avg(powerS);
-  const yieldInsight = powerS.length >= 5
-    ? {
-        trend: trendSlope(powerS) > 0 ? 'increasing' : 'stable',
-        insight: powerAvg > 100 ? 'Energy production higher than yesterday' : 'Stable energy production pattern',
-        color: powerAvg > 100 ? '#10B981' : '#F59E0B',
-      }
-    : { trend: null, insight: 'Collecting enough data for trend', color: '#94A3B8' };
-
-  let peak = { trend: null, insight: 'Collecting enough data for trend', color: '#94A3B8' };
-  if (ldrS.length >= 5) {
-    const duration = ldrS.filter(v => v > 600).length;
-    if (duration > 3) peak = { trend: 'adequate', insight: 'Sun exposure adequate', color: '#10B981' };
-    else peak = { trend: 'low', insight: 'Short peak sun duration detected', color: '#EF4444' };
-  }
-
-  const isOnline = powerS.length > 0;
-  const summary = isOnline
-    ? `${power.insight}. ${voltage.insight}.`
-    : 'Solar module offline';
-
-  return { power, voltage, yield: yieldInsight, peak, isOnline, summary };
-};
 
 // ─── SYSTEM STATUS LOGIC ─────────────────────────────────────────────────────
 export const getSystemStatus = (lastUpdate) => {

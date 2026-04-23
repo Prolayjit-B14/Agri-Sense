@@ -189,7 +189,7 @@ const IrrigationControl = () => {
       {/* ─── UNIFIED SENSOR GRID ─── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
         <DiagnosticCard label="Volume" value={stats.liters} unit="L" icon={Droplets} color={COLORS.primary} statusText={stats.level === null ? 'Offline' : (stats.level > 30 ? 'Stable' : 'Low')} range="2k-6k L" />
-        <DiagnosticCard label="Efficiency" value={isOnline ? '98' : null} unit="%" icon={Zap} color={COLORS.secondary} statusText={isOnline ? 'Optimal' : 'Offline'} range="90-100 %" />
+        <DiagnosticCard label="Efficiency" value={isOnline ? healthScore : null} unit="%" icon={Zap} color={COLORS.secondary} statusText={isOnline ? (healthScore > 80 ? 'Optimal' : 'Variable') : 'Offline'} range="90-100 %" />
       </div>
 
     </div>

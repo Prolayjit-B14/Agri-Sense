@@ -182,7 +182,7 @@ const WeatherMonitoring = () => {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
         <DiagnosticCard label="Temp" value={stats.temp} unit="°C" min={15} max={35} icon={Thermometer} color={COLORS.primary} statusText={stats.temp === null ? 'Offline' : (stats.temp > 32 ? 'High' : (stats.temp < 18 ? 'Low' : 'Stable'))} range="18-32 °C" />
         <DiagnosticCard label="Humidity" value={stats.humidity} unit="%" min={40} max={80} icon={Droplet} color={COLORS.secondary} statusText={stats.humidity === null ? 'Offline' : (stats.humidity > 75 ? 'High' : (stats.humidity < 45 ? 'Low' : 'Optimal'))} range="40-70 %" />
-        <DiagnosticCard label="Solar" value={stats.light} unit="lx" min={200} max={10000} icon={Sun} color={COLORS.warning} statusText={stats.light === null ? 'Offline' : (stats.light > 8000 ? 'High' : (stats.light < 500 ? 'Low' : 'Normal'))} range="1k-8k lx" />
+        <DiagnosticCard label="Sunlight" value={stats.light} unit="lx" min={200} max={10000} icon={Sun} color={COLORS.warning} statusText={stats.light === null ? 'Offline' : (stats.light > 8000 ? 'High' : (stats.light < 500 ? 'Low' : 'Normal'))} range="1k-8k lx" />
         <DiagnosticCard label="Rain" value={stats.rain} unit="mm" min={0} max={50} icon={CloudRain} color="#0EA5E9" statusText={stats.rain === null ? 'Offline' : (stats.rain > 20 ? 'Active' : 'No Rain')} range="0-10 mm" />
       </div>
 

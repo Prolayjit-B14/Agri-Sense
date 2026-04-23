@@ -76,7 +76,6 @@ const Alerts = () => {
   const [filter, setFilter] = useState('all');
   const [alerts, setAlerts] = useState([
     { id: 1, title: 'Critical Soil Dryness', message: 'Field A-1 moisture dropped below 15%. Irrigation recommended.', type: 'critical', time: '2m ago' },
-    { id: 2, title: 'Unusual Power Drop', message: 'Solar output decreased by 40% during peak sun hours.', type: 'warning', time: '15m ago' },
     { id: 3, title: 'Market Price Alert', message: 'Current market price for Tomatoes up by 12%.', type: 'success', time: '1h ago' },
     { id: 4, title: 'System Update', message: 'Firmware v2.5.0 deployed successfully.', type: 'info', time: '3h ago' }
   ]);

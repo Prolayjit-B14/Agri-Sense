@@ -45,13 +45,12 @@ export const AppProvider = ({ children }) => {
     'soil_node': processDeviceState('soil_node', 'soil', null),
     'weather_node': processDeviceState('weather_node', 'weather', null),
     'storage_node': processDeviceState('storage_node', 'storage', null),
-    'water_node': processDeviceState('water_node', 'water', null),
-    'solar_node': processDeviceState('solar_node', 'solar', null)
+    'water_node': processDeviceState('water_node', 'water', null)
   });
 
   const [systemOverview, setSystemOverview] = useState({
-    total_nodes: 5, active_nodes: 0, partial_nodes: 0, offline_nodes: 5,
-    overall_status: 'CRITICAL', health_percent: 0, nodes: []
+    total_nodes: 4, active_nodes: 0, partial_nodes: 0, offline_nodes: 4,
+    overall_status: 'OFFLINE', health_percent: 0, nodes: []
   });
 
 
@@ -197,7 +196,7 @@ export const AppProvider = ({ children }) => {
       const recs = getAIv2Recommendations(sensorData);
       setRecommendations(recs);
     }
-  }, [sensorData.soil.moisture, sensorData.soil.ph, sensorData.soil.temp, sensorData.soil.npk]);
+  }, [sensorData?.soil?.moisture, sensorData?.soil?.ph, sensorData?.soil?.temp, sensorData?.soil?.npk]);
 
   // 3. Sensor History Logger
   useEffect(() => {
@@ -222,12 +221,21 @@ export const AppProvider = ({ children }) => {
         const lines = text.split('\n').slice(1, 6);
         const commodities = lines.map(line => {
           const parts = line.split(',');
-          return { name: parts[0], price: `₹${Math.round(parts[1] * 80)}`, trend: parts[2] > 0 ? 'up' : 'down' };
+          const priceVal = parseFloat(parts[1]);
+          return { 
+            name: parts[0], 
+            price: isNaN(priceVal) ? '--' : `₹${Math.round(priceVal * 80)}`, 
+            trend: (parseFloat(parts[2]) > 0) ? 'up' : 'down' 
+          };
         }).filter(c => c.name);
 
         setSensorData(prev => ({
           ...prev,
-          market: { price: commodities[0]?.price || '--', trend: commodities[0]?.trend || 'stable', commodities }
+          market: { 
+            price: commodities[0]?.price || '--', 
+            trend: commodities[0]?.trend || 'stable', 
+            commodities 
+          }
         }));
       } catch (e) {
         setSensorData(prev => ({ ...prev, market: { price: '--', trend: 'stable', commodities: [] } }));
@@ -259,7 +267,7 @@ export const AppProvider = ({ children }) => {
                 nodeType = 'soil';
               }
 
-              if (['soil', 'weather', 'storage', 'water', 'solar'].includes(nodeType)) {
+              if (['soil', 'weather', 'storage', 'water'].includes(nodeType)) {
                 setDevices(prevDevices => {
                   const nodeId = data.device_id || `${nodeType}_node`;
                   const newState = processDeviceState(nodeId, nodeType, data);
@@ -282,10 +290,10 @@ export const AppProvider = ({ children }) => {
       } else {
         // Initialize Mock Devices
         const mockNodes = {
-          'soil_alpha': processDeviceState('soil_alpha', 'soil', { rssi: -65, latency: 20, packet_loss: 0.1, timestamp: Date.now(), moisture: 45, ph: 6.8 }),
-          'weather_alpha': processDeviceState('weather_alpha', 'weather', { rssi: -72, latency: 45, packet_loss: 0.5, timestamp: Date.now(), temperature: 28, humidity: 65 }),
-          'storage_alpha': processDeviceState('storage_alpha', 'storage', { rssi: -55, latency: 15, packet_loss: 0, timestamp: Date.now(), mq135: 120 }),
-          'water_alpha': processDeviceState('water_alpha', 'water', { rssi: -88, latency: 120, packet_loss: 4.5, timestamp: Date.now(), level: 80 })
+          'soil_alpha': processDeviceState('soil_alpha', 'soil', { rssi: -65, latency: 20, packet_loss: 0.1, timestamp: Date.now(), moisture: 45, ph: 6.8, n: 20, p: 40, k: 30, temperature: 24 }),
+          'weather_alpha': processDeviceState('weather_alpha', 'weather', { rssi: -72, latency: 45, packet_loss: 0.5, timestamp: Date.now(), temperature: 28, humidity: 65, rain: 0, ldr: 800 }),
+          'storage_alpha': processDeviceState('storage_alpha', 'storage', { rssi: -55, latency: 15, packet_loss: 0, timestamp: Date.now(), mq135: 120, temperature: 22, humidity: 45 }),
+          'water_alpha': processDeviceState('water_alpha', 'water', { rssi: -88, latency: 120, packet_loss: 4.5, timestamp: Date.now(), level: 80, flow: 12, pressure: 45 })
         };
         setDevices(mockNodes);
         setSystemOverview(calculateSystemOverview(mockNodes));

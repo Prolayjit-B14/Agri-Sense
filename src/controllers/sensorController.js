@@ -68,13 +68,7 @@ export const processMqttMessage = (topic, data, prev) => {
       newState.storage.mq135 = getVal(data.storage, ['mq135', 'aqi', 'gas'], prev.storage.mq135);
       newState.storage.healthIndex = calculateNodeHealth('storage', newState.storage);
     }
-    if (data.solar) {
-      newState.solar.voltage = getVal(data.solar, ['voltage', 'v'], prev.solar.voltage);
-      newState.solar.battery = getVal(data.solar, ['battery', 'bat', 'b'], prev.solar.battery);
-      newState.solar.current = getVal(data.solar, ['current', 'a'], prev.solar.current);
-      newState.solar.load = getVal(data.solar, ['load', 'w'], prev.solar.load);
-      newState.solar.healthIndex = calculateNodeHealth('solar', newState.solar);
-    }
+
   }
   // Handle Discrete Node Topics
   else if (nodeType === 'soil') {
@@ -86,8 +80,13 @@ export const processMqttMessage = (topic, data, prev) => {
       newState.soil.npk.p = getVal(data.npk, ['p'], prev.soil.npk.p);
       newState.soil.npk.k = getVal(data.npk, ['k'], prev.soil.npk.k);
     }
+    // Route physical pump feedback to water node
+    if (data.pump_status !== undefined) {
+      newState.water.pumpActive = (data.pump_status === 'ACTIVE' || data.pump_status === 1 || data.pump_status === true);
+    }
     newState.soil.healthIndex = calculateNodeHealth('soil', newState.soil);
   } 
+
   else if (nodeType === 'weather') {
     newState.weather.temp = getVal(data, ['temp', 't'], prev.weather.temp);
     newState.weather.humidity = getVal(data, ['humidity', 'h'], prev.weather.humidity);
@@ -107,13 +106,7 @@ export const processMqttMessage = (topic, data, prev) => {
     newState.storage.mq135 = getVal(data, ['mq135', 'aqi', 'gas'], prev.storage.mq135);
     newState.storage.healthIndex = calculateNodeHealth('storage', newState.storage);
   }
-  else if (nodeType === 'solar') {
-    newState.solar.voltage = getVal(data, ['voltage', 'v'], prev.solar.voltage);
-    newState.solar.battery = getVal(data, ['battery', 'bat', 'b'], prev.solar.battery);
-    newState.solar.current = getVal(data, ['current', 'a'], prev.solar.current);
-    newState.solar.load = getVal(data, ['load', 'w'], prev.solar.load);
-    newState.solar.healthIndex = calculateNodeHealth('solar', newState.solar);
-  }
+
 
 
   return newState;

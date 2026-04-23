@@ -18,9 +18,7 @@ export const INITIAL_SENSOR_DATA = {
   water: { 
     level: null, tankLevel: null, flowRate: null, totalUsage: null 
   },
-  solar: { 
-    lightIntensity: null, exposureDuration: null, power: null, voltage: null, current: null 
-  },
+
   market: { 
     price: null, trend: 'stable', commodities: [] 
   }

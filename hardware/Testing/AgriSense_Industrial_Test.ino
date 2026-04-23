@@ -22,11 +22,16 @@
 #define PIN_LED_STATUS  2
 #define PIN_RELAY_PUMP  27
 
+// OLED I2C Configuration
+#define SDA_PIN 21
+#define SCL_PIN 22
+
 // NPK RS485 (Modbus) Configuration
 #define RXD2 16
 #define TXD2 17
 const byte npk_query[] = {0x01, 0x03, 0x00, 0x1e, 0x00, 0x03, 0x65, 0xcd};
 byte npk_response[11];
+
 
 
 // ─── SENSOR CONFIG ──────────────────────────────────────────────────────────
@@ -40,8 +45,9 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 // ─── NETWORK CONFIG ─────────────────────────────────────────────────────────
 const char* ssid = "YOUR_WIFI_SSID";
 const char* password = "YOUR_WIFI_PASSWORD";
-const char* mqtt_server = "YOUR_MQTT_BROKER_URL"; // e.g., broker.emqx.io
+const char* mqtt_server = "broker.hivemq.com"; 
 const char* node_id = "agrisense_main_node";
+
 const char* topic_soil = "agrisense/v1/node/soil/telemetry";
 const char* topic_weather = "agrisense/v1/node/weather/telemetry";
 
@@ -63,6 +69,8 @@ void setup() {
   
   // Initialize Sensors
   dht.begin();
+  Wire.begin(SDA_PIN, SCL_PIN);
+  
   if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
     Serial.println(F("SSD1306 allocation failed"));
   }
@@ -71,9 +79,10 @@ void setup() {
   display.setTextSize(1);
   display.setTextColor(WHITE);
   display.setCursor(0,0);
-  display.println("AGRISENSE v3.95");
+  display.println("AGRISENSE v4.03");
   display.println("Initializing...");
   display.display();
+
 
   setup_wifi();
   client.setServer(mqtt_server, 1883);
@@ -146,15 +155,16 @@ void loop() {
     readNPK(n, p, k);
 
     // ─── UPDATE OLED ────────────────────────────────────────────────────────
-
     display.clearDisplay();
     display.setCursor(0,0);
     display.println("--- DIAGNOSTICS ---");
     display.printf("Moist: %d%% | pH: %.1f\n", moist, ph);
+    display.printf("N:%d P:%d K:%d\n", n, p, k);
     display.printf("Temp: %.1fC | Hum: %.0f%%\n", temp, hum);
     display.printf("Rain: %s | LDR: %d\n", isRaining ? "YES" : "NO", ldr);
     display.printf("PUMP: %s\n", pumpState ? "ACTIVE" : "OFF");
     display.display();
+
 
     // ─── MEASURE REAL-TIME LATENCY ──────────────────────────────────────────
     uint32_t startPing = millis();
@@ -170,7 +180,9 @@ void loop() {
     
     soilDoc["moisture"] = moist;
     soilDoc["ph"] = ph;
+    soilDoc["pump_status"] = digitalRead(PIN_RELAY_PUMP) == HIGH ? "ACTIVE" : "OFF";
     JsonObject npk = soilDoc.createNestedObject("npk");
+
     npk["n"] = n; npk["p"] = p; npk["k"] = k;
     
     char soilBuffer[512];

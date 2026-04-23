@@ -169,7 +169,7 @@ const StorageMonitoring = () => {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
         <DiagnosticCard label="Temp" value={stats.temp} unit="°C" icon={Thermometer} color={COLORS.critical} statusText={stats.temp === null ? 'Offline' : (stats.temp > 12 ? 'High' : 'Safe')} range="0-12 °C" />
         <DiagnosticCard label="Humidity" value={stats.hum} unit="%" icon={Droplet} color={COLORS.secondary} statusText={stats.hum === null ? 'Offline' : (stats.hum > 95 ? 'High' : 'Optimal')} range="85-95 %" />
-        <DiagnosticCard label="Air Quality" value={isOnline ? '98' : null} unit="%" icon={ShieldCheck} color="#10B981" statusText={isOnline ? 'Protected' : 'Offline'} range="90-100 %" />
+        <DiagnosticCard label="Air Quality" value={isOnline ? storageScore : null} unit="%" icon={ShieldCheck} color="#10B981" statusText={isOnline ? (storageScore > 80 ? 'Protected' : 'Warning') : 'Offline'} range="90-100 %" />
         <DiagnosticCard label="Gas Level" value={stats.gas} unit="ppm" icon={Wind} color={COLORS.warning} statusText={stats.gas === null ? 'Offline' : (stats.gas > 400 ? 'Warning' : 'Normal')} range="0-300 ppm" />
       </div>
 
