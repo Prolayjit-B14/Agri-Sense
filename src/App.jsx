@@ -115,7 +115,7 @@ const MainLayout = ({ children }) => {
 
   return (
     <div style={{ height: '100dvh', width: '100vw', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#F8FAFC' }}>
-      <TopBar title={titles[location.pathname] || 'Bharat Advisor'} />
+      <TopBar title={titles[location.pathname] || 'AgriSense'} />
       <main ref={mainRef} style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <div style={{ maxWidth: '500px', margin: '0 auto', width: '100%', paddingBottom: '10px' }}>
           <AnimatePresence mode="wait">
