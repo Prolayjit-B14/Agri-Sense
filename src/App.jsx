@@ -1,6 +1,6 @@
 /**
- * AgriSense v2.8.0 Main Application Entry
- * Handles routing, global layout, and capacitor event listeners.
+ * Bharat Advisor Pro v17.1.0 Main Application Entry
+ * Handles routing, global layout, and organized page imports.
  */
 
 import React, { useEffect } from 'react';
@@ -14,44 +14,37 @@ import {
 } from 'lucide-react';
 
 // Context & State
-import { AppProvider, useApp } from './context/AppContext';
+import { AppProvider, useApp } from './state/AppContext';
 
 // Reusable Components
-import TopBar from './components/TopBar';
-import Sidebar from './components/Sidebar';
+import TopBar from './ui/TopBar';
+import Sidebar from './ui/Sidebar';
 
-// Pages (Main Screens)
-import Login from './pages/Login';
-import Splash from './pages/Splash';
-import Dashboard from './pages/Dashboard';
-import SoilMonitoring from './pages/SoilMonitoring';
-import IrrigationControl from './pages/IrrigationControl';
-import VisualMonitoring from './pages/VisualMonitoring';
-import Profile from './pages/Profile';
+// Pages - Organized Structure
+import Login from './pages/Auth/Login';
+import Splash from './pages/Auth/Splash';
+import Profile from './pages/Auth/Profile';
+import Settings from './pages/Auth/Settings';
 
-import Alerts from './pages/Alerts';
-import WeatherMonitoring from './pages/WeatherMonitoring';
-import DeviceManagement from './pages/DeviceManagement';
-import AnalyticsHub from './pages/AnalyticsHub';
-import Settings from './pages/Settings';
-import PrecisionSoilTesting from './pages/PrecisionSoilTesting';
-import Reports from './pages/Reports';
-import StorageMonitoring from './pages/StorageMonitoring';
-import CropAdvisor from './pages/CropAdvisor';
-import Traceability from './pages/Traceability';
+import Dashboard from './pages/Core/Dashboard';
+import AlertCenter from './pages/Core/AlertCenter';
+import FarmMap from './pages/Core/FarmMap';
+import Traceability from './pages/Core/Traceability';
 
+import SoilMonitor from './pages/Monitoring/SoilMonitor';
+import WeatherMonitor from './pages/Monitoring/WeatherMonitor';
+import StorageMonitor from './pages/Monitoring/StorageMonitor';
+import VisualMonitor from './pages/Monitoring/VisualMonitor';
 
-const PageWrapper = ({ children }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -10 }}
-    transition={{ duration: 0.3, ease: "easeOut" }}
-    style={{ height: '100%', width: '100%' }}
-  >
-    {children}
-  </motion.div>
-);
+import IrrigationSystem from './pages/Control/IrrigationSystem';
+import DeviceManager from './pages/Control/DeviceManager';
+
+import AnalyticsHub from './pages/Analytics/AnalyticsHub';
+import Reports from './pages/Analytics/Reports';
+
+import SoilForensics from './pages/Advisory/SoilForensics';
+import BharatAdvisor from './pages/Advisory/BharatAdvisor';
+
 
 const BottomNav = () => {
   const navigate = useNavigate();
@@ -85,10 +78,8 @@ const BottomNav = () => {
               padding: '4px 0', flex: 1, cursor: 'pointer', transition: '0.3s'
             }}
           >
-            <div style={{ position: 'relative' }}>
-              <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-            </div>
-            <span style={{ fontSize: '0.55rem', fontWeight: isActive ? 950 : 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{item.id}</span>
+            <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+            <span style={{ fontSize: '0.55rem', fontWeight: isActive ? 950 : 700, textTransform: 'uppercase' }}>{item.id}</span>
           </motion.button>
         );
       })}
@@ -106,27 +97,25 @@ const MainLayout = ({ children }) => {
 
   const titles = {
     '/dashboard': 'Dashboard',
-    '/analytics': 'Analytics',
-    '/irrigation': 'Irrigation Control',
+    '/analytics': 'Analytics Hub',
+    '/irrigation': 'Irrigation System',
     '/weather': 'Weather Station',
     '/soil-monitoring': 'Soil Monitor',
     '/storage-hub': 'Storage Monitor',
-    '/device-area': 'Device Management',
-    '/camera': 'Camera',
-    '/alerts': 'Alerts',
-    '/profile': 'Profile',
+    '/device-area': 'Device Manager',
+    '/camera': 'Visual Monitor',
+    '/alerts': 'Alert Center',
+    '/profile': 'User Profile',
     '/settings': 'Settings',
-    '/reports': 'Farm Report',
-
-    '/precision-soil-testing': 'Soil Test',
-    '/crop-advisor': 'Crop Advisor',
+    '/reports': 'Farm Reports',
+    '/precision-soil-testing': 'Soil Forensics',
+    '/crop-advisor': 'Bharat Advisor',
     '/traceability': 'Product Journey'
   };
 
-
   return (
     <div style={{ height: '100dvh', width: '100vw', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#F8FAFC' }}>
-      <TopBar title={titles[location.pathname] || 'Agri Sense'} />
+      <TopBar title={titles[location.pathname] || 'Bharat Advisor'} />
       <main ref={mainRef} style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <div style={{ maxWidth: '500px', margin: '0 auto', width: '100%', paddingBottom: '10px' }}>
           <AnimatePresence mode="wait">
@@ -161,16 +150,11 @@ const AppRoutes = () => {
           });
         }
       } catch (e) {
-        console.warn("Capacitor listener setup failed:", e);
+        console.warn("Capacitor listener failed:", e);
       }
     };
-
     initListener();
-    return () => {
-      if (listener && typeof listener.remove === 'function') {
-        listener.remove();
-      }
-    };
+    return () => listener?.remove();
   }, [location.pathname, navigate]);
 
   return (
@@ -179,22 +163,20 @@ const AppRoutes = () => {
       <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
       <Route path="/dashboard" element={<MainLayout><Dashboard /></MainLayout>} />
       <Route path="/analytics" element={<MainLayout><AnalyticsHub /></MainLayout>} />
-      <Route path="/soil-monitoring" element={<MainLayout><SoilMonitoring /></MainLayout>} />
-      <Route path="/irrigation" element={<MainLayout><IrrigationControl /></MainLayout>} />
-      <Route path="/storage-hub" element={<MainLayout><StorageMonitoring /></MainLayout>} />
-      <Route path="/camera" element={<MainLayout><VisualMonitoring /></MainLayout>} />
-      <Route path="/device-area" element={<MainLayout><DeviceManagement /></MainLayout>} />
-
-      <Route path="/alerts" element={<MainLayout><Alerts /></MainLayout>} />
+      <Route path="/soil-monitoring" element={<MainLayout><SoilMonitor /></MainLayout>} />
+      <Route path="/irrigation" element={<MainLayout><IrrigationSystem /></MainLayout>} />
+      <Route path="/storage-hub" element={<MainLayout><StorageMonitor /></MainLayout>} />
+      <Route path="/camera" element={<MainLayout><VisualMonitor /></MainLayout>} />
+      <Route path="/device-area" element={<MainLayout><DeviceManager /></MainLayout>} />
+      <Route path="/alerts" element={<MainLayout><AlertCenter /></MainLayout>} />
       <Route path="/reports" element={<MainLayout><Reports /></MainLayout>} />
       <Route path="/profile" element={<MainLayout><Profile /></MainLayout>} />
       <Route path="/settings" element={<MainLayout><Settings /></MainLayout>} />
-      <Route path="/weather" element={<MainLayout><WeatherMonitoring /></MainLayout>} />
-      <Route path="/precision-soil-testing" element={<MainLayout><PrecisionSoilTesting /></MainLayout>} />
-      <Route path="/crop-advisor" element={<MainLayout><CropAdvisor /></MainLayout>} />
+      <Route path="/weather" element={<MainLayout><WeatherMonitor /></MainLayout>} />
+      <Route path="/precision-soil-testing" element={<MainLayout><SoilForensics /></MainLayout>} />
+      <Route path="/crop-advisor" element={<MainLayout><BharatAdvisor /></MainLayout>} />
       <Route path="/traceability" element={<MainLayout><Traceability /></MainLayout>} />
       <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
-
     </Routes>
   );
 };
