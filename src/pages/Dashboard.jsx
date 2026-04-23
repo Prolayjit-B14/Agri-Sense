@@ -31,7 +31,7 @@ const COLORS = {
 
 // ─── SUB-COMPONENTS ────────────────────────────────────────────────────────
 const StatusBadge = ({ status }) => {
-  const isActive = status === 'connected';
+  const isActive = status && status !== 'OFFLINE';
   return (
     <div style={{ 
       display: 'flex', alignItems: 'center', gap: '6px', 
@@ -60,8 +60,9 @@ const HealthOverview = ({ score, systemHealth }) => {
   const isOffline = score === null || score === 0;
   const healthColor = getHealthColor(score);
 
-  const activeNodesCount = Object.values(devices || {}).filter(d => d?.status === 'ACTIVE').length;
-  const totalNodesCount = Object.values(devices || {}).length;
+  const activeNodesCount = Object.values(devices || {})
+    .filter(d => d?.device_id?.endsWith('_node') && d?.status === 'ACTIVE').length;
+  const totalNodesCount = 4; // Soil, Weather, Storage, Irrigation (Fixed Industrial Count)
 
   const systems = [
     { label: 'Soil', score: systemHealth?.soil, color: '#10B981' },
@@ -134,12 +135,13 @@ const HealthOverview = ({ score, systemHealth }) => {
  * SensorCard: Navigational card for major monitoring nodes
  */
 const SensorCard = ({ title, value, icon: Icon, color, status, score, onClick, nodeType }) => {
-  const isConnected = status === 'CONNECTED';
+  const isConnected = status === 'CONNECTED' || status === 'ACTIVE' || status === 'PARTIAL';
   const hColor = getHealthColor(score);
 
   const themeColor = isConnected ? ({
     soil: '#10B981',
     irrigation: '#0EA5E9',
+    water: '#0EA5E9',
     weather: '#14B8A6',
     storage: '#8B5CF6',
   }[nodeType] || color) : '#CBD5E1';
@@ -157,7 +159,7 @@ const SensorCard = ({ title, value, icon: Icon, color, status, score, onClick, n
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ 
           width: '46px', height: '46px', borderRadius: '14px', 
-          background: isConnected ? `${themeColor}15` : '#F1F5F9', 
+          background: isConnected ? `${themeColor}25` : '#F1F5F9', 
           display: 'flex', alignItems: 'center', justifyContent: 'center' 
         }}>
           <Icon size={22} color={themeColor} strokeWidth={2.5} />
@@ -256,32 +258,32 @@ const Dashboard = () => {
           title="Soil Health" nodeType="soil"
           value={devices?.['soil_node']?.status !== 'OFFLINE' && systemHealth?.soil !== null ? `${Math.round(systemHealth?.soil || 0)} %` : '---'}
           icon={Sprout} color="#10B981"
-          status={devices?.['soil_node']?.status === 'ACTIVE' ? "CONNECTED" : "OFFLINE"}
-          score={systemHealth?.soil}
+          status={devices?.['soil_node']?.status}
+          score={devices?.['soil_node']?.status !== 'OFFLINE' ? systemHealth?.soil : null}
           onClick={() => navigate('/soil-monitoring')}
         />
         <SensorCard
           title="Irrigation Health" nodeType="irrigation"
           value={devices?.['water_node']?.status !== 'OFFLINE' && systemHealth?.water !== null ? `${Math.round(systemHealth?.water || 0)} %` : '---'}
           icon={Droplets} color="#0EA5E9"
-          status={devices?.['water_node']?.status === 'ACTIVE' ? "CONNECTED" : "OFFLINE"}
-          score={systemHealth?.water}
+          status={devices?.['water_node']?.status}
+          score={devices?.['water_node']?.status !== 'OFFLINE' ? systemHealth?.water : null}
           onClick={() => navigate('/irrigation')}
         />
         <SensorCard
           title="Weather Health" nodeType="weather"
           value={devices?.['weather_node']?.status !== 'OFFLINE' && systemHealth?.weather !== null ? `${Math.round(systemHealth?.weather || 0)} %` : '---'}
           icon={CloudRain} color="#14B8A6"
-          status={devices?.['weather_node']?.status === 'ACTIVE' ? "CONNECTED" : "OFFLINE"}
-          score={systemHealth?.weather}
+          status={devices?.['weather_node']?.status}
+          score={devices?.['weather_node']?.status !== 'OFFLINE' ? systemHealth?.weather : null}
           onClick={() => navigate('/weather')}
         />
         <SensorCard
           title="Storage Health" nodeType="storage"
           value={devices?.['storage_node']?.status !== 'OFFLINE' && systemHealth?.storage !== null ? `${Math.round(systemHealth?.storage || 0)} %` : '---'}
           icon={Archive} color="#8B5CF6"
-          status={devices?.['storage_node']?.status === 'ACTIVE' ? "CONNECTED" : "OFFLINE"}
-          score={systemHealth?.storage}
+          status={devices?.['storage_node']?.status}
+          score={devices?.['storage_node']?.status !== 'OFFLINE' ? systemHealth?.storage : null}
           onClick={() => navigate('/storage-hub')}
         />
       </div>

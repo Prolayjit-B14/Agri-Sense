@@ -1,171 +1,183 @@
 /**
- * AgriSense v3.80 Industrial IoT Device Management
- * Real-time Hero Summary and Diagnostic Grid.
- * FULL-SCREEN UNIFORM EDITION (No Gaps)
+ * AgriSense v5.2.0 - Responsive Device Area
+ * Optimized for mobile screens with adaptive grid and scrollable container.
+ * Fixed "Out of screen" overflow issue.
  */
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { 
-  Server, Cpu, Wifi, Activity, 
-  RefreshCcw, Search, Settings, AlertTriangle, 
-  CheckCircle2, AlertCircle, SignalHigh, SignalLow, 
-  SignalMedium, Clock, HardDrive, Droplets, CloudRain,
-  Sprout, Thermometer, Zap, ShieldCheck
+  Cpu, Sprout, CloudRain, Droplets, HardDrive, 
+  Wifi, Zap, RefreshCw
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────
 const COLORS = {
-  active: '#10B981', 
-  partial: '#F59E0B', 
-  error: '#EF4444',
-  offline: '#94A3B8', 
-  bg: '#F8FAFC', 
-  card: '#FFFFFF', 
-  border: 'rgba(0,0,0,0.06)', 
-  text: '#0F172A', 
-  subtext: '#64748B'
+  active: '#10B981',
+  warning: '#F59E0B',
+  offline: '#94A3B8',
+  critical: '#EF4444',
+  background: '#F8FAFC',
+  card: '#FFFFFF',
+  text: '#0F172A',
+  subtext: '#64748B',
+  border: 'rgba(0, 0, 0, 0.05)'
 };
 
-const NODE_THEMES = {
-  soil: { color: '#10B981', icon: Sprout, label: 'Soil Node' },
-  weather: { color: '#14B8A6', icon: CloudRain, label: 'Weather Node' },
-  storage: { color: '#8B5CF6', icon: HardDrive, label: 'Storage Node' },
-  water: { color: '#0EA5E9', icon: Droplets, label: 'Water Node' }
-};
+// ─── SUB-COMPONENTS ────────────────────────────────────────────────────────
 
-// ─── COMPONENTS ───────────────────────────────────────────────────────────
+const DeviceCard = ({ device }) => {
+  if (!device) return null;
 
-const NodeCard = ({ device }) => {
-  const { status, metrics, sensors, node_type } = device;
-  const isOffline = status === 'OFFLINE';
-  const theme = NODE_THEMES[node_type] || { color: COLORS.active, icon: Cpu, label: 'Logic' };
+  const { status, node_type, sensors } = device;
+  const isOnline = status === 'ACTIVE' || status === 'PARTIAL';
+  const isOffline = status === 'OFFLINE' || status === 'ERROR';
   
-  const statusColor = isOffline ? COLORS.offline : (status === 'PARTIAL' ? COLORS.partial : (status === 'ERROR' ? COLORS.error : theme.color));
-  const NodeIcon = theme.icon;
-
-  const getSensorStatusColor = (sStatus) => {
-    if (sStatus === 'ACTIVE') return COLORS.active;
-    if (sStatus === 'STALE') return COLORS.partial;
-    if (sStatus === 'ERROR' || sStatus === 'DAMAGED') return COLORS.error;
-    return COLORS.offline; 
-  };
+  const config = {
+    soil: { icon: Sprout, label: 'Soil Node', color: '#10B981' },
+    weather: { icon: CloudRain, label: 'Weather Node', color: '#14B8A6' },
+    water: { icon: Droplets, label: 'Water Node', color: '#0EA5E9' },
+    storage: { icon: HardDrive, label: 'Storage Node', color: '#8B5CF6' }
+  }[node_type] || { icon: Cpu, label: 'Control Node', color: '#6366F1' };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
-      style={{ 
-        background: isOffline ? '#F8FAFC' : 'white', 
-        borderRadius: '20px', padding: '0.75rem', 
-        border: `1px solid ${isOffline ? '#E2E8F0' : COLORS.border}`, 
-        boxShadow: isOffline ? 'none' : '0 10px 25px rgba(0,0,0,0.02)',
-        display: 'flex', flexDirection: 'column', gap: '0.5rem',
-        height: '100%', boxSizing: 'border-box', overflow: 'hidden'
+    <motion.div
+      whileTap={{ scale: 0.98 }}
+      style={{
+        background: COLORS.card, borderRadius: '24px', padding: '1rem',
+        border: `1px solid ${COLORS.border}`, boxShadow: '0 8px 20px rgba(0,0,0,0.02)',
+        display: 'flex', flexDirection: 'column', gap: '0.85rem', minWidth: 0 // Prevent overflow
       }}
     >
+      {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <div style={{ padding: '6px', borderRadius: '10px', background: isOffline ? '#F1F5F9' : `${theme.color}12` }}>
-            <NodeIcon size={14} color={isOffline ? COLORS.offline : theme.color} strokeWidth={2.5} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+          <div style={{ 
+            width: '38px', height: '38px', borderRadius: '12px', flexShrink: 0,
+            background: isOffline ? '#F1F5F9' : `${config.color}15`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}>
+            <config.icon size={18} color={isOffline ? COLORS.offline : config.color} />
           </div>
-          <h3 style={{ margin: 0, fontSize: '0.75rem', fontWeight: 950, color: isOffline ? COLORS.offline : COLORS.text }}>
-            {theme.label}
-          </h3>
+          <div style={{ overflow: 'hidden' }}>
+            <h3 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 900, color: COLORS.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{config.label}</h3>
+            <span style={{ fontSize: '0.55rem', fontWeight: 800, color: COLORS.subtext, opacity: 0.6 }}>v2.9.2</span>
+          </div>
         </div>
-        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: statusColor }} />
+        <div style={{ flexShrink: 0, padding: '5px', borderRadius: '8px', background: isOnline ? `${COLORS.active}10` : '#F1F5F9' }}>
+           <Wifi size={16} color={isOnline ? COLORS.active : COLORS.offline} />
+        </div>
       </div>
 
-      {!isOffline && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px' }}>
-          <div style={{ background: '#F8FAFC', padding: '5px', borderRadius: '8px', textAlign: 'center' }}>
-            <span style={{ fontSize: '0.45rem', fontWeight: 900, color: COLORS.subtext, display: 'block', textTransform: 'uppercase' }}>Signal</span>
-            <span style={{ fontSize: '0.7rem', fontWeight: 950, color: COLORS.text }}>{metrics.rssi || '---'}</span>
-          </div>
-          <div style={{ background: '#F8FAFC', padding: '5px', borderRadius: '8px', textAlign: 'center' }}>
-            <span style={{ fontSize: '0.45rem', fontWeight: 900, color: COLORS.subtext, display: 'block', textTransform: 'uppercase' }}>Lat</span>
-            <span style={{ fontSize: '0.7rem', fontWeight: 950, color: COLORS.text }}>{metrics.latency || '---'}</span>
-          </div>
-        </div>
-      )}
-
+      {/* Sensor Dots */}
       <div style={{ 
-        flex: 1, padding: '8px', background: isOffline ? 'transparent' : '#FCFCFC', 
-        borderRadius: '12px', border: isOffline ? '1px dashed #E2E8F0' : '1px solid #F1F5F9',
-        overflowY: 'auto'
+        background: '#F8FAFC', borderRadius: '14px', padding: '10px',
+        display: 'grid', gridTemplateColumns: 'repeat(1, 1fr)', gap: '6px'
       }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-          {sensors && sensors.map((s, idx) => (
-            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: isOffline ? 0.4 : 1 }}>
-              <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: getSensorStatusColor(s.status) }} />
-              <span style={{ fontSize: '0.6rem', fontWeight: 800, color: isOffline ? COLORS.offline : COLORS.text, textTransform: 'uppercase' }}>
-                {s.name.replace(/_/g, ' ')}
-              </span>
+        {sensors?.slice(0, 4).map((s, idx) => {
+          let dotColor = COLORS.offline;
+          if (!isOffline) {
+            if (s.status === 'ACTIVE') dotColor = COLORS.active;
+            else if (s.status === 'ERROR') dotColor = COLORS.critical;
+            else dotColor = COLORS.warning;
+          }
+          
+          return (
+            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
+               <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
+               <span style={{ fontSize: '0.6rem', fontWeight: 850, color: COLORS.text, opacity: isOffline ? 0.4 : 1, textTransform: 'capitalize', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                 {s.name?.replace(/_/g, ' ') || 'S'}
+               </span>
             </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
     </motion.div>
   );
 };
 
 const DeviceManagement = () => {
-  const { devices = {}, systemOverview } = useApp();
+  const { devices, systemOverview } = useApp();
 
-  if (!systemOverview || !devices) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: COLORS.bg }}>
-        <Activity size={32} color={COLORS.active} className="spin-slow" />
-      </div>
-    );
-  }
+  if (!systemOverview || !devices) return null;
 
-  const statusColor = systemOverview.overall_status === 'HEALTHY' ? COLORS.active : (systemOverview.overall_status === 'DEGRADED' ? COLORS.partial : COLORS.offline);
-  const deviceList = Object.values(devices);
+  const getHeroStatus = () => {
+    const { active_nodes = 0, total_nodes = 4, offline_nodes = 0 } = systemOverview;
+    if (offline_nodes === total_nodes) return { text: "Offline ❌", color: COLORS.critical, sub: "System Down" };
+    if (active_nodes === total_nodes) return { text: "Healthy ✅", color: COLORS.active, sub: "All Nodes Active" };
+    return { text: "Alert ⚠️", color: COLORS.warning, sub: `${offline_nodes} Disconnected` };
+  };
+
+  const hero = getHeroStatus();
 
   return (
-    <div style={{ background: COLORS.bg, height: '100vh', padding: '0.75rem', fontFamily: "'Outfit', sans-serif", display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div style={{ 
+      padding: '1rem', background: COLORS.background, minHeight: '100dvh', 
+      display: 'flex', flexDirection: 'column', gap: '1.25rem', paddingBottom: '7rem',
+      overflowY: 'auto', // Enable vertical scroll
+      maxWidth: '100vw' // Prevent horizontal overflow
+    }}>
       
-      {/* ─── SYSTEM HERO CARD ─── */}
-      <motion.div 
+      {/* Hero Card */}
+      <motion.div
         initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-        style={{ 
-          background: 'white', borderRadius: '24px', padding: '1rem', 
-          border: `1px solid ${COLORS.border}`, boxShadow: '0 8px 25px rgba(0,0,0,0.03)',
-          marginBottom: '0.75rem', position: 'relative', overflow: 'hidden'
+        style={{
+          background: COLORS.card, borderRadius: '28px', padding: '1.25rem',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.04)', border: `1px solid ${COLORS.border}`,
+          position: 'relative', overflow: 'hidden'
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 2 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ padding: '8px', background: `${statusColor}15`, borderRadius: '12px' }}>
-              <Server size={20} color={statusColor} strokeWidth={2.5} />
+        <div style={{ position: 'relative', zIndex: 2 }}>
+          <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 900, color: COLORS.subtext, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Node Status</p>
+          <h2 style={{ margin: '4px 0', fontSize: '1.4rem', fontWeight: 950, color: COLORS.text }}>{hero.text}</h2>
+          <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 700, color: COLORS.subtext, opacity: 0.7 }}>{hero.sub}</p>
+          
+          <div style={{ display: 'flex', gap: '1.25rem', marginTop: '1.25rem', borderTop: '1px solid #F1F5F9', paddingTop: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+               <div style={{ width: '10px', height: '10px', borderRadius: '3px', background: COLORS.active }} />
+               <span style={{ fontSize: '1rem', fontWeight: 950 }}>{systemOverview.active_nodes ?? 0}</span>
             </div>
-            <div>
-              <span style={{ fontSize: '0.6rem', fontWeight: 950, color: COLORS.subtext, textTransform: 'uppercase' }}>Fleet Diagnostics</span>
-              <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 950, color: COLORS.text, lineHeight: 1 }}>{systemOverview.overall_status}</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+               <div style={{ width: '10px', height: '10px', borderRadius: '3px', background: COLORS.warning }} />
+               <span style={{ fontSize: '1rem', fontWeight: 950 }}>{systemOverview.partial_nodes ?? 0}</span>
             </div>
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '1.8rem', fontWeight: 950, color: statusColor, lineHeight: 1 }}>{systemOverview.health_percent}%</div>
-            <span style={{ fontSize: '0.5rem', fontWeight: 900, color: COLORS.subtext, textTransform: 'uppercase' }}>Integrity Score</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+               <div style={{ width: '10px', height: '10px', borderRadius: '3px', background: COLORS.offline }} />
+               <span style={{ fontSize: '1rem', fontWeight: 950 }}>{systemOverview.offline_nodes ?? 0}</span>
+            </div>
           </div>
         </div>
       </motion.div>
 
-      {/* ─── FULL-SCREEN 2x2 GRID (Stretches to fill bottom) ─── */}
+      {/* Adaptive Grid: 2 columns on mobile, 1 column if extremely narrow */}
       <div style={{ 
-        flex: 1, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', 
-        gridTemplateRows: 'repeat(2, 1fr)', gap: '0.75rem', paddingBottom: '0.2rem' 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(2, 1fr)', // Force 2 columns for high-density
+        gap: '0.75rem',
+        width: '100%'
       }}>
-        {deviceList.slice(0, 4).map(dev => (
-          <NodeCard key={dev.device_id} device={dev} />
-        ))}
+        <DeviceCard device={devices.soil_node} />
+        <DeviceCard device={devices.weather_node} />
+        <DeviceCard device={devices.water_node} />
+        <DeviceCard device={devices.storage_node} />
       </div>
 
-      <style>{`
-        .spin-slow { animation: spin 3s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-      `}</style>
+      {/* Action Button */}
+      <motion.button 
+        whileTap={{ scale: 0.95 }}
+        onClick={() => window.location.reload()}
+        style={{ 
+          background: COLORS.text, border: 'none', padding: '14px', 
+          borderRadius: '20px', color: 'white', fontWeight: 900, fontSize: '0.85rem',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+          boxShadow: '0 8px 16px rgba(0,0,0,0.1)', marginTop: 'auto'
+        }}
+      >
+        <RefreshCw size={16} />
+        Synchronize Data
+      </motion.button>
+
     </div>
   );
 };

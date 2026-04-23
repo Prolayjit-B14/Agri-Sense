@@ -38,11 +38,11 @@ const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, statusText 
   const isOffline = value === null || value === undefined;
   const safeStatus = (statusText || '').toLowerCase();
   
-  const isOptimal = safeStatus.includes('optimal') || safeStatus.includes('safe') || safeStatus.includes('stable');
+  const isOptimal = safeStatus.includes('optimal') || safeStatus.includes('safe') || safeStatus.includes('stable') || safeStatus.includes('no rain') || safeStatus.includes('light');
   const isModerate = safeStatus.includes('moderate') || safeStatus.includes('high') || safeStatus.includes('low');
-  const isCritical = safeStatus.includes('critical') || safeStatus.includes('warning');
+  const isCritical = safeStatus.includes('critical') || safeStatus.includes('warning') || safeStatus.includes('heavy');
   
-  const stateColor = isOffline ? COLORS.offline : (isOptimal ? COLORS.primary : (isModerate ? COLORS.warning : COLORS.critical));
+  const stateColor = isOffline ? COLORS.offline : (isOptimal ? COLORS.primary : (isModerate ? COLORS.warning : (isCritical ? COLORS.critical : COLORS.offline)));
   const cardBg = isOffline ? '#F1F5F9' : (isOptimal ? '#F0FDF4' : (isModerate ? '#FFFBEB' : '#FEF2F2'));
 
   return (
@@ -111,19 +111,22 @@ const RegionalMetric = ({ label, value, icon: Icon, color }) => (
 
 const WeatherMonitoring = () => {
   const navigate = useNavigate();
-  const { sensorData, apiWeather, apiForecast, systemHealth, lastGlobalUpdate } = useApp();
+  const { sensorData, apiWeather, apiForecast, systemHealth, lastGlobalUpdate, devices } = useApp();
 
   const weather = sensorData?.weather || {};
   const weatherScore = systemHealth.weather || 0;
   
-  const stats = useMemo(() => ({
-    temp: weather.temp !== null ? Number(weather.temp).toFixed(1) : null,
-    humidity: weather.humidity !== null ? Number(weather.humidity).toFixed(1) : null,
-    light: weather.lightIntensity !== null ? Math.round(weather.lightIntensity) : null,
-    rain: weather.rainLevel !== null ? Math.round(weather.rainLevel) : null,
-  }), [weather]);
+  const stats = useMemo(() => {
+    const safeNum = (val, dec = 1) => (val !== null && val !== undefined && !isNaN(val)) ? Number(val).toFixed(dec) : null;
+    return { 
+      temp: safeNum(weather.temp), 
+      humidity: safeNum(weather.humidity, 0), 
+      light: safeNum(weather.lightIntensity, 0), 
+      rain: safeNum(weather.rainLevel, 1) 
+    };
+  }, [weather]);
 
-  const isOnline = stats.temp !== null || stats.humidity !== null;
+  const isOnline = devices?.['weather_node']?.status === 'ACTIVE' || stats.temp !== null;
 
   const heroConfig = useMemo(() => {
     if (!isOnline) return { label: 'DEVICE OFFLINE', status: 'Offline', gradient: GRADIENTS.offline, iconColor: COLORS.offline, message: 'Check node power and connectivity.', bg: '#F1F5F9', border: '#E2E8F0' };
@@ -151,7 +154,7 @@ const WeatherMonitoring = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: `${heroConfig.iconColor}10`, padding: '6px 14px', borderRadius: '100px', border: `1px solid ${heroConfig.iconColor}20` }}>
             <motion.div animate={isOnline ? { opacity: [0.4, 1, 0.4] } : { opacity: 0.5 }} transition={{ duration: 2, repeat: Infinity }} style={{ width: '8px', height: '8px', borderRadius: '50%', background: heroConfig.iconColor }} />
-            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: heroConfig.iconColor, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{isOnline ? 'Node Active' : 'Device Offline'}</span>
+            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: heroConfig.iconColor, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{isOnline ? 'Climate Node Active' : 'Device Offline'}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', opacity: 0.5 }}>
             <Clock size={12} color={COLORS.subtext} />
@@ -162,7 +165,7 @@ const WeatherMonitoring = () => {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
           <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 800, color: COLORS.subtext, textTransform: 'uppercase', letterSpacing: '0.15em', opacity: 0.6 }}>{heroConfig.label}</p>
           <motion.h1 key={weatherScore} style={{ margin: 0, fontSize: '5.5rem', fontWeight: 800, color: COLORS.text, letterSpacing: '-0.04em', lineHeight: 1 }}>
-            {isOnline ? weatherScore : '--'}<span style={{ fontSize: '1.5rem', opacity: 0.3, marginLeft: '4px' }}>%</span>
+            {isOnline && weatherScore !== null ? Math.round(weatherScore) : '--'}<span style={{ fontSize: '1.5rem', opacity: 0.3, marginLeft: '4px' }}>%</span>
           </motion.h1>
           <motion.div 
             animate={heroConfig.status === 'Critical' ? { scale: [1, 1.05, 1], boxShadow: [`0 4px 15px ${COLORS.critical}30`, `0 4px 25px ${COLORS.critical}50`, `0 4px 15px ${COLORS.critical}30`] } : {}}
@@ -180,10 +183,25 @@ const WeatherMonitoring = () => {
 
       {/* ─── UNIFIED SENSOR GRID ─── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-        <DiagnosticCard label="Temp" value={stats.temp} unit="°C" min={15} max={35} icon={Thermometer} color={COLORS.primary} statusText={stats.temp === null ? 'Offline' : (stats.temp > 32 ? 'High' : (stats.temp < 18 ? 'Low' : 'Stable'))} range="18-32 °C" />
+        <DiagnosticCard label="Temp" value={stats.temp} unit="°C" min={15} max={35} icon={Thermometer} color={COLORS.primary} statusText={stats.temp === null ? 'Offline' : (stats.temp > 32 ? 'High' : (stats.temp < 18 ? 'Low' : 'Optimal'))} range="18-32 °C" />
         <DiagnosticCard label="Humidity" value={stats.humidity} unit="%" min={40} max={80} icon={Droplet} color={COLORS.secondary} statusText={stats.humidity === null ? 'Offline' : (stats.humidity > 75 ? 'High' : (stats.humidity < 45 ? 'Low' : 'Optimal'))} range="40-70 %" />
         <DiagnosticCard label="Sunlight" value={stats.light} unit="lx" min={200} max={10000} icon={Sun} color={COLORS.warning} statusText={stats.light === null ? 'Offline' : (stats.light > 8000 ? 'High' : (stats.light < 500 ? 'Low' : 'Normal'))} range="1k-8k lx" />
-        <DiagnosticCard label="Rain" value={stats.rain} unit="mm" min={0} max={50} icon={CloudRain} color="#0EA5E9" statusText={stats.rain === null ? 'Offline' : (stats.rain > 20 ? 'Active' : 'No Rain')} range="0-10 mm" />
+        <DiagnosticCard 
+          label="Rain" 
+          value={stats.rain} 
+          unit="mm" 
+          min={0} 
+          max={50} 
+          icon={CloudRain} 
+          color="#0EA5E9" 
+          statusText={
+            stats.rain === null ? 'Offline' : 
+            (Number(stats.rain) === 0 ? 'No Rain' : 
+            (Number(stats.rain) <= 5 ? 'Light' : 
+            (Number(stats.rain) <= 20 ? 'Moderate' : 'Heavy')))
+          } 
+          range="0-10 mm" 
+        />
       </div>
 
       {/* ─── REGIONAL & FORECAST (REMAIN AS IS BUT CLEANED) ─── */}

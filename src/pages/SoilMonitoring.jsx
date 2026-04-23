@@ -213,7 +213,7 @@ const SoilMonitoring = () => {
               style={{ width: '8px', height: '8px', borderRadius: '50%', background: heroConfig.iconColor }} 
             />
             <span style={{ fontSize: '0.65rem', fontWeight: 800, color: heroConfig.iconColor, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              {isOnline ? 'Node Active' : 'Device Offline'}
+              {isOnline ? 'Soil Node Active' : 'Device Offline'}
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', opacity: 0.5 }}>

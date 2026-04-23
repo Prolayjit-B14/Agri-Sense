@@ -183,9 +183,11 @@ export const AppProvider = ({ children }) => {
       const stIdx = calculateNodeHealth('storage', sensorData.storage);
       const iIdx = calculateNodeHealth('irrigation', sensorData.water);
 
-      setSystemHealth({ soil: sIdx, weather: wIdx, storage: stIdx, water: iIdx });
+      const health = { soil: sIdx, weather: wIdx, storage: stIdx, water: iIdx };
+      setSystemHealth(health);
       
-      const overallScore = calculateOverallHealth({ soil: sIdx, weather: wIdx, storage: stIdx, water: iIdx });
+      // Pass devices registry so offline nodes are excluded from overall score
+      const overallScore = calculateOverallHealth(health, devices);
       setFarmHealthScore(overallScore);
     }
   }, [sensorData]);
@@ -258,24 +260,48 @@ export const AppProvider = ({ children }) => {
             setSensorData(prev => {
               const updated = processMqttMessage(topic, data, prev);
               
-              // Update Device Registry
+              // 🛰️ MULTI-NODE REGISTRY UPDATE
               const parts = topic.split('/');
-              let nodeType = parts[parts.length - 1];
-              if (nodeType === 'telemetry' && parts.length >= 3) {
-                nodeType = parts[parts.length - 2];
-              } else if (nodeType === 'sensors') {
-                nodeType = 'soil';
+              let primaryNodeType = parts[parts.length - 1];
+              if (primaryNodeType === 'telemetry' && parts.length >= 3) {
+                primaryNodeType = parts[parts.length - 2];
               }
 
-              if (['soil', 'weather', 'storage', 'water'].includes(nodeType)) {
-                setDevices(prevDevices => {
-                  const nodeId = data.device_id || `${nodeType}_node`;
-                  const newState = processDeviceState(nodeId, nodeType, data);
-                  const newDevices = { ...prevDevices, [nodeId]: newState };
-                  setSystemOverview(calculateSystemOverview(newDevices));
-                  return newDevices;
-                });
-              }
+              // Detect Unified Payload (e.g. agrisense/field_a/sensors)
+              const isUnified = primaryNodeType === 'sensors' || !!(data.soil || data.weather || data.storage || data.water);
+              
+              setDevices(prevDevices => {
+                let newDevices = { ...prevDevices };
+                
+                // Function to update a single node type
+                const updateNode = (type, nodeData) => {
+                  if (!nodeData) return;
+                  const nodeId = nodeData.device_id || `${type}_node`;
+                  const newState = processDeviceState(nodeId, type, nodeData);
+                  
+                  // Canonical Dashboard Linking
+                  newDevices[nodeId] = newState;
+                  newDevices[`${type}_node`] = newState; 
+                };
+
+                if (isUnified) {
+                  // Update all available nodes from the unified packet
+                  if (data.soil) updateNode('soil', data.soil);
+                  if (data.weather) updateNode('weather', data.weather);
+                  if (data.storage) updateNode('storage', data.storage);
+                  if (data.water || data.irrigation) updateNode('water', data.water || data.irrigation);
+                  
+                  // If it's a flat unified packet (legacy support)
+                  if (!data.soil && (data.moisture || data.n)) updateNode('soil', data);
+                } else if (['soil', 'weather', 'storage', 'water', 'irrigation'].includes(primaryNodeType)) {
+                  // Standard discrete node update
+                  const type = primaryNodeType === 'irrigation' ? 'water' : primaryNodeType;
+                  updateNode(type, data);
+                }
+
+                setSystemOverview(calculateSystemOverview(newDevices));
+                return newDevices;
+              });
               
               return updated;
             });
@@ -290,10 +316,10 @@ export const AppProvider = ({ children }) => {
       } else {
         // Initialize Mock Devices
         const mockNodes = {
-          'soil_alpha': processDeviceState('soil_alpha', 'soil', { rssi: -65, latency: 20, packet_loss: 0.1, timestamp: Date.now(), moisture: 45, ph: 6.8, n: 20, p: 40, k: 30, temperature: 24 }),
-          'weather_alpha': processDeviceState('weather_alpha', 'weather', { rssi: -72, latency: 45, packet_loss: 0.5, timestamp: Date.now(), temperature: 28, humidity: 65, rain: 0, ldr: 800 }),
-          'storage_alpha': processDeviceState('storage_alpha', 'storage', { rssi: -55, latency: 15, packet_loss: 0, timestamp: Date.now(), mq135: 120, temperature: 22, humidity: 45 }),
-          'water_alpha': processDeviceState('water_alpha', 'water', { rssi: -88, latency: 120, packet_loss: 4.5, timestamp: Date.now(), level: 80, flow: 12, pressure: 45 })
+          'soil_node': processDeviceState('soil_node', 'soil', { rssi: -65, latency: 20, packet_loss: 0.1, timestamp: Date.now(), moisture: 45, ph: 6.8, n: 20, p: 40, k: 30, temperature: 24 }),
+          'weather_node': processDeviceState('weather_node', 'weather', { rssi: -72, latency: 45, packet_loss: 0.5, timestamp: Date.now(), temperature: 28, humidity: 65, rain: 0, ldr: 800 }),
+          'storage_node': processDeviceState('storage_node', 'storage', { rssi: -55, latency: 15, packet_loss: 0, timestamp: Date.now(), mq135: 120, temperature: 22, humidity: 45 }),
+          'water_node': processDeviceState('water_node', 'water', { rssi: -88, latency: 120, packet_loss: 4.5, timestamp: Date.now(), level: 80, flow: 12, pressure: 45 })
         };
         setDevices(mockNodes);
         setSystemOverview(calculateSystemOverview(mockNodes));

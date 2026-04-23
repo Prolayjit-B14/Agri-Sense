@@ -129,9 +129,11 @@ const PrecisionSoilTesting = () => {
         if (!sensorData.soil || sensorData.soil.moisture === '---') return;
         const now = new Date();
         const newVal = {
-          moisture: parseFloat(sensorData.soil.moisture || 0).toFixed(1),
-          ph: parseFloat(sensorData.soil.ph || 0).toFixed(1),
-          n: parseInt(sensorData.soil.npk?.n || 0), p: parseInt(sensorData.soil.npk?.p || 0), k: parseInt(sensorData.soil.npk?.k || 0),
+          moisture: sensorData.soil.moisture !== null ? parseFloat(sensorData.soil.moisture).toFixed(1) : '---',
+          ph: sensorData.soil.ph !== null ? parseFloat(sensorData.soil.ph).toFixed(1) : '---',
+          n: sensorData.soil.npk?.n !== null ? parseInt(sensorData.soil.npk.n) : '---',
+          p: sensorData.soil.npk?.p !== null ? parseInt(sensorData.soil.npk.p) : '---',
+          k: sensorData.soil.npk?.k !== null ? parseInt(sensorData.soil.npk.k) : '---',
           date: now.toLocaleDateString(), 
           time: now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
           gps: `${mapCenter.lat.toFixed(6)}, ${mapCenter.lng.toFixed(6)}`

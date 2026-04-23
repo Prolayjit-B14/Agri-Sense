@@ -10,7 +10,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   LayoutGrid, LineChart, Cpu,
   Camera, Bell, User,
-  Settings as SettingsIcon, FlaskConical
+  Settings as SettingsIcon, FlaskConical, Sparkles
 } from 'lucide-react';
 
 // Context & State
@@ -28,7 +28,7 @@ import SoilMonitoring from './pages/SoilMonitoring';
 import IrrigationControl from './pages/IrrigationControl';
 import VisualMonitoring from './pages/VisualMonitoring';
 import Profile from './pages/Profile';
-import MapView from './pages/MapView';
+
 import Alerts from './pages/Alerts';
 import WeatherMonitoring from './pages/WeatherMonitoring';
 import DeviceManagement from './pages/DeviceManagement';
@@ -37,6 +37,9 @@ import Settings from './pages/Settings';
 import PrecisionSoilTesting from './pages/PrecisionSoilTesting';
 import Reports from './pages/Reports';
 import StorageMonitoring from './pages/StorageMonitoring';
+import CropAdvisor from './pages/CropAdvisor';
+import Traceability from './pages/Traceability';
+
 
 const PageWrapper = ({ children }) => (
   <motion.div
@@ -57,9 +60,9 @@ const BottomNav = () => {
   const tabs = [
     { id: 'Home', path: '/dashboard', icon: LayoutGrid },
     { id: 'Soil Test', path: '/precision-soil-testing', icon: FlaskConical },
+    { id: 'Advisor', path: '/crop-advisor', icon: Sparkles },
     { id: 'Analytics', path: '/analytics', icon: LineChart },
     { id: 'Devices', path: '/device-area', icon: Cpu },
-    { id: 'Settings', path: '/settings', icon: SettingsIcon },
   ];
 
   return (
@@ -104,19 +107,22 @@ const MainLayout = ({ children }) => {
   const titles = {
     '/dashboard': 'Dashboard',
     '/analytics': 'Analytics',
-    '/irrigation': 'Irigataion Control',
+    '/irrigation': 'Irrigation Control',
     '/weather': 'Weather Station',
     '/soil-monitoring': 'Soil Monitor',
     '/storage-hub': 'Storage Monitor',
-    '/device-area': 'Device Managmenet',
+    '/device-area': 'Device Management',
     '/camera': 'Camera',
     '/alerts': 'Alerts',
     '/profile': 'Profile',
     '/settings': 'Settings',
     '/reports': 'Farm Report',
-    '/map-view': 'Feild map',
-    '/precision-soil-testing': 'Soil Test'
+
+    '/precision-soil-testing': 'Soil Test',
+    '/crop-advisor': 'Crop Advisor',
+    '/traceability': 'Product Journey'
   };
+
 
   return (
     <div style={{ height: '100dvh', width: '100vw', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#F8FAFC' }}>
@@ -178,14 +184,17 @@ const AppRoutes = () => {
       <Route path="/storage-hub" element={<MainLayout><StorageMonitoring /></MainLayout>} />
       <Route path="/camera" element={<MainLayout><VisualMonitoring /></MainLayout>} />
       <Route path="/device-area" element={<MainLayout><DeviceManagement /></MainLayout>} />
-      <Route path="/map-view" element={<MainLayout><MapView /></MainLayout>} />
+
       <Route path="/alerts" element={<MainLayout><Alerts /></MainLayout>} />
       <Route path="/reports" element={<MainLayout><Reports /></MainLayout>} />
       <Route path="/profile" element={<MainLayout><Profile /></MainLayout>} />
       <Route path="/settings" element={<MainLayout><Settings /></MainLayout>} />
       <Route path="/weather" element={<MainLayout><WeatherMonitoring /></MainLayout>} />
       <Route path="/precision-soil-testing" element={<MainLayout><PrecisionSoilTesting /></MainLayout>} />
+      <Route path="/crop-advisor" element={<MainLayout><CropAdvisor /></MainLayout>} />
+      <Route path="/traceability" element={<MainLayout><Traceability /></MainLayout>} />
       <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
+
     </Routes>
   );
 };

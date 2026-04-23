@@ -7,8 +7,9 @@ import {
   FileText, Activity, Network,
   CloudRain, Archive,
   LogOut, FlaskConical, Camera,
-  User as UserIcon, Cpu
+  User as UserIcon, Cpu, Sparkles
 } from 'lucide-react';
+
 import { useApp } from '../context/AppContext';
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────
@@ -40,8 +41,10 @@ const Sidebar = () => {
       title: 'Intelligence & Vision',
       links: [
         { name: 'Farm Report', path: '/reports', icon: FileText },
-        { name: 'Feild map', path: '/map-view', icon: Map },
+
         { name: 'Field Vision', path: '/camera', icon: Camera },
+        { name: 'Crop Advisor', path: '/crop-advisor', icon: Sparkles },
+        { name: 'Traceability', path: '/traceability', icon: Map },
       ]
     },
     {

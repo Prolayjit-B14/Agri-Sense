@@ -1,19 +1,18 @@
 /**
- * AgriSense v3.80 High-Density Analytical Intelligence Hub
+ * AgriSense v3.85 High-Density Analytical Intelligence Hub
  * 8-Chart Diagnostic Matrix per module for Deep Insight.
+ * Fixed: Synchronized with global sensor history for immediate graph rendering.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LineChart, Line, BarChart, Bar, AreaChart, Area,
   PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, ComposedChart, Legend
+  Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 import {
-  Sprout, CloudRain, Warehouse, Activity,
-  TrendingUp, Thermometer, Droplets, Zap, AlertCircle,
-  Wind, Gauge, Sun, Cloud, Battery, ShieldAlert
+  Sprout, CloudRain, Warehouse, AlertCircle
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useLocation } from 'react-router-dom';
@@ -58,40 +57,37 @@ const AnalyticsCard = ({ title, status = 'good', isOffline, children, height = '
 };
 
 const AnalyticsHub = () => {
-  const { sensorData, devices } = useApp();
+  const { sensorData, devices, sensorHistory } = useApp();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState(location.state?.tab || 'soil');
-  const [history, setHistory] = useState({ soil: [], weather: [], storage: [], correlation: [] });
 
-  // ─── OFFLINE DETECTION ───
+  // ─── PROCESS GLOBAL HISTORY INTO CATEGORIZED TRENDS ───
+  const historyData = useMemo(() => {
+    return {
+      soil: sensorHistory.map(entry => ({
+        name: new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        health: entry.soil?.healthIndex || 0, moisture: entry.soil?.moisture || 0,
+        n: entry.soil?.npk?.n || 0, p: entry.soil?.npk?.p || 0, k: entry.soil?.npk?.k || 0,
+        temp: entry.soil?.temperature || 0, ph: entry.soil?.ph || 7
+      })),
+      weather: sensorHistory.map(entry => ({
+        name: new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        temp: entry.weather?.temperature || 0, humidity: entry.weather?.humidity || 0,
+        ldr: entry.weather?.ldr || 0, rain: entry.weather?.rain || 0,
+        wind: 12, pressure: 1013
+      })),
+      storage: sensorHistory.map(entry => ({
+        name: new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        temp: entry.storage?.temperature || 0, humidity: entry.storage?.humidity || 0,
+        gas: entry.storage?.mq135 || 0, co2: 450
+      }))
+    };
+  }, [sensorHistory]);
+
   const getIsOffline = (type) => {
     const node = Object.values(devices).find(d => d.node_type === type);
     return !node || node.status === 'OFFLINE';
   };
-
-  const isSoilOffline = getIsOffline('soil');
-  const isWeatherOffline = getIsOffline('weather');
-  const isStorageOffline = getIsOffline('storage');
-
-  useEffect(() => {
-    const now = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    setHistory(prev => ({
-      soil: isSoilOffline ? prev.soil : [...prev.soil, { 
-        name: now, health: sensorData.soil?.healthIndex || 0, moisture: sensorData.soil?.moisture || 0,
-        n: sensorData.soil?.npk?.n || 0, p: sensorData.soil?.npk?.p || 0, k: sensorData.soil?.npk?.k || 0,
-        temp: sensorData.soil?.temperature || 0, ph: sensorData.soil?.ph || 7
-      }].slice(-20),
-      weather: isWeatherOffline ? prev.weather : [...prev.weather, {
-        name: now, temp: sensorData.weather?.temperature || 0, humidity: sensorData.weather?.humidity || 0,
-        ldr: sensorData.weather?.ldr || 0, rain: sensorData.weather?.rain || 0,
-        wind: 12 + Math.random()*5, pressure: 1013 + Math.random()*2
-      }].slice(-20),
-      storage: isStorageOffline ? prev.storage : [...prev.storage, {
-        name: now, temp: sensorData.storage?.temperature || 0, humidity: sensorData.storage?.humidity || 0,
-        gas: sensorData.storage?.mq135 || 0, co2: 400 + Math.random()*50
-      }].slice(-20)
-    }));
-  }, [sensorData, isSoilOffline, isWeatherOffline, isStorageOffline]);
 
   const renderGrid = (tabId) => {
     const charts = {
@@ -128,6 +124,7 @@ const AnalyticsHub = () => {
     }[tabId] || [];
 
     const isOffline = getIsOffline(tabId);
+    const tabData = historyData[tabId] || [];
 
     return (
       <div className="analytics-grid">
@@ -136,25 +133,27 @@ const AnalyticsHub = () => {
             <ResponsiveContainer width="100%" height="100%">
               {c.type === 'pie' ? (
                 <PieChart>
-                  <Pie data={c.data} innerRadius="60%" outerRadius="80%" dataKey="v">
+                  <Pie data={c.data} innerRadius="60%" outerRadius="80%" dataKey="v" isAnimationActive={false}>
                     <Cell fill={COLORS.good} /><Cell fill="#F1F5F9" />
                   </Pie>
                 </PieChart>
               ) : c.type === 'area' ? (
-                <AreaChart data={history[tabId]}>
-                  <Area type="monotone" dataKey={c.key} stroke={c.color} fill={`${c.color}20`} strokeWidth={2} />
+                <AreaChart data={tabData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                  <Area type="monotone" dataKey={c.key} stroke={c.color} fill={`${c.color}20`} strokeWidth={2} isAnimationActive={false} />
                 </AreaChart>
               ) : c.type === 'line' ? (
-                <LineChart data={history[tabId]}>
-                  <Line type="monotone" dataKey={c.key} stroke={c.color} strokeWidth={2} dot={false} />
+                <LineChart data={tabData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                  <Line type="monotone" dataKey={c.key} stroke={c.color} strokeWidth={2} dot={false} isAnimationActive={false} />
                 </LineChart>
               ) : c.type === 'bar' ? (
-                <BarChart data={history[tabId]}>
-                  <Bar dataKey={c.key} fill={c.color} radius={[2, 2, 0, 0]} />
+                <BarChart data={tabData}>
+                  <Bar dataKey={c.key} fill={c.color} radius={[2, 2, 0, 0]} isAnimationActive={false} />
                 </BarChart>
               ) : (
-                <BarChart data={history[tabId]}>
-                  {c.keys.map((k, idx) => <Bar key={k} dataKey={k} fill={c.colors[idx]} radius={[2, 2, 0, 0]} />)}
+                <BarChart data={tabData}>
+                  {c.keys.map((k, idx) => <Bar key={k} dataKey={k} fill={c.colors[idx]} radius={[2, 2, 0, 0]} isAnimationActive={false} />)}
                 </BarChart>
               )}
             </ResponsiveContainer>

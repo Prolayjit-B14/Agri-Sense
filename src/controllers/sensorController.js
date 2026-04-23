@@ -27,18 +27,16 @@ export const processMqttMessage = (topic, data, prev) => {
   const newState = JSON.parse(JSON.stringify(prev));
   
   // 🛰️ NODE DETECTION VIA TOPIC PATH
-  // Supports: agrisense/v1/node/[type]/telemetry
   let nodeType = parts[parts.length - 1]; 
   if (nodeType === 'telemetry' && parts.length >= 3) {
     nodeType = parts[parts.length - 2];
   }
 
-  // Handle Unified Payload (from legacy test scripts)
+  // Handle Unified Payload (topic: sensors)
   if (nodeType === 'sensors') {
-
     if (data.soil) {
       newState.soil.moisture = getVal(data.soil, ['moisture', 'm'], prev.soil.moisture);
-      newState.soil.temp = getVal(data.soil, ['temp', 't'], prev.soil.temp);
+      newState.soil.temp = getVal(data.soil, ['temp', 't', 'temperature'], prev.soil.temp);
       newState.soil.ph = getVal(data.soil, ['ph'], prev.soil.ph);
       if (data.soil.npk) {
         newState.soil.npk.n = getVal(data.soil.npk, ['n'], prev.soil.npk.n);
@@ -47,12 +45,14 @@ export const processMqttMessage = (topic, data, prev) => {
       }
       newState.soil.healthIndex = calculateNodeHealth('soil', newState.soil);
     }
-    if (data.weather) {
-      newState.weather.temp = getVal(data.weather, ['temp', 't'], prev.weather.temp);
-      newState.weather.humidity = getVal(data.weather, ['humidity', 'h'], prev.weather.humidity);
-      newState.weather.lightIntensity = getVal(data.weather, ['lightIntensity', 'light', 'ldr'], prev.weather.lightIntensity);
-      newState.weather.rainLevel = getVal(data.weather, ['rainLevel', 'rain', 'rainfall'], prev.weather.rainLevel);
-      newState.weather.isRaining = data.weather.isRaining ?? (data.weather.humidity > 95) ?? prev.weather.isRaining;
+    // Unified flat weather or nested
+    if (data.weather || data.temp || data.humidity || data.ldr || data.rain) {
+      const wData = data.weather || data;
+      newState.weather.temp = getVal(wData, ['temp', 't', 'temperature'], prev.weather.temp);
+      newState.weather.humidity = getVal(wData, ['humidity', 'h'], prev.weather.humidity);
+      newState.weather.lightIntensity = getVal(wData, ['lightIntensity', 'light', 'ldr', 'lux'], prev.weather.lightIntensity);
+      newState.weather.rainLevel = getVal(wData, ['rainLevel', 'rain', 'rainfall'], prev.weather.rainLevel);
+      newState.weather.isRaining = wData.isRaining ?? (newState.weather.humidity > 95) ?? (newState.weather.rainLevel > 0) ?? prev.weather.isRaining;
       newState.weather.healthIndex = calculateNodeHealth('weather', newState.weather);
     }
     if (data.water || data.irrigation) {
@@ -63,14 +63,13 @@ export const processMqttMessage = (topic, data, prev) => {
       newState.water.healthIndex = calculateNodeHealth('water', newState.water);
     }
     if (data.storage) {
-      newState.storage.temp = getVal(data.storage, ['temp', 't'], prev.storage.temp);
+      newState.storage.temp = getVal(data.storage, ['temp', 't', 'temperature'], prev.storage.temp);
       newState.storage.humidity = getVal(data.storage, ['humidity', 'h'], prev.storage.humidity);
       newState.storage.mq135 = getVal(data.storage, ['mq135', 'aqi', 'gas'], prev.storage.mq135);
       newState.storage.healthIndex = calculateNodeHealth('storage', newState.storage);
     }
-
   }
-  // Handle Discrete Node Topics
+  // Discrete Node Topics
   else if (nodeType === 'soil') {
     newState.soil.moisture = getVal(data, ['moisture', 'm'], prev.soil.moisture);
     newState.soil.temp = getVal(data, ['temp', 't'], prev.soil.temp);
@@ -80,19 +79,17 @@ export const processMqttMessage = (topic, data, prev) => {
       newState.soil.npk.p = getVal(data.npk, ['p'], prev.soil.npk.p);
       newState.soil.npk.k = getVal(data.npk, ['k'], prev.soil.npk.k);
     }
-    // Route physical pump feedback to water node
     if (data.pump_status !== undefined) {
       newState.water.pumpActive = (data.pump_status === 'ACTIVE' || data.pump_status === 1 || data.pump_status === true);
     }
     newState.soil.healthIndex = calculateNodeHealth('soil', newState.soil);
   } 
-
   else if (nodeType === 'weather') {
-    newState.weather.temp = getVal(data, ['temp', 't'], prev.weather.temp);
+    newState.weather.temp = getVal(data, ['temp', 't', 'temperature'], prev.weather.temp);
     newState.weather.humidity = getVal(data, ['humidity', 'h'], prev.weather.humidity);
-    newState.weather.lightIntensity = getVal(data, ['light', 'ldr'], prev.weather.lightIntensity);
-    newState.weather.rainLevel = getVal(data, ['rain', 'rainfall'], prev.weather.rainLevel);
-    newState.weather.isRaining = data.isRaining ?? (data.humidity > 95) ?? prev.weather.isRaining;
+    newState.weather.lightIntensity = getVal(data, ['lightIntensity', 'light', 'ldr', 'lux'], prev.weather.lightIntensity);
+    newState.weather.rainLevel = getVal(data, ['rainLevel', 'rain', 'rainfall'], prev.weather.rainLevel);
+    newState.weather.isRaining = data.isRaining ?? (data.humidity > 95) ?? (newState.weather.rainLevel > 0) ?? prev.weather.isRaining;
     newState.weather.healthIndex = calculateNodeHealth('weather', newState.weather);
   }
   else if (nodeType === 'water' || nodeType === 'irrigation') {
@@ -106,8 +103,6 @@ export const processMqttMessage = (topic, data, prev) => {
     newState.storage.mq135 = getVal(data, ['mq135', 'aqi', 'gas'], prev.storage.mq135);
     newState.storage.healthIndex = calculateNodeHealth('storage', newState.storage);
   }
-
-
 
   return newState;
 };
