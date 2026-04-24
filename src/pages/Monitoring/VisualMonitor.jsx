@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 // Context & Utils
-import { useApp } from '../context/AppContext';
+import { useApp } from '../../state/AppContext';
 
 // ─── DESIGN TOKENS ─────────────────────────────────────────────────────────
 const COLORS = {

@@ -4,7 +4,7 @@
  */
 
 import * as mqttModule from 'mqtt';
-import { MASTER_CONFIG } from '../config';
+import { MASTER_CONFIG } from '../setup';
 
 const mqtt = mqttModule.default || mqttModule;
 const { connect } = mqtt;

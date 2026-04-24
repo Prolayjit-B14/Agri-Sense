@@ -6,8 +6,8 @@ import {
   AlertCircle, Clock
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useApp } from '../context/AppContext';
-import useTrendEngine from '../hooks/useTrendEngine';
+import { useApp } from '../../state/AppContext';
+import useTrendEngine from '../../hooks/useTrendEngine';
 
 // ─── DESIGN SYSTEM ─────────────────────────────────────────────────────────
 

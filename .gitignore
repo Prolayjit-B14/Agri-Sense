@@ -34,6 +34,7 @@ android/build/
 local.properties
 .cxx/
 *.apk
+!apk/*.apk
 *.aar
 
 # Env files

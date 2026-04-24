@@ -1,6 +1,6 @@
-# AgriSense v3.90: Scientific Intelligence Suite
+# AgriSense Pro v17.1.0: Industrial Agronomy Suite
 
-An industrial-grade, IoT-driven precision agriculture platform. AgriSense v3.90 is a high-density monitoring ecosystem that bridges real-time hardware telemetry with scientific forensic diagnostics. Powered by **React 19**, **Vite**, and **Capacitor**, it delivers a zero-lag, zero-mock experience for professional farm management.
+An industrial-grade, deterministic agronomic advisory and IoT monitoring platform. AgriSense v17.1.0 is a high-fidelity diagnostic ecosystem that bridges real-time field telemetry with scientific crop suitability intelligence. Powered by **React 19**, **Vite**, and **Capacitor**, it delivers a production-grade advisory experience for professional agriculture.
 
 ---
 

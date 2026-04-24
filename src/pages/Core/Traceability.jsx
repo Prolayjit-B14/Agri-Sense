@@ -11,7 +11,7 @@ import {
   MapPin, Thermometer, Clock, Info,
   Search, Barcode, ChevronRight
 } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../../state/AppContext';
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────
 const COLORS = {

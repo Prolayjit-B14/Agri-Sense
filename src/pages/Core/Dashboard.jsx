@@ -14,8 +14,8 @@ import {
 } from 'lucide-react';
 
 // Context & Utils
-import { useApp } from '../context/AppContext';
-import { getHealthColor } from '../utils/healthEngine';
+import { useApp } from '../../state/AppContext';
+import { getHealthColor } from '../../logic/healthEngine';
 
 // ─── DESIGN TOKENS ─────────────────────────────────────────────────────────
 const COLORS = {

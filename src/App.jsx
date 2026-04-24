@@ -1,5 +1,5 @@
 /**
- * Bharat Advisor Pro v17.1.0 Main Application Entry
+ * Farm Advisor Pro v17.1.0 Main Application Entry
  * Handles routing, global layout, and organized page imports.
  */
 
@@ -43,7 +43,7 @@ import AnalyticsHub from './pages/Analytics/AnalyticsHub';
 import Reports from './pages/Analytics/Reports';
 
 import SoilForensics from './pages/Advisory/SoilForensics';
-import BharatAdvisor from './pages/Advisory/BharatAdvisor';
+import FarmAdvisor from './pages/Advisory/FarmAdvisor';
 
 
 const BottomNav = () => {
@@ -109,7 +109,7 @@ const MainLayout = ({ children }) => {
     '/settings': 'Settings',
     '/reports': 'Farm Reports',
     '/precision-soil-testing': 'Soil Forensics',
-    '/crop-advisor': 'Bharat Advisor',
+    '/crop-advisor': 'Farm Advisor',
     '/traceability': 'Product Journey'
   };
 
@@ -174,7 +174,7 @@ const AppRoutes = () => {
       <Route path="/settings" element={<MainLayout><Settings /></MainLayout>} />
       <Route path="/weather" element={<MainLayout><WeatherMonitor /></MainLayout>} />
       <Route path="/precision-soil-testing" element={<MainLayout><SoilForensics /></MainLayout>} />
-      <Route path="/crop-advisor" element={<MainLayout><BharatAdvisor /></MainLayout>} />
+      <Route path="/crop-advisor" element={<MainLayout><FarmAdvisor /></MainLayout>} />
       <Route path="/traceability" element={<MainLayout><Traceability /></MainLayout>} />
       <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
     </Routes>

@@ -1,9 +1,9 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../state/AppContext';
 import { 
-  Bell, Menu, Search, User, ChevronRight
+  Bell, Menu, User
 } from 'lucide-react';
 
 const AgriSenseLogo = () => (

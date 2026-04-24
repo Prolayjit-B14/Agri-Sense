@@ -5,7 +5,7 @@ import {
   Waves, ChevronRight, Clock, Minus, Zap
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../../state/AppContext';
 
 // ─── DESIGN TOKENS (UNIFIED) ───────────────────────────────────────────────
 

@@ -14,7 +14,7 @@ import {
 import {
   Sprout, CloudRain, Warehouse, AlertCircle
 } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../../state/AppContext';
 import { useLocation } from 'react-router-dom';
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────
@@ -68,18 +68,18 @@ const AnalyticsHub = () => {
         name: new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
         health: entry.soil?.healthIndex || 0, moisture: entry.soil?.moisture || 0,
         n: entry.soil?.npk?.n || 0, p: entry.soil?.npk?.p || 0, k: entry.soil?.npk?.k || 0,
-        temp: entry.soil?.temperature || 0, ph: entry.soil?.ph || 7
+        temp: entry.soil?.temperature || 0, ph: entry.soil?.ph || 0
       })),
       weather: sensorHistory.map(entry => ({
         name: new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
         temp: entry.weather?.temperature || 0, humidity: entry.weather?.humidity || 0,
         ldr: entry.weather?.ldr || 0, rain: entry.weather?.rain || 0,
-        wind: 12, pressure: 1013
+        wind: entry.weather?.windSpeed || 0, pressure: entry.weather?.pressure || 0
       })),
       storage: sensorHistory.map(entry => ({
         name: new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
         temp: entry.storage?.temperature || 0, humidity: entry.storage?.humidity || 0,
-        gas: entry.storage?.mq135 || 0, co2: 450
+        gas: entry.storage?.mq135 || 0, co2: entry.storage?.co2 || 0
       }))
     };
   }, [sensorHistory]);

@@ -17,15 +17,30 @@ import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 
 // Context & Utils
-import { useApp } from '../context/AppContext';
-import { MASTER_CONFIG } from '../config';
+import { useApp } from '../../state/AppContext';
+import { MASTER_CONFIG } from '../../setup';
 
 // ─── DESIGN TOKENS ─────────────────────────────────────────────────────────
 const COLORS = {
-  primary: '#10B981', secondary: '#3B82F6', warning: '#F59E0B', danger: '#EF4444',
-  text: '#0F172A', subtext: '#64748B', bg: '#F8FAFC', border: '#E2E8F0', terminal: '#1E293B',
-  nutrient: { n: '#10B981', p: '#A855F7', k: '#EC4899', ph: '#F59E0B', m: '#3B82F6' },
+  primary: '#10B981',
+  primaryDark: '#059669',
+  secondary: '#0EA5E9',
+  warning: '#F59E0B',
+  danger: '#EF4444',
+  background: '#F8FAFC',
+  cardBg: '#FFFFFF',
+  textMain: '#0F172A',
+  textMuted: '#64748B',
+  border: 'rgba(0, 0, 0, 0.04)',
+  terminal: '#1E293B',
+  nutrient: { n: '#10B981', p: '#A855F7', k: '#EC4899', ph: '#F59E0B', m: '#0EA5E9' },
   zone: { vLow: '#EF4444', low: '#F97316', mod: '#F59E0B', opt: '#10B981', high: '#064E3B' }
+};
+
+const RAD = {
+  card: '32px',
+  inner: '20px',
+  btn: '16px'
 };
 
 // ─── MATH UTILS ───────────────────────────────────────────────────────────
@@ -50,19 +65,29 @@ const isPointInPolygon = (point, vs) => {
 };
 
 const StepIndicator = ({ currentStep }) => (
-  <div style={{ background: 'white', padding: '1rem', borderBottom: `1px solid ${COLORS.border}`, position: 'sticky', top: 0, zIndex: 100 }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+  <div style={{ background: 'white', padding: '1.25rem', borderBottom: `1px solid ${COLORS.border}`, position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 4px 10px rgba(0,0,0,0.02)' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '500px', margin: '0 auto' }}>
       {[1, 2, 3, 4, 5].map(step => (
-        <div key={step} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', flex: 1 }}>
-          <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: currentStep >= step ? COLORS.primary : COLORS.bg, color: currentStep >= step ? 'white' : COLORS.subtext, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 900 }}>{currentStep > step ? <CheckCircle2 size={16} /> : step}</div>
-          <span style={{ fontSize: '0.6rem', fontWeight: 800, color: currentStep >= step ? COLORS.text : COLORS.subtext, textTransform: 'uppercase' }}>{['Map', 'Strategy', 'Collect', 'Zones', 'Report'][step-1]}</span>
+        <div key={step} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', flex: 1 }}>
+          <div style={{ 
+            width: '30px', height: '30px', borderRadius: '50%', 
+            background: currentStep >= step ? COLORS.primary : COLORS.background, 
+            color: currentStep >= step ? 'white' : COLORS.textMuted, 
+            display: 'flex', alignItems: 'center', justifyContent: 'center', 
+            fontSize: '0.75rem', fontWeight: 900, transition: '0.3s'
+          }}>
+            {currentStep > step ? <CheckCircle2 size={16} /> : step}
+          </div>
+          <span style={{ fontSize: '0.55rem', fontWeight: 800, color: currentStep >= step ? COLORS.textMain : COLORS.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            {['Map', 'Strategy', 'Collect', 'Zones', 'Report'][step-1]}
+          </span>
         </div>
       ))}
     </div>
   </div>
 );
 
-const PrecisionSoilTesting = () => {
+const SoilForensics = () => {
   const { sensorData } = useApp();
   const [currentStep, setCurrentStep] = useState(1);
   const [boundaryPoints, setBoundaryPoints] = useState([]);
@@ -192,7 +217,7 @@ const PrecisionSoilTesting = () => {
         scale: 2, 
         useCORS: true, 
         logging: false,
-        backgroundColor: '#F8FAFC' 
+        backgroundColor: COLORS.background 
       });
       
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
@@ -223,71 +248,97 @@ const PrecisionSoilTesting = () => {
   };
 
   const PrimaryCTA = ({ onClick, children, disabled, icon: Icon }) => (
-    <button onClick={onClick} disabled={disabled} style={{ width: '100%', height: '58px', borderRadius: '16px', background: COLORS.primary, color: 'white', fontWeight: 950, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: `0 8px 20px ${COLORS.primary}30`, opacity: disabled ? 0.5 : 1 }}>
+    <motion.button whileTap={{ scale: 0.97 }} onClick={onClick} disabled={disabled} style={{ width: '100%', height: '58px', borderRadius: RAD.btn, background: COLORS.primary, color: 'white', fontWeight: 950, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: `0 8px 20px ${COLORS.primary}30`, opacity: disabled ? 0.5 : 1 }}>
       {Icon && <Icon size={20} />}{children}
-    </button>
+    </motion.button>
   );
 
   return (
-    <div style={{ background: COLORS.bg, minHeight: 'auto', paddingBottom: '20px', fontFamily: "'Outfit', sans-serif" }}>
+    <div style={{ background: COLORS.background, minHeight: '100dvh', paddingBottom: '2rem', fontFamily: "'Outfit', sans-serif" }}>
       <StepIndicator currentStep={currentStep} />
-      <div style={{ padding: '1rem' }}>
+      <div style={{ padding: '1.25rem' }}>
         <AnimatePresence mode="wait">
           {currentStep === 1 && (
-            <motion.div key="st1" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}><h2 style={{ fontSize: '1.3rem', fontWeight: 950 }}>Field Mapping</h2><div style={{ padding: '5px 10px', background: '#F0FDF4', borderRadius: '8px', fontSize: '0.65rem', fontWeight: 900 }}>{gpsAccuracy}m</div></div>
-              <div onClick={handleAddPoint} style={{ height: '380px', background: '#E2E8F0', borderRadius: '28px', position: 'relative', border: '4px solid white', overflow: 'hidden' }}>
+            <motion.div key="st1" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.25rem', alignItems: 'center' }}>
+                <h2 style={{ fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain }}>Field Mapping</h2>
+                <div style={{ padding: '6px 12px', background: '#ECFDF5', borderRadius: '10px', fontSize: '0.65rem', fontWeight: 900, color: COLORS.primaryDark, border: `1px solid ${COLORS.primary}20` }}>GPS: {gpsAccuracy}m</div>
+              </div>
+              <div onClick={handleAddPoint} style={{ height: '400px', background: '#E2E8F0', borderRadius: RAD.card, position: 'relative', border: `4px solid white`, boxShadow: '0 10px 30px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
                  <iframe width="100%" height="100%" frameBorder="0" src={`https://www.openstreetmap.org/export/embed.html?bbox=${calculateBBox()}&layer=mapnik`} style={{ filter: 'grayscale(0.3)', pointerEvents: 'none' }} />
-                 <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}><polygon points={boundaryPoints.map(p => `${p.x},${p.y}`).join(' ')} fill={`${COLORS.primary}15`} stroke={COLORS.primary} strokeWidth="3" strokeDasharray="6 4" />{boundaryPoints.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r="8" fill="white" stroke={COLORS.primary} strokeWidth="3" />)}</svg>
+                 <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+                   <polygon points={boundaryPoints.map(p => `${p.x},${p.y}`).join(' ')} fill={`${COLORS.primary}15`} stroke={COLORS.primary} strokeWidth="3" strokeDasharray="6 4" />
+                   {boundaryPoints.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r="8" fill="white" stroke={COLORS.primary} strokeWidth="3" />)}
+                 </svg>
                  <div style={{ position: 'absolute', bottom: '15px', left: '15px', background: COLORS.terminal, color: 'white', padding: '8px 16px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800 }}>{areaAcre} Acres</div>
               </div>
-              <div style={{ marginTop: '1rem', display: 'flex', gap: '10px' }}><button onClick={() => setBoundaryPoints(boundaryPoints.slice(0, -1))} style={{ flex: 1, height: '58px', borderRadius: '16px', border: `1px solid ${COLORS.border}`, background: 'white' }}><Undo size={20} /></button><div style={{ flex: 3 }}><PrimaryCTA onClick={() => generateStrategy('max')} disabled={boundaryPoints.length < 3}>LOCK BOUNDARY</PrimaryCTA></div></div>
+              <div style={{ marginTop: '1.25rem', display: 'flex', gap: '10px' }}>
+                <motion.button whileTap={{ scale: 0.95 }} onClick={() => setBoundaryPoints(boundaryPoints.slice(0, -1))} style={{ flex: 1, height: '58px', borderRadius: RAD.btn, border: `1px solid ${COLORS.border}`, background: 'white' }}><Undo size={20} color={COLORS.textMain} /></motion.button>
+                <div style={{ flex: 3 }}><PrimaryCTA onClick={() => generateStrategy('max')} disabled={boundaryPoints.length < 3}>LOCK BOUNDARY</PrimaryCTA></div>
+              </div>
             </motion.div>
           )}
 
           {currentStep === 2 && (
-            <motion.div key="st2" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <div style={{ marginBottom: '1rem' }}><h2 style={{ fontSize: '1.3rem', fontWeight: 950 }}>Strategy</h2></div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '1rem' }}>
-                 <div onClick={() => generateStrategy('min')} style={{ background: selectedDensity === 'min' ? `${COLORS.primary}10` : 'white', padding: '1rem', borderRadius: '20px', border: `2px solid ${selectedDensity === 'min' ? COLORS.primary : COLORS.border}`, textAlign: 'center' }}><p style={{ fontSize: '0.6rem', fontWeight: 900 }}>CORE MIN</p><h3 style={{ fontSize: '1.4rem', fontWeight: 950 }}>{sampleRequirements.min}</h3></div>
-                 <div onClick={() => generateStrategy('max')} style={{ background: selectedDensity === 'max' ? `${COLORS.primary}10` : 'white', padding: '1rem', borderRadius: '20px', border: `2px solid ${selectedDensity === 'max' ? COLORS.primary : COLORS.border}`, textAlign: 'center' }}><p style={{ fontSize: '0.6rem', fontWeight: 900 }}>PRECISION MAX</p><h3 style={{ fontSize: '1.4rem', fontWeight: 950 }}>{sampleRequirements.max}</h3></div>
+            <motion.div key="st2" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <div style={{ marginBottom: '1.25rem' }}><h2 style={{ fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain }}>Sampling Strategy</h2></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '1.25rem' }}>
+                 <motion.div whileTap={{ scale: 0.98 }} onClick={() => generateStrategy('min')} style={{ background: selectedDensity === 'min' ? `${COLORS.primary}10` : 'white', padding: '1.25rem', borderRadius: RAD.inner, border: `2px solid ${selectedDensity === 'min' ? COLORS.primary : COLORS.border}`, textAlign: 'center', transition: '0.3s' }}>
+                   <p style={{ fontSize: '0.6rem', fontWeight: 900, color: COLORS.textMuted, textTransform: 'uppercase' }}>CORE MIN</p>
+                   <h3 style={{ fontSize: '1.5rem', fontWeight: 950, color: COLORS.textMain, margin: '4px 0' }}>{sampleRequirements.min}</h3>
+                 </motion.div>
+                 <motion.div whileTap={{ scale: 0.98 }} onClick={() => generateStrategy('max')} style={{ background: selectedDensity === 'max' ? `${COLORS.primary}10` : 'white', padding: '1.25rem', borderRadius: RAD.inner, border: `2px solid ${selectedDensity === 'max' ? COLORS.primary : COLORS.border}`, textAlign: 'center', transition: '0.3s' }}>
+                   <p style={{ fontSize: '0.6rem', fontWeight: 900, color: COLORS.textMuted, textTransform: 'uppercase' }}>PRECISION MAX</p>
+                   <h3 style={{ fontSize: '1.5rem', fontWeight: 950, color: COLORS.textMain, margin: '4px 0' }}>{sampleRequirements.max}</h3>
+                 </motion.div>
               </div>
-              <div style={{ height: '300px', background: 'white', borderRadius: '28px', border: `1px solid ${COLORS.border}`, position: 'relative', marginBottom: '1rem', overflow: 'hidden' }}>
+              <div style={{ height: '320px', background: 'white', borderRadius: RAD.card, border: `1px solid ${COLORS.border}`, position: 'relative', marginBottom: '1.25rem', overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.02)' }}>
                  <iframe width="100%" height="100%" frameBorder="0" src={`https://www.openstreetmap.org/export/embed.html?bbox=${calculateBBox()}&layer=mapnik`} style={{ filter: 'grayscale(0.4)', pointerEvents: 'none' }} />
-                 <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}><polygon points={boundaryPoints.map(p => `${p.x},${p.y}`).join(' ')} fill={`${COLORS.primary}10`} stroke={COLORS.primary} strokeWidth="3" strokeDasharray="6 4" />{samples.map((s, i) => (<g key={i}><circle cx={s.x} cy={s.y} r="14" fill="white" stroke={COLORS.primary} strokeWidth="2" /><text x={s.x} y={s.y + 4} textAnchor="middle" fontSize="10" fontWeight="900" fill={COLORS.primary}>{s.id}</text></g>))}</svg>
+                 <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
+                   <polygon points={boundaryPoints.map(p => `${p.x},${p.y}`).join(' ')} fill={`${COLORS.primary}10`} stroke={COLORS.primary} strokeWidth="3" strokeDasharray="6 4" />
+                   {samples.map((s, i) => (<g key={i}><circle cx={s.x} cy={s.y} r="14" fill="white" stroke={COLORS.primary} strokeWidth="2" /><text x={s.x} y={s.y + 4} textAnchor="middle" fontSize="10" fontWeight="900" fill={COLORS.primary}>{s.id}</text></g>))}
+                 </svg>
               </div>
               <PrimaryCTA onClick={() => setCurrentStep(3)}>BEGIN COLLECTION</PrimaryCTA>
             </motion.div>
           )}
 
           {currentStep === 3 && (
-            <motion.div key="st3" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}><h2 style={{ fontSize: '1.3rem', fontWeight: 950 }}>Data Collection</h2><div style={{ background: COLORS.terminal, color: 'white', padding: '5px 10px', borderRadius: '8px', fontSize: '0.7rem' }}>{samples.filter(s => s.status === 'completed').length}/{samples.length} SAMPLES</div></div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '1rem' }}>
+            <motion.div key="st3" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.25rem', alignItems: 'center' }}>
+                <h2 style={{ fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain }}>Data Collection</h2>
+                <div style={{ background: COLORS.terminal, color: 'white', padding: '6px 12px', borderRadius: '10px', fontSize: '0.7rem', fontWeight: 800 }}>{samples.filter(s => s.status === 'completed').length}/{samples.length} SAMPLES</div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '1.5rem' }}>
                  {samples.map((s, i) => (
-                   <div key={i} onClick={() => s.status === 'pending' && !isCollecting && startCollection(i)} style={{ background: 'white', padding: '1.1rem', borderRadius: '20px', border: `1px solid ${activeSampleIndex === i ? COLORS.primary : COLORS.border}`, position: 'relative', overflow: 'hidden' }}>
-                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                        <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: s.status === 'completed' ? COLORS.primary : COLORS.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{s.status === 'completed' ? <CheckCircle2 size={24} color="white" /> : <MapPin size={24} color={COLORS.subtext} />}</div>
+                   <motion.div key={i} whileTap={s.status === 'pending' && !isCollecting ? { scale: 0.98 } : {}} onClick={() => s.status === 'pending' && !isCollecting && startCollection(i)} style={{ background: COLORS.cardBg, padding: '1.25rem', borderRadius: RAD.inner, border: `1px solid ${activeSampleIndex === i ? COLORS.primary : COLORS.border}`, position: 'relative', overflow: 'hidden', boxShadow: '0 4px 10px rgba(0,0,0,0.02)' }}>
+                      <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                        <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: s.status === 'completed' ? COLORS.primary : COLORS.background, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {s.status === 'completed' ? <CheckCircle2 size={24} color="white" /> : <MapPin size={24} color={COLORS.textMuted} />}
+                        </div>
                         <div style={{ flex: 1 }}>
-                           <div style={{ display: 'flex', justifyContent: 'space-between' }}><div style={{ fontSize: '1rem', fontWeight: 950 }}>Sample #{s.id}</div><div style={{ fontSize: '0.6rem', fontWeight: 900, color: COLORS.subtext }}>{isCollecting && activeSampleIndex === i ? 'COLLECTING...' : (s.status === 'completed' ? 'SYNCED' : 'PENDING')}</div></div>
+                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                             <div style={{ fontSize: '1rem', fontWeight: 900, color: COLORS.textMain }}>Sample #{s.id}</div>
+                             <div style={{ fontSize: '0.6rem', fontWeight: 900, color: activeSampleIndex === i ? COLORS.primary : COLORS.textMuted, textTransform: 'uppercase' }}>{isCollecting && activeSampleIndex === i ? 'Collecting...' : (s.status === 'completed' ? 'Synced' : 'Pending')}</div>
+                           </div>
                            {isCollecting && activeSampleIndex === i ? (
                              <div style={{ marginTop: '10px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', color: COLORS.primary, fontWeight: 900, marginBottom: '6px' }}><span>LIVE STREAMING...</span><span>{currentReadings.length}/3</span></div>
-                                <div style={{ height: '6px', background: COLORS.bg, borderRadius: '10px', overflow: 'hidden' }}><motion.div initial={{ width: 0 }} animate={{ width: `${collectProgress}%` }} style={{ height: '100%', background: COLORS.primary }} /></div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.6rem', color: COLORS.primary, fontWeight: 900, marginBottom: '6px' }}><span>LIVE STREAMING...</span><span>{currentReadings.length}/3</span></div>
+                                <div style={{ height: '6px', background: COLORS.background, borderRadius: '10px', overflow: 'hidden' }}><motion.div initial={{ width: 0 }} animate={{ width: `${collectProgress}%` }} style={{ height: '100%', background: COLORS.primary }} /></div>
                              </div>
                            ) : s.status === 'completed' ? (
-                             <div style={{ marginTop: '8px' }}>
-                               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', background: COLORS.bg, padding: '8px', borderRadius: '12px', textAlign: 'center', gap: '5px' }}>
-                                  <div><p style={{ fontSize: '0.45rem', margin: 0, color: COLORS.subtext }}>MOISTURE</p><p style={{ fontSize: '0.75rem', fontWeight: 950 }}>{s.readings?.moisture}%</p></div>
-                                  <div><p style={{ fontSize: '0.45rem', margin: 0, color: COLORS.subtext }}>PH LEVEL</p><p style={{ fontSize: '0.75rem', fontWeight: 950 }}>{s.readings?.ph}</p></div>
-                                  <div><p style={{ fontSize: '0.45rem', margin: 0, color: COLORS.subtext }}>NUTRIENTS</p><p style={{ fontSize: '0.75rem', fontWeight: 950 }}>{s.readings?.npk?.n}:{s.readings?.npk?.p}:{s.readings?.npk?.k}</p></div>
+                             <div style={{ marginTop: '10px' }}>
+                               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', background: COLORS.background, padding: '10px', borderRadius: '12px', textAlign: 'center', gap: '8px' }}>
+                                  <div><p style={{ fontSize: '0.5rem', margin: '0 0 2px 0', color: COLORS.textMuted, fontWeight: 800 }}>MOISTURE</p><p style={{ fontSize: '0.85rem', fontWeight: 950, color: COLORS.textMain }}>{s.readings?.moisture}%</p></div>
+                                  <div><p style={{ fontSize: '0.5rem', margin: '0 0 2px 0', color: COLORS.textMuted, fontWeight: 800 }}>pH LEVEL</p><p style={{ fontSize: '0.85rem', fontWeight: 950, color: COLORS.textMain }}>{s.readings?.ph}</p></div>
+                                  <div><p style={{ fontSize: '0.5rem', margin: '0 0 2px 0', color: COLORS.textMuted, fontWeight: 800 }}>N:P:K</p><p style={{ fontSize: '0.85rem', fontWeight: 950, color: COLORS.textMain }}>{s.readings?.npk?.n}:{s.readings?.npk?.p}:{s.readings?.npk?.k}</p></div>
                                </div>
-                               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.55rem', color: COLORS.subtext, marginTop: '6px', fontWeight: 700 }}><span>{s.readings?.date} {s.readings?.time}</span><span>{s.readings?.gps}</span></div>
+                               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.55rem', color: COLORS.textMuted, marginTop: '8px', fontWeight: 700 }}><span>{s.readings?.date} • {s.readings?.time}</span><span>{s.readings?.gps}</span></div>
                              </div>
-                           ) : <div style={{ fontSize: '0.75rem', color: COLORS.subtext, fontWeight: 700 }}>Tap to start sensor handshake...</div>}
+                           ) : <div style={{ fontSize: '0.75rem', color: COLORS.textMuted, fontWeight: 700, marginTop: '4px' }}>Tap to begin precision sync...</div>}
                         </div>
                       </div>
-                   </div>
+                   </motion.div>
                  ))}
               </div>
               <PrimaryCTA onClick={() => setCurrentStep(4)} disabled={samples.some(s => s.status === 'pending')}>ANALYZE GIS ZONES</PrimaryCTA>
@@ -295,84 +346,107 @@ const PrecisionSoilTesting = () => {
           )}
 
           {currentStep === 4 && (
-            <motion.div key="st4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center' }}><h2 style={{ fontSize: '1.3rem', fontWeight: 950, margin: 0 }}>GIS Zones</h2><div style={{ display: 'flex', gap: '5px' }}>{['Moisture', 'PH', 'NPK'].map(l => (<button key={l} onClick={() => setAnalysisLayer(l)} style={{ padding: '5px 10px', borderRadius: '8px', border: 'none', background: analysisLayer === l ? COLORS.primary : 'white', color: analysisLayer === l ? 'white' : COLORS.subtext, fontSize: '0.6rem', fontWeight: 900 }}>{l}</button>))}</div></div>
-              <div style={{ height: '380px', background: 'white', borderRadius: '28px', border: `1px solid ${COLORS.border}`, position: 'relative', marginBottom: '1rem', overflow: 'hidden' }}><iframe width="100%" height="100%" frameBorder="0" src={`https://www.openstreetmap.org/export/embed.html?bbox=${calculateBBox()}&layer=mapnik`} style={{ filter: 'grayscale(0.6)', pointerEvents: 'none' }} /><svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}><defs><clipPath id="fClp_final_z"><polygon points={boundaryPoints.map(p => `${p.x},${p.y}`).join(' ')} /></clipPath></defs><g clipPath="url(#fClp_final_z)">{Array.from({length: 400}).map((_, i) => { const x = (i % 20) * 20, y = Math.floor(i / 20) * 22, val = calculateIDWValue(x, y, analysisLayer); return <rect key={i} x={x} y={y} width="20" height="22" fill={getZoneColor(val, analysisLayer)} fillOpacity="0.7" />; })}</g><polygon points={boundaryPoints.map(p => `${p.x},${p.y}`).join(' ')} fill="none" stroke="white" strokeWidth="2" /></svg></div>
+            <motion.div key="st4" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.25rem', alignItems: 'center' }}>
+                <h2 style={{ fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain, margin: 0 }}>GIS Mapping</h2>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  {['Moisture', 'PH', 'NPK'].map(l => (
+                    <motion.button key={l} whileTap={{ scale: 0.95 }} onClick={() => setAnalysisLayer(l)} style={{ padding: '6px 12px', borderRadius: '10px', border: 'none', background: analysisLayer === l ? COLORS.primary : 'white', color: analysisLayer === l ? 'white' : COLORS.textMuted, fontSize: '0.6rem', fontWeight: 900, boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>{l.toUpperCase()}</motion.button>
+                  ))}
+                </div>
+              </div>
+              <div style={{ height: '400px', background: 'white', borderRadius: RAD.card, border: `1px solid ${COLORS.border}`, position: 'relative', marginBottom: '1.5rem', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
+                <iframe width="100%" height="100%" frameBorder="0" src={`https://www.openstreetmap.org/export/embed.html?bbox=${calculateBBox()}&layer=mapnik`} style={{ filter: 'grayscale(0.6)', pointerEvents: 'none' }} />
+                <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+                  <defs><clipPath id="fClp_final_z"><polygon points={boundaryPoints.map(p => `${p.x},${p.y}`).join(' ')} /></clipPath></defs>
+                  <g clipPath="url(#fClp_final_z)">
+                    {Array.from({length: 400}).map((_, i) => { 
+                      const x = (i % 20) * 20, y = Math.floor(i / 20) * 22, val = calculateIDWValue(x, y, analysisLayer); 
+                      return <rect key={i} x={x} y={y} width="20" height="22" fill={getZoneColor(val, analysisLayer)} fillOpacity="0.75" />; 
+                    })}
+                  </g>
+                  <polygon points={boundaryPoints.map(p => `${p.x},${p.y}`).join(' ')} fill="none" stroke="white" strokeWidth="2" strokeDasharray="4 2" />
+                </svg>
+              </div>
               <PrimaryCTA onClick={() => setCurrentStep(5)}>GENERATE REPORT</PrimaryCTA>
             </motion.div>
           )}
 
           {currentStep === 5 && healthReport && (
-            <motion.div key="st5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} id="soil-report">
-               <header style={{ textAlign: 'center', marginBottom: '1.2rem', paddingTop: '10px' }}>
-                  <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: `${COLORS.primary}10`, margin: '0 auto 0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `3px solid ${COLORS.primary}` }}><h2 style={{ fontSize: '2.2rem', fontWeight: 950, color: COLORS.primary, margin: 0 }}>{healthReport.score}%</h2></div>
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: 950, margin: '0 0 8px 0' }}>Soil Health Index</h3>
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', color: COLORS.subtext, fontSize: '0.65rem', fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', padding: '0 10px' }}>
-                     <span style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}><Target size={11} color={COLORS.primary} /> {areaAcre} Acres</span>
-                     <span style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}><Calendar size={11} color={COLORS.primary} /> {new Date().toLocaleDateString()}</span>
-                     <span style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}><Clock size={11} color={COLORS.primary} /> {new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</span>
-                     <span style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}><Navigation size={11} color={COLORS.primary} /> {mapCenter.lat.toFixed(4)}, {mapCenter.lng.toFixed(4)}</span>
+            <motion.div key="st5" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} id="soil-report">
+               <header style={{ textAlign: 'center', marginBottom: '1.5rem', paddingTop: '10px' }}>
+                  <div style={{ width: '90px', height: '90px', borderRadius: '50%', background: `${COLORS.primary}10`, margin: '0 auto 0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `4px solid ${COLORS.primary}`, boxShadow: `0 0 30px ${COLORS.primary}20` }}>
+                    <h2 style={{ fontSize: '2.4rem', fontWeight: 950, color: COLORS.primaryDark, margin: 0 }}>{healthReport.score}<small style={{ fontSize: '0.4em' }}>%</small></h2>
+                  </div>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 950, color: COLORS.textMain, margin: '0 0 10px 0', letterSpacing: '-0.02em' }}>Soil Health Index</h3>
+                  <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '12px', color: COLORS.textMuted, fontSize: '0.65rem', fontWeight: 800, padding: '0 10px' }}>
+                     <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Target size={12} color={COLORS.primary} /> {areaAcre} Acres</span>
+                     <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Calendar size={12} color={COLORS.primary} /> {new Date().toLocaleDateString()}</span>
+                     <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Clock size={12} color={COLORS.primary} /> {new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
                </header>
 
-               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'repeat(2, 1fr)', gap: '8px', marginBottom: '1.5rem' }}>
+               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '1.5rem' }}>
                   {[
                     { label: 'Moisture', val: `${healthReport.moisture}%`, icon: Droplets, color: COLORS.nutrient.m },
                     { label: 'Soil pH', val: healthReport.ph, icon: FlaskConical, color: COLORS.nutrient.ph },
-                    { label: 'Samples', val: samples.length, icon: MapPin, color: COLORS.subtext },
+                    { label: 'Samples', val: samples.length, icon: MapPin, color: COLORS.textMuted },
                     { label: 'Nitrogen', val: healthReport.n, icon: Zap, color: COLORS.nutrient.n },
                     { label: 'Phosphorus', val: healthReport.p, icon: Atom, color: COLORS.nutrient.p },
                     { label: 'Potassium', val: healthReport.k, icon: Sparkles, color: COLORS.nutrient.k }
-                  ].map((it, i) => (<div key={i} style={{ background: 'white', padding: '0.9rem', borderRadius: '18px', border: `1px solid ${COLORS.border}`, boxShadow: '0 4px 10px rgba(0,0,0,0.02)' }}><it.icon size={15} color={it.color} style={{ marginBottom: '5px' }} /><p style={{ fontSize: '0.5rem', fontWeight: 900, color: COLORS.subtext, textTransform: 'uppercase', marginBottom: '2px' }}>{it.label}</p><h4 style={{ fontSize: '0.95rem', fontWeight: 950, margin: 0 }}>{it.val}</h4></div>))}
+                  ].map((it, i) => (
+                    <div key={i} style={{ background: COLORS.cardBg, padding: '1rem', borderRadius: '22px', border: `1px solid ${COLORS.border}`, boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
+                      <it.icon size={16} color={it.color} style={{ marginBottom: '6px' }} />
+                      <p style={{ fontSize: '0.5rem', fontWeight: 900, color: COLORS.textMuted, textTransform: 'uppercase', marginBottom: '2px' }}>{it.label}</p>
+                      <h4 style={{ fontSize: '1rem', fontWeight: 950, color: COLORS.textMain, margin: 0 }}>{it.val}</h4>
+                    </div>
+                  ))}
                </div>
 
-               <div className="report-maps" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '1.5rem' }}>
-                  <div style={{ height: '220px', background: 'white', borderRadius: '20px', border: `2px solid ${COLORS.border}`, overflow: 'hidden', position: 'relative' }}>
-                    <div style={{ position: 'absolute', top: '8px', left: '8px', zIndex: 10, background: 'white', padding: '3px 8px', borderRadius: '6px', fontSize: '0.5rem', fontWeight: 950, border: `1px solid ${COLORS.border}` }}>DEPLOYMENT</div>
+               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '1.5rem' }}>
+                  <div style={{ height: '240px', background: 'white', borderRadius: RAD.inner, border: `2px solid ${COLORS.border}`, overflow: 'hidden', position: 'relative' }}>
+                    <div style={{ position: 'absolute', top: '10px', left: '10px', zIndex: 10, background: 'white', padding: '4px 10px', borderRadius: '8px', fontSize: '0.55rem', fontWeight: 950, border: `1px solid ${COLORS.border}`, boxShadow: '0 2px 6px rgba(0,0,0,0.05)' }}>DEPLOYMENT</div>
                     <iframe width="100%" height="100%" frameBorder="0" src={`https://www.openstreetmap.org/export/embed.html?bbox=${calculateBBox()}&layer=mapnik`} style={{ filter: 'grayscale(1) brightness(1.05)' }} />
                     <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}><polygon points={boundaryPoints.map(p => `${p.x/1.1},${p.y/1.1}`).join(' ')} fill="none" stroke="#000" strokeWidth="2" />{samples.map((s, i) => <circle key={i} cx={s.x/1.1} cy={s.y/1.1} r="4" fill="#000" />)}</svg>
                   </div>
-                  <div style={{ height: '220px', background: 'white', borderRadius: '20px', border: `2px solid ${COLORS.border}`, overflow: 'hidden', position: 'relative' }}>
-                    <div style={{ position: 'absolute', top: '8px', left: '8px', zIndex: 10, background: 'white', padding: '3px 8px', borderRadius: '6px', fontSize: '0.5rem', fontWeight: 950, border: `1px solid ${COLORS.border}` }}>HEATMAP</div>
+                  <div style={{ height: '240px', background: 'white', borderRadius: RAD.inner, border: `2px solid ${COLORS.border}`, overflow: 'hidden', position: 'relative' }}>
+                    <div style={{ position: 'absolute', top: '10px', left: '10px', zIndex: 10, background: 'white', padding: '4px 10px', borderRadius: '8px', fontSize: '0.55rem', fontWeight: 950, border: `1px solid ${COLORS.border}`, boxShadow: '0 2px 6px rgba(0,0,0,0.05)' }}>HEATMAP</div>
                     <svg style={{ width: '100%', height: '100%' }}><clipPath id="rClp_rep_final"><polygon points={boundaryPoints.map(p => `${p.x},${p.y}`).join(' ')} /></clipPath><g clipPath="url(#rClp_rep_final)">{Array.from({length: 400}).map((_, i) => { const x = (i % 20) * 20, y = Math.floor(i / 20) * 22, val = calculateIDWValue(x*2, y*2, 'Moisture'); return <rect key={i} x={x} y={y} width="20" height="22" fill={getZoneColor(val, 'Moisture')} fillOpacity="0.85" />; })}</g><polygon points={boundaryPoints.map(p => `${p.x},${p.y}`).join(' ')} fill="none" stroke="#000" strokeWidth="2" /></svg>
                   </div>
                </div>
 
-               <div style={{ background: 'white', borderRadius: '22px', border: `2px solid ${COLORS.border}`, padding: '0.9rem', marginBottom: '1.5rem' }}>
+               <div style={{ background: COLORS.cardBg, borderRadius: RAD.inner, border: `1px solid ${COLORS.border}`, padding: '1.25rem', marginBottom: '1.5rem', boxShadow: '0 4px 16px rgba(0,0,0,0.02)' }}>
                   <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.6rem', color: '#000' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.65rem', color: COLORS.textMain }}>
                       <thead>
-                        <tr style={{ textAlign: 'left', borderBottom: `2px solid ${COLORS.bg}`, color: COLORS.subtext }}>
-                          <th style={{ padding: '8px' }}>ID</th>
-                          <th style={{ padding: '8px' }}>TIMESTAMP</th>
-                          <th style={{ padding: '8px' }}>GPS ANCHOR</th>
-                          <th style={{ padding: '8px' }}>MOIST</th>
-                          <th style={{ padding: '8px' }}>pH</th>
-                          <th style={{ padding: '8px' }}>N:P:K</th>
+                        <tr style={{ textAlign: 'left', borderBottom: `2px solid ${COLORS.background}`, color: COLORS.textMuted }}>
+                          <th style={{ padding: '10px' }}>ID</th>
+                          <th style={{ padding: '10px' }}>TIMESTAMP</th>
+                          <th style={{ padding: '10px' }}>GPS ANCHOR</th>
+                          <th style={{ padding: '10px' }}>MOIST</th>
+                          <th style={{ padding: '10px' }}>pH</th>
+                          <th style={{ padding: '10px' }}>N:P:K</th>
                         </tr>
                       </thead>
                       <tbody>
                         {samples.map((s, i) => (
-                          <tr key={i} style={{ borderBottom: `1px solid ${COLORS.bg}` }}>
-                            <td style={{ padding: '8px', fontWeight: 400 }}>#{s.id}</td>
-                            <td style={{ padding: '8px', fontWeight: 400 }}>
-                               {s.readings?.date}<br/>{s.readings?.time}
-                            </td>
-                            <td style={{ padding: '8px', fontWeight: 400 }}>
-                               {s.readings?.gps}
-                            </td>
-                            <td style={{ padding: '8px', fontWeight: 950, color: '#000' }}>{s.readings?.moisture}%</td>
-                            <td style={{ padding: '8px', fontWeight: 950, color: '#000' }}>{s.readings?.ph}</td>
-                            <td style={{ padding: '8px', fontWeight: 950, color: '#000' }}>
-                               {s.readings?.npk?.n ?? 0}:{s.readings?.npk?.p ?? 0}:{s.readings?.npk?.k ?? 0}
-                            </td>
+                          <tr key={i} style={{ borderBottom: `1px solid ${COLORS.background}` }}>
+                            <td style={{ padding: '10px', fontWeight: 800 }}>#{s.id}</td>
+                            <td style={{ padding: '10px', fontWeight: 500 }}>{s.readings?.date}<br/>{s.readings?.time}</td>
+                            <td style={{ padding: '10px', fontWeight: 500 }}>{s.readings?.gps}</td>
+                            <td style={{ padding: '10px', fontWeight: 900 }}>{s.readings?.moisture}%</td>
+                            <td style={{ padding: '10px', fontWeight: 900 }}>{s.readings?.ph}</td>
+                            <td style={{ padding: '10px', fontWeight: 900 }}>{s.readings?.npk?.n ?? 0}:{s.readings?.npk?.p ?? 0}:{s.readings?.npk?.k ?? 0}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
                </div>
-               <div className="no-print"><div style={{ display: 'flex', gap: '10px' }}><button onClick={() => setCurrentStep(1)} style={{ flex: 1, height: '60px', borderRadius: '16px', border: `2px solid ${COLORS.border}`, background: 'white', fontWeight: 950 }}>NEW AUDIT</button><div style={{ flex: 2 }}><PrimaryCTA onClick={handleExportPDF} icon={Download}>EXPORT PDF REPORT</PrimaryCTA></div></div></div>
+               <div style={{ display: 'flex', gap: '10px' }}>
+                 <motion.button whileTap={{ scale: 0.95 }} onClick={() => setCurrentStep(1)} style={{ flex: 1, height: '60px', borderRadius: RAD.btn, border: `2px solid ${COLORS.border}`, background: 'white', fontWeight: 950, color: COLORS.textMain }}>NEW AUDIT</motion.button>
+                 <div style={{ flex: 2 }}><PrimaryCTA onClick={handleExportPDF} icon={Download}>EXPORT PDF REPORT</PrimaryCTA></div>
+               </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -381,4 +455,4 @@ const PrecisionSoilTesting = () => {
   );
 };
 
-export default PrecisionSoilTesting;
+export default SoilForensics;

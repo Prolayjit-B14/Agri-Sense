@@ -3,7 +3,7 @@
  * Processes incoming MQTT messages and routes them to the correct node state.
  */
 
-import { calculateNodeHealth } from '../utils/healthEngine';
+import { calculateNodeHealth } from '../logic/healthEngine';
 
 /**
  * Utility to extract numerical values from various sources with fallbacks

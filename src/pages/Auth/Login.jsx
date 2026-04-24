@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../../state/AppContext';
 import { Leaf, Lock, Mail, ShieldCheck } from 'lucide-react';
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────

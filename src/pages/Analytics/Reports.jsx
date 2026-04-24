@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../../state/AppContext';
 import { 
   FileText, Download, ShieldCheck, 
   RefreshCw, FileCheck, Loader2,

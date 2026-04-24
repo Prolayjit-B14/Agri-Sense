@@ -57,11 +57,7 @@ export const AppProvider = ({ children }) => {
 
   const [apiWeather, setApiWeather] = useState(INITIAL_API_WEATHER);
   const [apiForecast, setApiForecast] = useState([]);
-  const [recommendations, setRecommendations] = useState([]);
-  const [sensorHistory, setSensorHistory] = useState([]);
   const [mqttStatus, setMqttStatus] = useState('disconnected');
-  const [farmHealthScore, setFarmHealthScore] = useState(null);
-  const [systemHealth, setSystemHealth] = useState(INITIAL_SYSTEM_HEALTH);
   const [connectivityStatus, setConnectivityStatus] = useState('Online');
   const [cloudSyncStatus, setCloudSyncStatus] = useState('Active');
   const [isDataLoading, setIsDataLoading] = useState(true);
@@ -155,27 +151,30 @@ export const AppProvider = ({ children }) => {
     setTimeout(() => setConnectivityStatus('Online'), 2000);
   };
 
-  // 1. Health Scoring Engine
-  useEffect(() => {
-    if (sensorData) {
-      const sIdx = calculateNodeHealth('soil', sensorData.soil);
-      const wIdx = calculateNodeHealth('weather', sensorData.weather);
-      const stIdx = calculateNodeHealth('storage', sensorData.storage);
-      const iIdx = calculateNodeHealth('irrigation', sensorData.water);
-      const health = { soil: sIdx, weather: wIdx, storage: stIdx, water: iIdx };
-      setSystemHealth(health);
-      setFarmHealthScore(calculateOverallHealth(health, devices));
-    }
-  }, [sensorData, devices]);
+  // 1. Derived Health Logic (Pure Derivation)
+  const systemHealth = React.useMemo(() => {
+    if (!sensorData) return INITIAL_SYSTEM_HEALTH;
+    return {
+      soil: calculateNodeHealth('soil', sensorData.soil),
+      weather: calculateNodeHealth('weather', sensorData.weather),
+      storage: calculateNodeHealth('storage', sensorData.storage),
+      water: calculateNodeHealth('irrigation', sensorData.water)
+    };
+  }, [sensorData]);
 
-  // 2. AI Recommendation Engine
-  useEffect(() => {
-    if (sensorData?.soil?.moisture !== null) {
-      setRecommendations(getAIv2Recommendations(sensorData));
-    }
-  }, [sensorData?.soil?.moisture, sensorData?.soil?.ph, sensorData?.soil?.temp, sensorData?.soil?.npk]);
+  const farmHealthScore = React.useMemo(() => {
+    return calculateOverallHealth(systemHealth, devices);
+  }, [systemHealth, devices]);
 
-  // 3. Sensor History Logger
+  // 2. AI Recommendation Logic
+  const recommendations = React.useMemo(() => {
+    if (sensorData?.soil?.moisture === null) return [];
+    return getAIv2Recommendations(sensorData);
+  }, [sensorData]);
+
+
+  // 3. Sensor History Logger (Stateful Sync)
+  const [sensorHistory, setSensorHistory] = useState([]);
   useEffect(() => {
     if (sensorData && (sensorData.soil || sensorData.weather)) {
       setSensorHistory(prev => {

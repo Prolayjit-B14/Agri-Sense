@@ -7,7 +7,7 @@ import {
   Umbrella, CloudSun, Clock, Minus, ArrowUp, ArrowDown
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../../state/AppContext';
 
 // ─── DESIGN TOKENS (UNIFIED) ───────────────────────────────────────────────
 

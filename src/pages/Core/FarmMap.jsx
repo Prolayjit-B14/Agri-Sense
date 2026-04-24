@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { useApp } from '../context/AppContext';
-import { MASTER_CONFIG } from '../config';
+import { useApp } from '../../state/AppContext';
+import { MASTER_CONFIG } from '../../setup';
 import { 
   Map as MapIcon, Satellite, Navigation, 
   Layers, Compass, Activity, Radio, 

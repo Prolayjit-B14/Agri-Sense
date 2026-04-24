@@ -10,7 +10,7 @@ import {
   Cpu, Sprout, CloudRain, Droplets, HardDrive, 
   Wifi, Zap, RefreshCw
 } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../../state/AppContext';
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────
 const COLORS = {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../../state/AppContext';
 import { 
   User, Shield, CheckCircle2, 
   Edit3, Bell, Cpu, Brain, Sun, Moon, 

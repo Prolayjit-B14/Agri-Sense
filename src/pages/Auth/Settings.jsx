@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useApp } from '../context/AppContext';
+import { useApp } from '../../state/AppContext';
 import { 
   Settings as SettingsIcon, Bell, Shield, 
   RefreshCw, Globe, Moon, Sun, 

@@ -2,15 +2,15 @@ import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LayoutDashboard, Sprout, Droplets,
+  Sprout, Droplets,
   X, Map, Settings as SettingsIcon,
-  FileText, Activity, Network,
+  FileText, Network,
   CloudRain, Archive,
-  LogOut, FlaskConical, Camera,
-  User as UserIcon, Cpu, Sparkles
+  FlaskConical, Camera,
+  Sparkles
 } from 'lucide-react';
 
-import { useApp } from '../context/AppContext';
+import { useApp } from '../state/AppContext';
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────
 const COLORS = {
@@ -22,7 +22,7 @@ const COLORS = {
 };
 
 const Sidebar = () => {
-  const { logout, user, isSidebarOpen, setIsSidebarOpen } = useApp();
+  const { user, isSidebarOpen, setIsSidebarOpen } = useApp();
   const location = useLocation();
 
   const close = () => setIsSidebarOpen(false);
