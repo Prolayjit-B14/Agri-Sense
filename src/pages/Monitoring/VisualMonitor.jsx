@@ -1,203 +1,303 @@
 /**
- * AgriSense v2.8.0 Visual Monitoring (Neural Vision)
- * Real-time AI-driven incursion detection, neural feed analysis, and pest repellent control.
+ * ESP32-CAM Surveillance System v1.0.0
+ * High-integrity real-time monitoring based on hardware-triggered detection.
+ * 
+ * DESIGN: Industrial Minimalist, High-Density Telemetry.
+ * LOGIC: Polling-based hardware state synchronization.
  */
 
-// ─── IMPORTS ────────────────────────────────────────────────────────────────
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Camera, Radio, Activity, 
-  Bell, ChevronRight, Eye, 
-  EyeOff, Video, Volume2, VolumeX,
-  Bug, Bird, Dog, Zap, Wind,
-  Clock, Wifi, Cpu
+  Camera, Radio, Activity, Bell, ChevronRight, Eye, 
+  EyeOff, Video, Volume2, VolumeX, Zap, Wind, 
+  Clock, Wifi, Cpu, ShieldAlert, Thermometer, Battery,
+  RefreshCw, Maximize2, AlertTriangle, Lightbulb, Camera as CaptureIcon,
+  Smartphone, MapPin, Info
 } from 'lucide-react';
-
-// Context & Utils
 import { useApp } from '../../state/AppContext';
 
 // ─── DESIGN TOKENS ─────────────────────────────────────────────────────────
 const COLORS = {
-  primary: '#10B981',
-  secondary: '#3B82F6',
-  warning: '#F59E0B',
-  danger: '#EF4444',
-  text: '#1E293B',
-  subtext: '#64748B',
+  primary: '#10B981',    // Success / Safe
+  secondary: '#3B82F6',  // Control / Info
+  warning: '#F59E0B',    // Medium Alert
+  danger: '#EF4444',     // High Alert / Live
+  text: '#0F172A',
+  muted: '#64748B',
+  border: 'rgba(0,0,0,0.04)',
   bg: '#F8FAFC',
-  border: '#F1F5F9',
-  terminal: '#0F172A'
+  card: '#FFFFFF'
 };
 
-// ─── SUB-COMPONENTS ────────────────────────────────────────────────────────
+const RAD = {
+  card: '28px',
+  inner: '18px',
+  btn: '14px'
+};
 
-const ControlBtn = ({ icon: Icon, onClick, active, color = 'white' }) => (
-  <motion.button 
-    whileTap={{ scale: 0.9 }}
-    onClick={onClick}
-    style={{
-      width: '40px', height: '40px', borderRadius: '12px',
-      background: active ? `${COLORS.primary}20` : 'rgba(255,255,255,0.1)',
-      border: `1px solid ${active ? COLORS.primary : 'rgba(255,255,255,0.2)'}`,
-      color: active ? COLORS.primary : color,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      cursor: 'pointer', backdropFilter: 'blur(8px)'
-    }}
-  >
-    <Icon size={18} />
-  </motion.button>
+// ─── HELPER COMPONENTS ──────────────────────────────────────────────────────
+
+const Badge = ({ children, color, pulse = false }) => (
+  <div style={{ 
+    background: `${color}15`, color: color, padding: '4px 10px', borderRadius: '10px', 
+    fontSize: '0.65rem', fontWeight: 950, display: 'flex', alignItems: 'center', gap: '6px',
+    border: `1px solid ${color}30`, backdropFilter: 'blur(8px)'
+  }}>
+    {pulse && <motion.div animate={{ opacity: [1, 0.4, 1] }} transition={{ repeat: Infinity, duration: 1.5 }} style={{ width: '6px', height: '6px', background: color, borderRadius: '50%' }} />}
+    {children}
+  </div>
 );
 
-const ActionCard = ({ icon: Icon, label, color, onClick }) => (
+const ControlButton = ({ icon: Icon, label, active, onClick, color = COLORS.secondary }) => (
   <motion.button 
     whileTap={{ scale: 0.95 }}
     onClick={onClick}
     style={{ 
-      background: 'white', border: `1px solid ${color}30`, borderRadius: '20px', 
-      padding: '14px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
-      boxShadow: `0 4px 15px ${color}08`, flex: 1, cursor: 'pointer'
+      background: active ? color : COLORS.card, 
+      border: `1px solid ${active ? color : 'rgba(0,0,0,0.05)'}`,
+      borderRadius: RAD.inner, padding: '16px', display: 'flex', flexDirection: 'column', 
+      alignItems: 'center', gap: '10px', flex: 1, cursor: 'pointer',
+      boxShadow: active ? `0 8px 20px ${color}30` : '0 4px 12px rgba(0,0,0,0.02)'
     }}
   >
-    <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: `${color}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <Icon size={18} color={color} />
+    <div style={{ 
+      width: '44px', height: '44px', borderRadius: '12px', 
+      background: active ? 'rgba(255,255,255,0.2)' : `${color}10`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center'
+    }}>
+      <Icon size={22} color={active ? 'white' : color} />
     </div>
-    <span style={{ fontSize: '0.65rem', fontWeight: 900, color: COLORS.text }}>{label}</span>
+    <div style={{ textAlign: 'center' }}>
+      <div style={{ fontSize: '0.7rem', fontWeight: 900, color: active ? 'white' : COLORS.text, textTransform: 'uppercase' }}>{label}</div>
+      <div style={{ fontSize: '0.55rem', fontWeight: 700, color: active ? 'rgba(255,255,255,0.8)' : COLORS.muted }}>{active ? 'ON' : 'OFF'}</div>
+    </div>
   </motion.button>
 );
 
 // ─── MAIN COMPONENT ────────────────────────────────────────────────────────
 
-const VisualMonitoring = () => {
-  // ─── STATE ────────────────────────────────────────────────────────────────
-  const [isAiOn, setIsAiOn] = useState(true);
-  const [isRecording, setIsRecording] = useState(true);
-  const [isAudioOn, setIsAudioOn] = useState(false);
+const VisualMonitor = () => {
+  const { sensorData } = useApp();
   
-  // ─── DERIVED STATE ────────────────────────────────────────────────────────
-  const activeDetections = useMemo(() => [
-    { id: 1, type: 'Locust', confidence: 94, x: '20%', y: '35%', w: '100px', h: '100px', severity: 'High' },
-    { id: 2, type: 'Pigeon', confidence: 88, x: '65%', y: '50%', w: '80px', h: '80px', severity: 'Med' }
-  ], []);
+  // ─── STATE ────────────────────────────────────────────────────────────────
+  const [deviceStatus, setDeviceStatus] = useState('ONLINE');
+  const [streamUrl, setStreamUrl] = useState('https://images.unsplash.com/photo-1599933334297-586b51491f21?auto=format&fit=crop&q=80&w=1000');
+  const [controls, setControls] = useState({
+    repellent: false,
+    alarm: false,
+    light: false,
+    autoMode: true
+  });
+  const [logs, setLogs] = useState([
+    { id: 1, type: 'Motion Detected', zone: 'Main Gate', time: '14:45:22', level: 'Medium', action: 'Monitor Only' },
+    { id: 2, type: 'Sensor Trigger', zone: 'Perimeter B', time: '14:32:10', level: 'High', action: 'Alarm Triggered' },
+    { id: 3, type: 'Motion Detected', zone: 'Main Gate', time: '14:15:05', level: 'Low', action: 'Ignored' },
+  ]);
 
-  const timeline = [
-    { id: 1, event: 'Locust Cluster identified', time: '17:18:45', cat: 'Pest', icon: Bug, color: COLORS.danger },
-    { id: 2, event: 'Bird intrusion detected', time: '17:16:12', cat: 'Animal', icon: Bird, color: COLORS.warning },
-    { id: 3, event: 'Stray dog near gate', time: '17:10:05', cat: 'Security', icon: Dog, color: COLORS.secondary },
-  ];
+  // ─── HARDWARE LOGIC SIMULATION ───
+  // In real implementation, this would poll /status and /stream endpoints
+  const [telemetry, setTelemetry] = useState({
+    wifi: -64,
+    temp: 42,
+    fps: 18.4,
+    latency: 145,
+    battery: 88,
+    detection: { active: false, type: '---', level: 'Normal', zone: '---', duration: 0 }
+  });
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      // Simulate real-time polling logic
+      setTelemetry(prev => ({
+        ...prev,
+        fps: (15 + Math.random() * 5).toFixed(1),
+        latency: Math.floor(100 + Math.random() * 100),
+        wifi: -60 - Math.floor(Math.random() * 10)
+      }));
+    }, 2000);
+    return () => clearInterval(timer);
+  }, []);
 
   // ─── RENDER ───────────────────────────────────────────────────────────────
   return (
-    <div style={{ padding: '1.25rem', background: COLORS.bg, minHeight: '100vh', paddingBottom: '100px', fontFamily: "'Outfit', sans-serif" }}>
+    <div className="no-scrollbar" style={{ 
+      background: COLORS.bg, minHeight: '100dvh', padding: '1.25rem', 
+      paddingBottom: '2.5rem', fontFamily: "'Outfit', sans-serif", overflowX: 'hidden' 
+    }}>
       
-      {/* 1. NEURAL FEED HERO */}
-      <div style={{ position: 'relative', borderRadius: '32px', overflow: 'hidden', background: '#000', marginBottom: '2rem', boxShadow: '0 20px 50px rgba(0,0,0,0.3)', border: `2px solid ${COLORS.terminal}` }}>
-        <div style={{ height: '380px', position: 'relative' }}>
-           <img 
-            src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&q=80&w=1000" 
-            style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }} 
-           />
-           
-           {/* AI SCANNING SCANLINE */}
-           <motion.div 
-            animate={{ top: ['0%', '100%', '0%'] }} 
-            transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
-            style={{ position: 'absolute', left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, transparent, ${COLORS.primary}, transparent)`, zIndex: 10, boxShadow: `0 0 15px ${COLORS.primary}` }}
-           />
+      {/* HEADER SECTION */}
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1.5rem', padding: '10px 0' }}>
+        <h1 style={{ fontSize: '1.2rem', fontWeight: 950, color: COLORS.text, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Visual Monitoring Feed</h1>
+      </div>
 
-           {/* AI BBOX OVERLAYS */}
-           <AnimatePresence>
-             {isAiOn && activeDetections.map((det) => (
-                <motion.div 
-                  key={det.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-                  style={{ 
-                    position: 'absolute', left: det.x, top: det.y, width: det.w, height: det.h, 
-                    border: `2px solid ${det.severity === 'High' ? COLORS.danger : COLORS.warning}`, 
-                    borderRadius: '12px', zIndex: 15, boxShadow: `0 0 20px ${det.severity === 'High' ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.3)'}`
-                  }}
-                >
-                  <div style={{ position: 'absolute', top: '-28px', left: 0, background: det.severity === 'High' ? COLORS.danger : COLORS.warning, color: 'white', fontSize: '0.65rem', fontWeight: 950, padding: '4px 10px', borderRadius: '8px', whiteSpace: 'nowrap' }}>
-                    {det.type.toUpperCase()} {det.confidence}%
-                  </div>
-                </motion.div>
-             ))}
-           </AnimatePresence>
-
-           {/* OVERLAY UI */}
-           <div style={{ position: 'absolute', inset: 0, padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', zIndex: 20 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                 <div style={{ display: 'flex', gap: '10px' }}>
-                    <div style={{ background: COLORS.danger, color: 'white', padding: '6px 12px', borderRadius: '10px', fontSize: '0.65rem', fontWeight: 950, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                       <div style={{ width: '6px', height: '6px', background: 'white', borderRadius: '50%', animation: 'pulse 1s infinite' }} /> LIVE
-                    </div>
-                    <div style={{ background: 'rgba(15,23,42,0.6)', color: COLORS.primary, padding: '6px 12px', borderRadius: '10px', fontSize: '0.65rem', fontWeight: 950, border: `1px solid ${COLORS.primary}40`, backdropFilter: 'blur(10px)' }}>
-                       NEURAL: {isAiOn ? 'ACTIVE' : 'IDLE'}
-                    </div>
-                 </div>
-                 <div style={{ textAlign: 'right', color: 'rgba(255,255,255,0.7)', fontSize: '0.6rem', fontWeight: 900 }}>
-                    <p style={{ margin: 0 }}>FPS: 24.2</p>
-                    <p style={{ margin: '4px 0 0 0' }}>LATENCY: 12ms</p>
-                 </div>
+      {/* 1. LIVE CAMERA FEED SECTION */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+        style={{ 
+          position: 'relative', borderRadius: '32px', overflow: 'hidden', 
+          background: '#000', marginBottom: '1.5rem', boxShadow: '0 12px 40px rgba(0,0,0,0.15)' 
+        }}
+      >
+        <div style={{ height: '240px', position: 'relative' }}>
+          <img src={streamUrl} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: telemetry.detection.active ? 0.9 : 0.7 }} alt="Camera Feed" />
+          
+          {/* CAMERA OVERLAYS */}
+          <div style={{ position: 'absolute', inset: 0, padding: '1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <Badge color={COLORS.danger} pulse>LIVE</Badge>
+                <Badge color={deviceStatus === 'ONLINE' ? COLORS.primary : COLORS.muted}>
+                  {deviceStatus}
+                </Badge>
               </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                 <div style={{ display: 'flex', gap: '10px' }}>
-                    <ControlBtn icon={Video} active={isRecording} onClick={() => setIsRecording(!isRecording)} />
-                    <ControlBtn icon={isAudioOn ? Volume2 : VolumeX} active={isAudioOn} onClick={() => setIsAudioOn(!isAudioOn)} />
-                    <ControlBtn icon={isAiOn ? Eye : EyeOff} active={isAiOn} onClick={() => setIsAiOn(!isAiOn)} />
-                 </div>
-                 <div style={{ background: 'rgba(15,23,42,0.6)', padding: '10px 14px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)' }}>
-                    <p style={{ fontSize: '0.55rem', fontWeight: 900, color: '#94A3B8', margin: '0 0 4px 0' }}>UAV LINK</p>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Wifi size={14} color={COLORS.primary} /><span style={{ fontSize: '0.75rem', fontWeight: 950, color: 'white' }}>920Mbps</span></div>
-                 </div>
+              <div style={{ textAlign: 'right', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+                <div style={{ fontSize: '0.6rem', fontWeight: 900 }}>FPS: {telemetry.fps}</div>
+                <div style={{ fontSize: '0.6rem', fontWeight: 900 }}>{telemetry.latency}ms</div>
               </div>
-           </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)', padding: '6px 12px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <div style={{ fontSize: '0.5rem', fontWeight: 900, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>Mode</div>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 850, color: 'white' }}>{controls.autoMode ? 'Auto-Protect' : 'Manual Scan'}</div>
+                </div>
+              </div>
+              <motion.button whileTap={{ scale: 0.9 }} style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                <Maximize2 size={18} />
+              </motion.button>
+            </div>
+          </div>
+
+          {/* MOTION BOUNDING BOX (Simulated Hardware Detection) */}
+          {telemetry.detection.active && (
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              style={{ 
+                position: 'absolute', left: '30%', top: '40%', width: '120px', height: '100px',
+                border: `2px solid ${COLORS.danger}`, borderRadius: '8px', zIndex: 5,
+                boxShadow: `0 0 20px ${COLORS.danger}40`
+              }}
+            >
+              <div style={{ position: 'absolute', top: '-22px', left: 0, background: COLORS.danger, color: 'white', fontSize: '0.5rem', fontWeight: 950, padding: '2px 6px', borderRadius: '4px' }}>
+                OBJECT DETECTED
+              </div>
+            </motion.div>
+          )}
+        </div>
+      </motion.div>
+
+      {/* 2. REAL-TIME DETECTION STATUS (DYNAMIC CARD) */}
+      <AnimatePresence>
+        {telemetry.detection.active && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+            style={{ 
+              background: '#FEF2F2', borderRadius: RAD.card, padding: '1.25rem', marginBottom: '1.5rem',
+              border: `1px solid ${COLORS.danger}20`, boxShadow: '0 8px 30px rgba(239,68,68,0.1)'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: COLORS.danger, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <ShieldAlert size={22} color="white" />
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.65rem', fontWeight: 800, color: COLORS.danger, textTransform: 'uppercase' }}>Current Trigger</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 950, color: COLORS.text }}>{telemetry.detection.type}</div>
+                </div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '0.6rem', fontWeight: 800, color: COLORS.muted }}>RISK LEVEL</div>
+                <div style={{ fontSize: '0.8rem', fontWeight: 900, color: COLORS.danger }}>{telemetry.detection.level}</div>
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div style={{ background: 'white', padding: '10px', borderRadius: '14px', border: '1px solid rgba(0,0,0,0.02)' }}>
+                <div style={{ fontSize: '0.55rem', fontWeight: 800, color: COLORS.muted }}>ZONE</div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 900, color: COLORS.text }}>{telemetry.detection.zone}</div>
+              </div>
+              <div style={{ background: 'white', padding: '10px', borderRadius: '14px', border: '1px solid rgba(0,0,0,0.02)' }}>
+                <div style={{ fontSize: '0.55rem', fontWeight: 800, color: COLORS.muted }}>TIMESTAMP</div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 900, color: COLORS.text }}>14:52:05</div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 3. SMART INSIGHT PANEL (LOGIC-BASED) */}
+      <div style={{ 
+        background: COLORS.card, borderRadius: RAD.card, padding: '1.25rem', marginBottom: '1.5rem',
+        border: `1px solid ${COLORS.border}`, display: 'flex', gap: '12px', alignItems: 'flex-start'
+      }}>
+        <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${COLORS.secondary}10`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Info size={20} color={COLORS.secondary} />
+        </div>
+        <div>
+          <div style={{ fontSize: '0.85rem', fontWeight: 900, color: COLORS.text, marginBottom: '4px' }}>System Insights</div>
+          <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 700, color: COLORS.muted, lineHeight: 1.5 }}>
+            {telemetry.detection.active 
+              ? `Continuous motion detected for ${telemetry.detection.duration}s. Triggered during active monitoring hours.`
+              : `Environment stable. ${logs.length} detections in the last 24 hours. WiFi signal is ${telemetry.wifi}dBm (Stable).`}
+          </p>
+          <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '0.65rem', fontWeight: 900, color: COLORS.secondary }}>RECOMMENDED ACTION:</span>
+            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: COLORS.text }}>{telemetry.detection.active ? 'TRIGGER ALARM' : 'MONITOR ONLY'}</span>
+          </div>
         </div>
       </div>
 
-      {/* 2. ACTION CONTROLS */}
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '2.5rem' }}>
-         <ActionCard icon={Wind} label="REPELLENT" color={COLORS.secondary} onClick={() => {}} />
-         <ActionCard icon={Bell} label="ALARM" color={COLORS.danger} onClick={() => {}} />
-         <ActionCard icon={Zap} label="SCAN AREA" color={COLORS.warning} onClick={() => {}} />
+      {/* 4. CONTROL PANEL */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '1.5rem' }}>
+        <ControlButton 
+          icon={Wind} label="Repellent" active={controls.repellent} 
+          onClick={() => setControls(c => ({...c, repellent: !c.repellent}))} 
+        />
+        <ControlButton 
+          icon={Bell} label="Alarm" active={controls.alarm} color={COLORS.danger}
+          onClick={() => setControls(c => ({...c, alarm: !c.alarm}))} 
+        />
+        <ControlButton 
+          icon={Lightbulb} label="Flash" active={controls.light} color={COLORS.warning}
+          onClick={() => setControls(c => ({...c, light: !c.light}))} 
+        />
+        <ControlButton 
+          icon={CaptureIcon} label="Capture" active={false} 
+          onClick={() => {}} 
+        />
       </div>
 
-      {/* 3. DETECTION TELEMETRY */}
-      <h3 style={{ fontSize: '0.8rem', fontWeight: 950, color: COLORS.text, marginBottom: '1.25rem', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <Activity size={18} color={COLORS.secondary} /> Signal Telemetry
-      </h3>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2.5rem' }}>
-         <div style={{ background: 'white', borderRadius: '28px', padding: '1.5rem', border: `1px solid ${COLORS.border}` }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}><Bug size={18} color={COLORS.danger} /><span style={{ fontSize: '0.55rem', fontWeight: 950, color: COLORS.danger, background: `${COLORS.danger}10`, padding: '2px 8px', borderRadius: '6px' }}>HIGH</span></div>
-            <h3 style={{ fontSize: '1.5rem', fontWeight: 950, margin: 0 }}>12</h3>
-            <p style={{ fontSize: '0.65rem', fontWeight: 800, color: COLORS.subtext, margin: 0 }}>INCURSIONS TODAY</p>
-         </div>
-         <div style={{ background: 'white', borderRadius: '28px', padding: '1.5rem', border: `1px solid ${COLORS.border}` }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}><Cpu size={18} color={COLORS.primary} /><span style={{ fontSize: '0.55rem', fontWeight: 950, color: COLORS.primary, background: `${COLORS.primary}10`, padding: '2px 8px', borderRadius: '6px' }}>STABLE</span></div>
-            <h3 style={{ fontSize: '1.5rem', fontWeight: 950, margin: 0 }}>98.4%</h3>
-            <p style={{ fontSize: '0.65rem', fontWeight: 800, color: COLORS.subtext, margin: 0 }}>AI CONFIDENCE</p>
-         </div>
-      </div>
 
-      {/* 4. RECENT LOGS */}
-      <h3 style={{ fontSize: '0.8rem', fontWeight: 950, color: COLORS.text, marginBottom: '1.25rem', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <Clock size={18} color={COLORS.primary} /> Vision Event History
-      </h3>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-         {timeline.map((item) => (
-           <motion.div key={item.id} whileTap={{ scale: 0.98 }} style={{ background: 'white', borderRadius: '24px', padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', border: `1px solid ${COLORS.border}` }}>
-              <div style={{ width: '45px', height: '45px', borderRadius: '14px', background: `${item.color}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{React.createElement(item.icon, { size: 22, color: item.color })}</div>
-              <div style={{ flex: 1 }}><h4 style={{ fontSize: '0.9rem', fontWeight: 900, color: COLORS.text, margin: 0 }}>{item.event}</h4><p style={{ fontSize: '0.7rem', fontWeight: 700, color: COLORS.subtext, margin: 0 }}>{item.cat} • {item.time}</p></div>
-              <ChevronRight size={18} color="#CBD5E1" />
-           </motion.div>
-         ))}
-      </div>
+      {/* ALERT OVERLAY SYSTEM (Simulated) */}
+      <AnimatePresence>
+        {telemetry.detection.active && telemetry.detection.level === 'High' && (
+          <motion.div 
+            initial={{ y: -50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -50, opacity: 0 }}
+            style={{ 
+              position: 'fixed', top: '20px', left: '20px', right: '20px', 
+              background: COLORS.danger, padding: '14px 20px', borderRadius: '16px',
+              display: 'flex', alignItems: 'center', gap: '12px', zIndex: 1000,
+              boxShadow: '0 10px 40px rgba(239,68,68,0.4)'
+            }}
+          >
+            <AlertTriangle size={24} color="white" />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 900, color: 'white' }}>CRITICAL ALERT</div>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>Motion detected at Main Gate!</div>
+            </div>
+            <motion.button whileTap={{ scale: 0.9 }} style={{ border: 'none', background: 'rgba(255,255,255,0.2)', padding: '6px 12px', borderRadius: '8px', color: 'white', fontSize: '0.65rem', fontWeight: 950 }}>VIEW</motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <style>{`
-        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.3); opacity: 0.4; } 100% { transform: scale(1); opacity: 1; } }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
       `}</style>
+
     </div>
   );
 };
 
-export default VisualMonitoring;
+export default VisualMonitor;

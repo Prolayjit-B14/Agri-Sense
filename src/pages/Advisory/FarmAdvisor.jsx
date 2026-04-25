@@ -272,9 +272,26 @@ const FarmAdvisor = () => {
 
 
   const allCropsList = useMemo(() => {
-    const csvLabels = Object.keys(db.crops || {});
+    // Source of truth: CROP_SPECS (Industrial database)
+    // We only show crops that we have verified data for.
     const specLabels = Object.keys(CROP_SPECS);
-    return [...new Set([...csvLabels, ...specLabels])].sort();
+    
+    // Also include crops from CSV IF they are in CROP_SPECS or are ALIASES of something in CROP_SPECS
+    const csvLabels = Object.keys(db.crops || {});
+    const combined = [...new Set([...specLabels, ...csvLabels])];
+
+    const finalUnique = new Set();
+    combined.forEach(raw => {
+      const label = raw.toLowerCase().trim();
+      const target = ALIASES[label] || label;
+      
+      // ONLY add if it exists in our industrial database
+      if (CROP_SPECS[target]) {
+        finalUnique.add(target);
+      }
+    });
+
+    return [...finalUnique].sort();
   }, [db.crops]);
 
   const { scrollY } = useScroll();
@@ -622,18 +639,6 @@ const FarmAdvisor = () => {
             </div>
           </div>
 
-          {/* AREA CONTROL */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#F8FAFC', padding: '12px 16px', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.02)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Scale size={16} color={COLORS.secondary} />
-              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#475569' }}>CULTIVATION AREA</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <motion.button whileTap={{ scale: 0.9 }} onClick={() => setArea(Math.max(0.1, area - 0.1))} style={{ width: '28px', height: '28px', borderRadius: '8px', border: 'none', background: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}><Minus size={14} color={COLORS.textMain} /></motion.button>
-              <span style={{ fontSize: '1rem', fontWeight: 900, color: COLORS.textMain, minWidth: '60px', textAlign: 'center' }}>{area.toFixed(1)} <small style={{ fontSize: '0.6em', opacity: 0.6 }}>AC</small></span>
-              <motion.button whileTap={{ scale: 0.9 }} onClick={() => setArea(area + 0.1)} style={{ width: '28px', height: '28px', borderRadius: '8px', border: 'none', background: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}><Plus size={14} color={COLORS.textMain} /></motion.button>
-            </div>
-          </div>
 
 
 
@@ -742,100 +747,6 @@ const FarmAdvisor = () => {
           ))}
         </motion.div>
 
-        {/* 🌿 STRUCTURED FIELD INTELLIGENCE */}
-        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} style={cardStyle}>
-          <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ ...sectionHeader, margin: 0 }}>
-              <Microscope size={20} color={COLORS.secondary} />
-              Industrial Field Intelligence
-            </h3>
-            <span style={{ fontSize: '0.7rem', fontWeight: 900, background: '#F1F5F9', padding: '4px 10px', borderRadius: '8px', color: COLORS.textMuted }}>V17.1 ENGINE</span>
-          </div>
-
-          {/* OVERALL DECISION SCORE */}
-          <div style={{ background: '#F8FAFC', borderRadius: '24px', padding: '1.5rem', marginBottom: '2rem', border: '1px solid rgba(0,0,0,0.02)', textAlign: 'center' }}>
-            <div style={{ fontSize: '0.65rem', fontWeight: 900, color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Aggregated Suitability Index</div>
-            <div style={{ fontSize: '3.2rem', fontWeight: 950, color: brain.summary.color, lineHeight: 1 }}>{brain.summary.overall}<span style={{ fontSize: '1rem', opacity: 0.5 }}>%</span></div>
-            <div style={{ fontSize: '0.9rem', fontWeight: 800, color: brain.summary.color, marginTop: '8px', textTransform: 'uppercase' }}>{brain.summary.status}</div>
-            
-            <div style={{ width: '100%', height: '10px', background: '#E2E8F0', borderRadius: '5px', overflow: 'hidden', margin: '20px 0' }}>
-              <motion.div 
-                initial={{ width: 0 }} animate={{ width: `${brain.summary.overall}%` }}
-                transition={{ duration: 1.5, ease: "circOut" }}
-                style={{ height: '100%', background: brain.summary.color, borderRadius: '5px' }} 
-              />
-            </div>
-            <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, color: COLORS.textMain, opacity: 0.8, lineHeight: 1.5 }}>
-              {brain.summary.insight}
-            </p>
-          </div>
-
-          {/* STRUCTURED GROUPS */}
-          {brain.summary.groups.map((group, gIdx) => (
-            <div key={group.id} style={{ marginBottom: gIdx === 2 ? 0 : '2rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', paddingBottom: '8px', borderBottom: `1px solid ${COLORS.background}` }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <group.icon size={18} color={COLORS.textMain} />
-                  <span style={{ fontSize: '0.9rem', fontWeight: 900, color: COLORS.textMain }}>{group.name}</span>
-                </div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 850, color: group.score > 70 ? COLORS.primary : COLORS.warning }}>{group.score}% HEALTH</span>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {group.items.map((p, idx) => (
-                  <div key={idx} style={{ 
-                    padding: '16px', borderRadius: '20px', background: '#FFFFFF', 
-                    border: `1px solid ${COLORS.background}`, boxShadow: '0 4px 12px rgba(0,0,0,0.01)'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '0.8rem', fontWeight: 850, color: COLORS.textMain }}>{p.n}</span>
-                        <span style={{ 
-                          fontSize: '0.55rem', fontWeight: 950, padding: '2px 6px', borderRadius: '4px', 
-                          background: p.impact === 'Critical' ? '#FEF2F2' : (p.impact === 'Important' ? '#FFFBEB' : '#F0FDF4'),
-                          color: p.impact === 'Critical' ? COLORS.danger : (p.impact === 'Important' ? COLORS.warning : COLORS.primary),
-                          textTransform: 'uppercase'
-                        }}>{p.impact}</span>
-                      </div>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 900, color: p.color }}>{p.pct}%</span>
-                    </div>
-
-                    <div style={{ width: '100%', height: '4px', background: '#F1F5F9', borderRadius: '2px', overflow: 'hidden', marginBottom: '12px' }}>
-                      <motion.div 
-                        initial={{ width: 0 }} animate={{ width: `${p.pct}%` }}
-                        style={{ height: '100%', background: p.color, borderRadius: '2px' }} 
-                      />
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                      <Info size={12} color={COLORS.textMuted} style={{ marginTop: '2px', flexShrink: 0 }} />
-                      <p style={{ margin: 0, fontSize: '0.65rem', fontWeight: 700, color: COLORS.textMuted, lineHeight: 1.4 }}>
-                        <span style={{ color: COLORS.textMain, fontWeight: 800 }}>WHY:</span> {p.explain}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-
-          {/* TRANSPARENCY LAYER */}
-          <div style={{ 
-            marginTop: '2rem', padding: '1.25rem', borderRadius: '22px', 
-            background: `${COLORS.primary}05`, border: `1px solid ${COLORS.primary}15`,
-            display: 'flex', gap: '14px', alignItems: 'center'
-          }}>
-            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.04)' }}>
-              <ShieldCheck size={24} color={COLORS.primary} />
-            </div>
-            <div>
-              <div style={{ fontSize: '0.8rem', fontWeight: 950, color: COLORS.textMain, marginBottom: '2px' }}>Decision Transparency</div>
-              <p style={{ margin: 0, fontSize: '0.65rem', fontWeight: 750, color: COLORS.textMuted, lineHeight: 1.4 }}>
-                Suitability weighted by agronomic criticality. Nutrients (N,P,K) and pH are prioritized over climate factors for this industrial assessment.
-              </p>
-            </div>
-          </div>
-        </motion.div>
 
         {/* 🧪 FERTILIZER ENGINE */}
         <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} style={cardStyle}>
