@@ -418,18 +418,48 @@ const FarmAdvisor = () => {
       action: 'Routine Schedule' 
     }]);
 
-    const confidence = Math.round((sensors.filter(s => s.type === 'good').length / sensors.length) * 100);
+    // ─── 🎯 REAL-WORLD CONFIDENCE ALGORITHM ───
+    // Confidence is calculated based on how close the live field data is to the EXACT mathematical center of the crop's ideal range.
+    const calcMeanDistPct = (s) => {
+      if (s.type === 'missing' || !isAvailableLoc(s.val)) return 0;
+      const val = parseFloat(s.val);
+      const range = Math.max(1, s.rMax - s.rMin);
+      const mid = (s.rMin + s.rMax) / 2;
+      // Distance from exact optimal center (0 is perfect)
+      const distFromCenter = Math.abs(val - mid);
+      const maxAllowedDist = range / 2;
+      // 100% means exactly in the middle of the ideal range.
+      return Math.max(0, 100 - ((distFromCenter / maxAllowedDist) * 100));
+    };
+    
+    const activeSensorsCount = sensors.filter(s => s.type !== 'missing' && isAvailableLoc(s.val)).length;
+    const completenessFactor = sensors.length > 0 ? (activeSensorsCount / sensors.length) : 0;
+    
+    const rawConfidence = activeSensorsCount > 0 
+      ? sensors.reduce((acc, s) => acc + calcMeanDistPct(s), 0) / activeSensorsCount 
+      : 0;
+    
+    // Final Confidence: 70% based on exact precision of data, 30% based on how many sensors are online.
+    const confidence = Math.round((rawConfidence * 0.7) + ((completenessFactor * 100) * 0.3));
 
     // ─── 📊 WEIGHTED INTELLIGENCE & EXPLAINABILITY ENGINE ───
     const calcMatchPct = (s) => {
-      if (s.type === 'missing') return 0;
-      if (s.type === 'good') return 100;
+      if (s.type === 'missing' || !isAvailableLoc(s.val)) return 0;
       const val = parseFloat(s.val);
       const { rMin, rMax } = s;
-      const range = Math.max(1, rMax - rMin);
-      const dist = val < rMin ? rMin - val : val - rMax;
-      const pct = Math.max(20, 100 - (dist / range * 100));
-      return Math.round(pct);
+      const mid = (rMin + rMax) / 2;
+      const maxAllowedDist = Math.max(1, (rMax - rMin) / 2);
+      const distFromCenter = Math.abs(val - mid);
+      
+      if (val < rMin || val > rMax) {
+        // Outside optimal boundary: Heavy decay based on severity of variance
+        const outDist = val < rMin ? (rMin - val) : (val - rMax);
+        return Math.max(15, Math.round(50 - ((outDist / maxAllowedDist) * 40)));
+      }
+      
+      // Inside boundary: Precision scale (70% at the edge, 100% at absolute perfect center)
+      const pctInside = 100 - ((distFromCenter / maxAllowedDist) * 30);
+      return Math.round(pctInside);
     };
 
     const categories = [
@@ -488,13 +518,21 @@ const FarmAdvisor = () => {
     const matchScore = isOffline ? 0 : Math.round(
       processedGroups.reduce((acc, g) => acc + (g.score * weights[g.id]), 0)
     );
+    
+    // ─── 🌍 REAL-WORLD SUITABILITY ENGINE ───
+    // Suitability focuses on long-term viability (Environment/Season heavily weighted)
+    // Even if NPK is perfect today (Match Score high), if it's the wrong season/location, Suitability drops.
+    const suitWeights = { soil: 0.15, climate: 0.35, external: 0.50 };
+    const suitabilityScore = isOffline ? 0 : Math.round(
+      processedGroups.reduce((acc, g) => acc + (g.score * suitWeights[g.id]), 0)
+    );
 
     let recStatus = 'MODERATE', recColor = '#F59E0B', recIcon = AlertCircle;
     if (matchScore > 80) { recStatus = 'RECOMMENDED'; recColor = '#10B981'; recIcon = CheckCircle2; }
     else if (matchScore < 50) { recStatus = 'NOT RECOMMENDED'; recColor = '#EF4444'; recIcon = XCircle; }
 
-    const suitLabel = matchScore > 80 ? 'High Suitability' : (matchScore > 50 ? 'Moderate' : 'Low Suitability');
-    const suitColor = matchScore > 80 ? COLORS.primary : (matchScore > 50 ? COLORS.warning : COLORS.danger);
+    const suitLabel = suitabilityScore > 80 ? 'High Suitability' : (suitabilityScore > 50 ? 'Moderate' : 'Low Suitability');
+    const suitColor = suitabilityScore > 80 ? COLORS.primary : (suitabilityScore > 50 ? COLORS.warning : COLORS.danger);
 
     const criticalFailures = processedGroups.flatMap(g => g.items).filter(p => p.impact === 'Critical' && p.pct < 60);
     const detailedInsight = criticalFailures.length > 0 
@@ -502,10 +540,10 @@ const FarmAdvisor = () => {
       : `SUITABILITY ANALYSIS: Field conditions are ${matchScore > 80 ? 'ideal' : 'stable'}. Focus on maintaining ${processedGroups[0].items.filter(p => p.pct < 85).map(p => p.n).join(', ') || 'current levels'} for maximum yield efficiency.`;
 
     return {
-      sensors, suitabilityTable, confidence, matchScore, recStatus, recColor, recIcon, isOffline, demand: metaSource.demand || (['Cash Crop', 'Fruit', 'Seed'].includes(spec.type) ? 'High' : (['Fiber', 'Grain', 'Vegetable', 'Pulse'].includes(spec.type) ? 'Stable' : 'Moderate')),
+      sensors, suitabilityTable, confidence, matchScore, suitabilityScore, recStatus, recColor, recIcon, isOffline, demand: metaSource.demand || (['Cash Crop', 'Fruit', 'Seed'].includes(spec.type) ? 'High' : (['Fiber', 'Grain', 'Vegetable', 'Pulse'].includes(spec.type) ? 'Stable' : 'Moderate')),
       summary: {
         groups: processedGroups,
-        overall: matchScore,
+        overall: suitabilityScore,
         status: suitLabel,
         color: suitColor,
         insight: detailedInsight
@@ -651,9 +689,9 @@ const FarmAdvisor = () => {
               },
               { 
                 id: 'Suitability', 
-                val: brain.isOffline ? 0 : brain.matchScore, 
-                label: brain.isOffline ? 'Offline' : (brain.matchScore > 65 ? 'Optimal' : 'Risky'),
-                color: brain.recColor 
+                val: brain.isOffline ? 0 : brain.suitabilityScore, 
+                label: brain.isOffline ? 'Offline' : (brain.suitabilityScore > 65 ? 'Optimal' : 'Risky'),
+                color: brain.summary.color 
               }
             ].map((m, i) => (
               <div key={i} style={{ 

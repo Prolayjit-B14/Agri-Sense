@@ -113,8 +113,8 @@ const DeviceManagement = () => {
 
   return (
     <div style={{ 
-      padding: '1rem', background: COLORS.background, minHeight: '100dvh', 
-      display: 'flex', flexDirection: 'column', gap: '1.25rem', paddingBottom: '7rem',
+      padding: '1rem', background: COLORS.background, minHeight: '100%', 
+      display: 'flex', flexDirection: 'column', gap: '1.25rem', paddingBottom: '0',
       overflowY: 'auto', // Enable vertical scroll
       maxWidth: '100vw' // Prevent horizontal overflow
     }}>
@@ -162,21 +162,6 @@ const DeviceManagement = () => {
         <DeviceCard device={devices.water_node} />
         <DeviceCard device={devices.storage_node} />
       </div>
-
-      {/* Action Button */}
-      <motion.button 
-        whileTap={{ scale: 0.95 }}
-        onClick={() => window.location.reload()}
-        style={{ 
-          background: COLORS.text, border: 'none', padding: '14px', 
-          borderRadius: '20px', color: 'white', fontWeight: 900, fontSize: '0.85rem',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-          boxShadow: '0 8px 16px rgba(0,0,0,0.1)', marginTop: 'auto'
-        }}
-      >
-        <RefreshCw size={16} />
-        Synchronize Data
-      </motion.button>
 
     </div>
   );

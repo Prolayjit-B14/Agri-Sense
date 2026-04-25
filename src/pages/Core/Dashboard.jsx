@@ -199,8 +199,7 @@ const Dashboard = () => {
 
   const handleSync = () => {
     setIsSyncing(true);
-    syncData();
-    setTimeout(() => setIsSyncing(false), 2000);
+    window.location.reload();
   };
 
   const isPumpActive = actuators ? actuators[ACTUATORS?.PUMP] : false;

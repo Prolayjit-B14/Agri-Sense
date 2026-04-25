@@ -49,7 +49,7 @@ const Badge = ({ children, color, pulse = false }) => (
   </div>
 );
 
-const ControlButton = ({ icon: Icon, label, active, onClick, color = COLORS.secondary }) => (
+const ControlButton = ({ icon: Icon, active, onClick, color = COLORS.secondary }) => (
   <motion.button 
     whileTap={{ scale: 0.95 }}
     onClick={onClick}
@@ -57,7 +57,7 @@ const ControlButton = ({ icon: Icon, label, active, onClick, color = COLORS.seco
       background: active ? color : COLORS.card, 
       border: `1px solid ${active ? color : 'rgba(0,0,0,0.05)'}`,
       borderRadius: RAD.inner, padding: '16px', display: 'flex', flexDirection: 'column', 
-      alignItems: 'center', gap: '10px', flex: 1, cursor: 'pointer',
+      alignItems: 'center', justifyContent: 'center', flex: 1, cursor: 'pointer',
       boxShadow: active ? `0 8px 20px ${color}30` : '0 4px 12px rgba(0,0,0,0.02)'
     }}
   >
@@ -66,11 +66,7 @@ const ControlButton = ({ icon: Icon, label, active, onClick, color = COLORS.seco
       background: active ? 'rgba(255,255,255,0.2)' : `${color}10`,
       display: 'flex', alignItems: 'center', justifyContent: 'center'
     }}>
-      <Icon size={22} color={active ? 'white' : color} />
-    </div>
-    <div style={{ textAlign: 'center' }}>
-      <div style={{ fontSize: '0.7rem', fontWeight: 900, color: active ? 'white' : COLORS.text, textTransform: 'uppercase' }}>{label}</div>
-      <div style={{ fontSize: '0.55rem', fontWeight: 700, color: active ? 'rgba(255,255,255,0.8)' : COLORS.muted }}>{active ? 'ON' : 'OFF'}</div>
+      <Icon size={24} color={active ? 'white' : color} />
     </div>
   </motion.button>
 );
@@ -151,15 +147,10 @@ const VisualMonitor = () => {
   // ─── RENDER ───────────────────────────────────────────────────────────────
   return (
     <div className="no-scrollbar" style={{ 
-      background: COLORS.bg, minHeight: '100dvh', padding: '1.25rem', 
-      paddingBottom: '2.5rem', fontFamily: "'Outfit', sans-serif", overflowX: 'hidden' 
+      background: COLORS.bg, minHeight: '100%', padding: '1.25rem', 
+      paddingBottom: '0', fontFamily: "'Outfit', sans-serif", overflowX: 'hidden' 
     }}>
       
-      {/* HEADER SECTION */}
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1.5rem', padding: '10px 0' }}>
-        <h1 style={{ fontSize: '1.2rem', fontWeight: 950, color: COLORS.text, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Visual Monitoring Feed</h1>
-      </div>
-
       {/* 1. LIVE CAMERA FEED SECTION */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
@@ -180,19 +171,9 @@ const VisualMonitor = () => {
                   {deviceStatus}
                 </Badge>
               </div>
-              <div style={{ textAlign: 'right', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
-                <div style={{ fontSize: '0.6rem', fontWeight: 900 }}>FPS: {telemetry.fps}</div>
-                <div style={{ fontSize: '0.6rem', fontWeight: 900 }}>{telemetry.latency}ms</div>
-              </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <div style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)', padding: '6px 12px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                  <div style={{ fontSize: '0.5rem', fontWeight: 900, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>AI Engine</div>
-                  <div style={{ fontSize: '0.7rem', fontWeight: 850, color: 'white' }}>Pest & Animal Watch</div>
-                </div>
-              </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end' }}>
               <motion.button whileTap={{ scale: 0.9 }} style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
                 <Maximize2 size={18} />
               </motion.button>
@@ -256,40 +237,18 @@ const VisualMonitor = () => {
         )}
       </AnimatePresence>
 
-      {/* 3. SMART INSIGHT PANEL (LOGIC-BASED) */}
-      <div style={{ 
-        background: COLORS.card, borderRadius: RAD.card, padding: '1.25rem', marginBottom: '1.5rem',
-        border: `1px solid ${COLORS.border}`, display: 'flex', gap: '12px', alignItems: 'flex-start'
-      }}>
-        <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${COLORS.secondary}10`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <Info size={20} color={COLORS.secondary} />
-        </div>
-        <div>
-          <div style={{ fontSize: '0.85rem', fontWeight: 900, color: COLORS.text, marginBottom: '4px' }}>AI Vision Insights</div>
-          <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 700, color: COLORS.muted, lineHeight: 1.5 }}>
-            {telemetry.detection.active 
-              ? `Threat recognized: ${telemetry.detection.type}. Automated deterrent protocols recommended.`
-              : `Field secure. Neural engine actively scanning for avian and ground threats.`}
-          </p>
-          <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '0.65rem', fontWeight: 900, color: COLORS.secondary }}>RECOMMENDED ACTION:</span>
-            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: COLORS.text }}>{telemetry.detection.active ? 'TRIGGER REPELLENT' : 'MONITOR ONLY'}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 4. CAMERA HARDWARE CONTROL PANEL */}
+      {/* 3. CAMERA HARDWARE CONTROL PANEL */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '1.5rem' }}>
         <ControlButton 
-          icon={Volume2} label="Repellent Buzzer" active={buzzerOn} color={COLORS.danger}
+          icon={Volume2} active={buzzerOn} color={COLORS.danger}
           onClick={toggleBuzzer} 
         />
         <ControlButton 
-          icon={Zap} label="Strobe Flash" active={flashOn} color={COLORS.warning}
+          icon={Zap} active={flashOn} color={COLORS.warning}
           onClick={toggleFlash} 
         />
         <ControlButton 
-          icon={CaptureIcon} label="Capture HD" active={false} color={COLORS.secondary}
+          icon={CaptureIcon} active={false} color={COLORS.secondary}
           onClick={captureImage} 
         />
       </div>
