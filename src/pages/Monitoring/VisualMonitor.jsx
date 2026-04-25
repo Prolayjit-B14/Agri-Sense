@@ -186,7 +186,7 @@ const VisualMonitoring = () => {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
          {timeline.map((item) => (
            <motion.div key={item.id} whileTap={{ scale: 0.98 }} style={{ background: 'white', borderRadius: '24px', padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', border: `1px solid ${COLORS.border}` }}>
-              <div style={{ width: '45px', height: '45px', borderRadius: '14px', background: `${item.color}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><item.icon size={22} color={item.color} /></div>
+              <div style={{ width: '45px', height: '45px', borderRadius: '14px', background: `${item.color}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{React.createElement(item.icon, { size: 22, color: item.color })}</div>
               <div style={{ flex: 1 }}><h4 style={{ fontSize: '0.9rem', fontWeight: 900, color: COLORS.text, margin: 0 }}>{item.event}</h4><p style={{ fontSize: '0.7rem', fontWeight: 700, color: COLORS.subtext, margin: 0 }}>{item.cat} • {item.time}</p></div>
               <ChevronRight size={18} color="#CBD5E1" />
            </motion.div>

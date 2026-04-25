@@ -58,7 +58,7 @@ const DeviceCard = ({ device }) => {
             background: isOffline ? '#F1F5F9' : `${config.color}15`,
             display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
-            <config.icon size={18} color={isOffline ? COLORS.offline : config.color} />
+            {React.createElement(config.icon, { size: 18, color: isOffline ? COLORS.offline : config.color })}
           </div>
           <div style={{ overflow: 'hidden' }}>
             <h3 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 900, color: COLORS.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{config.label}</h3>

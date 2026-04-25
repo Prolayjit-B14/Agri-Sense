@@ -48,7 +48,7 @@ const AlertCard = ({ alert, onDismiss }) => {
           width: '40px', height: '40px', borderRadius: '12px', background: config.bg,
           display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
         }}>
-          <config.icon size={20} color={config.color} />
+          {React.createElement(config.icon, { size: 20, color: config.color })}
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -123,7 +123,7 @@ const Alerts = () => {
               transition: '0.3s'
             }}
           >
-            <f.icon size={14} /> {f.label}
+            {React.createElement(f.icon, { size: 14 })} {f.label}
           </button>
         ))}
       </div>

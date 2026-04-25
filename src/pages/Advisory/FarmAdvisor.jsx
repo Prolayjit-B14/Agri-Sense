@@ -11,12 +11,14 @@ import {
   MapPin, Zap, Calculator, RefreshCw, Activity, Target, Plus, Minus,
   Bug, ShieldCheck, Leaf, Sprout, Globe, AlertCircle, CheckCircle2,
   XCircle, Waves, Clock, FlaskConical, BarChart3, CloudRain, Thermometer,
-  ChevronDown, TrendingUp, Droplets
+  ChevronDown, TrendingUp, Droplets, Search, X, ChevronRight, Scale, Microscope,
+  Sparkles, Info, TrendingDown, Apple, Flower, Wheat, Citrus, Grape, Carrot, Nut, Banana, AlertTriangle
 } from 'lucide-react';
 import { useApp } from '../../state/AppContext';
 
 // ─── ASSET IMPORTS ──────────────────────────────────────────────────────────
 import cropCsv from '../../data/CropSuitabilityData_Final.csv?url';
+import { CROP_SPECS, METADATA, ALIASES } from '../../data/CropDatabase';
 
 // ─── DESIGN TOKENS ─────────────────────────────────────────────────────────
 const COLORS = {
@@ -33,16 +35,169 @@ const COLORS = {
 };
 
 const RAD = {
-  card: '32px',
-  inner: '20px',
-  btn: '16px'
+  card: '24px',
+  inner: '18px',
+  btn: '14px'
+};
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const isAvailable = (val) => val !== undefined && val !== null && val !== '' && val !== '---';
+const isAvailableLoc = (v) => v !== null && v !== undefined && v !== '' && v !== '---';
+
+// ─── HELPERS ────────────────────────────────────────────────────────────────
+
+const getCropIcon = (type, name = '') => {
+  const t = type?.toLowerCase() || '';
+  const n = name?.toLowerCase() || '';
+
+  // Specific Crop Mappings
+  // Specific Crop Mappings (LITERAL MATCHES)
+  if (n.includes('apple') || n.includes('pomegranate')) return { icon: Apple, color: '#EF4444' };
+  if (n.includes('grape')) return { icon: Grape, color: '#8B5CF6' };
+  if (n.includes('banana')) return { icon: Banana, color: '#EAB308' };
+  if (n.includes('citrus') || n.includes('orange') || n.includes('lemon')) return { icon: Citrus, color: '#F59E0B' };
+  if (n.includes('mango') || n.includes('papaya')) return { icon: Citrus, color: '#F97316' };
+  if (n.includes('watermelon') || n.includes('muskmelon')) return { icon: Citrus, color: '#22C55E' }; // Using Citrus for round fruits
+  if (n.includes('coconut')) return { icon: Nut, color: '#78350F' };
+  if (n.includes('potato') || n.includes('radish') || n.includes('onion')) return { icon: Nut, color: '#92400E' };
+  if (n.includes('carrot')) return { icon: Carrot, color: '#F97316' };
+  if (n.includes('sunflower') || n.includes('marigold')) return { icon: Flower, color: '#FBBF24' };
+  if (n.includes('wheat') || n.includes('barley') || n.includes('jowar') || n.includes('bajra')) return { icon: Wheat, color: '#EAB308' };
+  if (n.includes('rice') || n.includes('paddy')) return { icon: Sprout, color: '#10B981' };
+  if (n.includes('cotton') || n.includes('jute')) return { icon: Waves, color: '#CBD5E1' };
+  if (n.includes('gram') || n.includes('pulse') || n.includes('bean') || n.includes('lentil')) return { icon: Sprout, color: '#10B981' };
+
+  // Category Fallbacks (LITERAL REPRESENTATIONS)
+  if (t.includes('grain') || t.includes('cereal') || t.includes('pulse')) return { icon: Wheat, color: '#10B981' };
+  if (t.includes('veg')) return { icon: Carrot, color: '#22C55E' };
+  if (t.includes('fruit')) return { icon: Apple, color: '#F97316' };
+  if (t.includes('flower')) return { icon: Flower, color: '#EC4899' };
+  if (t.includes('seed')) return { icon: Sprout, color: '#6366F1' };
+  if (t.includes('oilseed')) return { icon: Droplets, color: '#F59E0B' };
+  if (t.includes('fiber') || t.includes('cash')) return { icon: Waves, color: '#8B5CF6' };
+  return { icon: Sprout, color: '#10B981' };
+};
+
+const getDemandIcon = (demand) => {
+  const d = demand?.toLowerCase() || '';
+  if (d.includes('high')) return TrendingUp;
+  if (d.includes('low')) return TrendingDown;
+  return Activity;
+};
+
+const getDemandColor = (demand) => {
+  const d = demand?.toLowerCase() || '';
+  if (d.includes('high')) return '#10B981';
+  if (d.includes('medium')) return '#F59E0B';
+  return '#94A3B8';
+};
+
+const formatCropName = (name) => {
+  if (!name) return '';
+  return name.split('(')[0].trim().replace(/\b\w/g, l => l.toUpperCase());
+};
+
+const getCropSpec = (name) => {
+  if (!name || typeof name !== 'string') return { label: 'unknown' };
+  const normalized = name.toLowerCase().trim();
+  const target = ALIASES[normalized] || normalized;
+  return { ...(CROP_SPECS[target] || {}), label: target };
+};
+
+// ─── BOTTOM SHEET COMPONENT ─────────────────────────────────────────────────
+
+const CropBottomSheet = ({ isOpen, onClose, crops, onSelect, selectedCrop }) => {
+  const [search, setSearch] = useState('');
+  const filtered = (crops || []).filter(c => c.toLowerCase().includes(search.toLowerCase())).sort();
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={onClose}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, backdropFilter: 'blur(4px)' }}
+          />
+          <motion.div 
+            initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            style={{ 
+              position: 'fixed', bottom: 0, left: 0, right: 0, 
+              background: '#FFFFFF', borderTopLeftRadius: '32px', borderTopRightRadius: '32px',
+              zIndex: 1001, maxHeight: '85vh', display: 'flex', flexDirection: 'column',
+              padding: '1.5rem', boxShadow: '0 -10px 40px rgba(0,0,0,0.1)'
+            }}
+          >
+            <div style={{ width: '40px', height: '4px', background: '#E2E8F0', borderRadius: '2px', alignSelf: 'center', marginBottom: '1.5rem' }} />
+            
+            <div style={{ position: 'sticky', top: 0, background: 'white', zIndex: 2, paddingBottom: '1rem' }}>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <Search size={18} color="#94A3B8" style={{ position: 'absolute', left: '16px' }} />
+                <input 
+                  autoFocus
+                  placeholder="Search 75+ Crops..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  style={{ 
+                    width: '100%', padding: '14px 14px 14px 48px', borderRadius: '16px',
+                    border: '1px solid #E2E8F0', background: '#F8FAFC', outline: 'none',
+                    fontSize: '1rem', fontWeight: 600, color: '#0F172A'
+                  }}
+                />
+                {search && <X size={18} color="#94A3B8" style={{ position: 'absolute', right: '16px' }} onClick={() => setSearch('')} />}
+              </div>
+            </div>
+
+            <div style={{ overflowY: 'auto', flex: 1, paddingBottom: '2rem' }} className="no-scrollbar">
+              {filtered.map(c => {
+                const isSel = c === selectedCrop;
+                const spec = getCropSpec(c);
+                const { icon: CropIcon, color: cropColor } = getCropIcon(spec.type, c);
+                
+                return (
+                  <motion.div 
+                    key={c}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => { onSelect(c); onClose(); }}
+                    style={{ 
+                      padding: '16px', borderRadius: '16px', marginBottom: '8px',
+                      background: isSel ? `${cropColor}10` : 'transparent',
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      border: isSel ? `1px solid ${cropColor}30` : '1px solid transparent'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <div style={{ 
+                        width: '48px', height: '48px', borderRadius: '12px', 
+                        background: isSel ? '#FFFFFF' : `${cropColor}15`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        <CropIcon size={24} color={cropColor} />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '1rem', fontWeight: isSel ? 800 : 600, color: isSel ? '#0F172A' : '#1E293B' }}>{formatCropName(spec.label || c)}</span>
+                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.02em' }}>{spec.type || 'Crop'}</span>
+                      </div>
+                    </div>
+                    {isSel && <CheckCircle2 size={20} color={cropColor} />}
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
 };
 
 // ─── UTILS & PARSERS ────────────────────────────────────────────────────────
 
 const parseCSV = (t) => {
-  if (!t) return [];
+  if (!t || t.trim().length === 0) return [];
   const lines = t.trim().split('\n');
+  if (lines.length < 1) return [];
   const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, '').toLowerCase());
   return lines.slice(1).map(line => {
     const values = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || line.split(',');
@@ -51,168 +206,196 @@ const parseCSV = (t) => {
 };
 
 const aggregateCropProfiles = (data) => {
+  if (!Array.isArray(data) || data.length === 0) return {};
   const crops = {};
   data.forEach(row => {
+    if (!row || typeof row !== 'object') return;
     const label = row.label?.toLowerCase().trim();
     if (!label) return;
     if (!crops[label]) {
       crops[label] = { 
         n: [], p: [], k: [], temperature: [], humidity: [], ph: [], rainfall: [],
-        season: row.season, soil: row.soil_type, loc: row.location, sow: row.sowing_time,
-        fert: row.fertilizer, comp: row.compost, pest: row.pest_control
+        season: row.season || 'Kharif', 
+        soil: row.soil_type || 'Loamy', 
+        loc: row.location || 'India', 
+        sow: row.sowing_time || 'Jan-Dec',
+        fert: row.fertilizer || 'Balanced NPK', 
+        comp: row.compost || 'Organic Manure', 
+        pest: row.pest_control || 'Standard Control'
       };
     }
     ['n', 'p', 'k', 'temperature', 'humidity', 'ph', 'rainfall'].forEach(key => {
-      const val = parseFloat(row[key]); if (!isNaN(val)) crops[label][key].push(val);
+      const val = parseFloat(row[key]); 
+      if (!isNaN(val)) crops[label][key].push(val);
     });
   });
+  
   const final = {};
   Object.keys(crops).forEach(label => {
     const r = crops[label];
     final[label] = { ...r };
     ['n', 'p', 'k', 'temperature', 'humidity', 'ph', 'rainfall'].forEach(key => {
       const v = r[key];
-      if (v.length === 0) { final[label][key] = { min: 0, max: 0, avg: 0, range: 1, mid: 0 }; return; }
-      const min = Math.min(...v), max = Math.max(...v), avg = v.reduce((a, b) => a + b, 0) / v.length;
-      final[label][key] = { min, max, avg, range: max - min || 1, mid: (min + max) / 2 };
+      if (!v || v.length === 0) { 
+        final[label][key] = { min: 0, max: 0, avg: 0, range: 1, mid: 0 }; 
+      } else {
+        const min = Math.min(...v);
+        const max = Math.max(...v);
+        const avg = v.reduce((a, b) => a + b, 0) / v.length;
+        final[label][key] = { min, max, avg, range: Math.max(1, max - min), mid: (min + max) / 2 };
+      }
     });
+    
     const rain = final[label].rainfall || { min: 0, max: 0, avg: 0 };
     final[label].moisture = {
       min: Math.max(5, (rain.min || 0) / 20),
-      max: Math.min(100, (rain.max || 0) / 10),
-      avg: Math.min(90, (rain.avg || 0) / 15)
+      max: Math.min(100, (rain.max || 1000) / 10),
+      avg: Math.min(90, (rain.avg || 500) / 15)
     };
     final[label].moisture.mid = (final[label].moisture.min + final[label].moisture.max) / 2;
-    final[label].moisture.range = final[label].moisture.max - final[label].moisture.min || 1;
+    final[label].moisture.range = Math.max(1, final[label].moisture.max - final[label].moisture.min);
   });
   return final;
 };
 
-// ─── MASTER METADATA (CROP PROFILES) ───
-const CROP_METADATA = {
-  rice: { type: 'Grain', season: 'Kharif', water: 'HIGH', dur: '120–150d', bU: 100, bS: 50, bM: 40, bC: 3, soil: 'Clayey/Alluvial', weather: 'Humid', sow: 'Jun-Jul', pests: [{ n: 'Stem Borer', s: 'Chlorpyrifos', tm: 25, hm: 75, rm: 0, r: 'High humidity' }] },
-  maize: { type: 'Grain', season: 'Kharif', water: 'MEDIUM', dur: '90–110d', bU: 80, bS: 40, bM: 30, bC: 2, soil: 'Loamy', weather: 'Dry/Warm', sow: 'May-Jun', pests: [{ n: 'Armyworm', s: 'Spinosad', tm: 28, hm: 50, rm: 0, r: 'Dry heat' }] },
-  watermelon: { type: 'Fruit', season: 'Summer', water: 'HIGH', dur: '75–90d', bU: 140, bS: 60, bM: 80, bC: 4, soil: 'Sandy', weather: 'Dry/Hot', sow: 'Jan-Feb', pests: [{ n: 'Fruit Fly', s: 'Traps', tm: 30, hm: 40, rm: 0, r: 'Extreme heat' }] },
-  wheat: { type: 'Grain', season: 'Rabi', water: 'MEDIUM', dur: '110–140d', bU: 120, bS: 50, bM: 40, bC: 2, soil: 'Loamy', weather: 'Cool/Dry', sow: 'Oct-Nov', pests: [{ n: 'Rust', s: 'Propiconazole', tm: 18, hm: 60, rm: 0, r: 'Cool moisture' }] },
-  tomato: { type: 'Vegetable', season: 'Year-round', water: 'MEDIUM', dur: '60–80d', bU: 110, bS: 70, bM: 90, bC: 4, soil: 'Loamy', weather: 'Warm', sow: 'Jan-Feb', pests: [{ n: 'Hornworm', s: 'Bt Spray', tm: 25, hm: 65, rm: 0, r: 'High temp' }] },
-  potato: { type: 'Vegetable', season: 'Rabi', water: 'MEDIUM', dur: '90–120d', bU: 135, bS: 90, bM: 175, bC: 5, soil: 'Loose Loam', weather: 'Cool', sow: 'Oct-Nov', pests: [{ n: 'Late Blight', s: 'Fungicide', tm: 18, hm: 85, rm: 0, r: 'High humidity' }] },
-  rose: { type: 'Flower', season: 'Perennial', water: 'MEDIUM', dur: 'Yearly', bU: 70, bS: 45, bM: 45, bC: 2, soil: 'Clay Loam', weather: 'Moderate', sow: 'Dec-Feb', pests: [{ n: 'Aphids', s: 'Neem Oil', tm: 22, hm: 55, rm: 0, r: 'New growth' }] },
-  marigold: { type: 'Flower', season: 'Year-round', water: 'LOW', dur: '60–70d', bU: 55, bS: 35, bM: 35, bC: 1, soil: 'Any', weather: 'Warm', sow: 'Feb-Mar', pests: [{ n: 'Slugs', s: 'Iron Phosphate', tm: 25, hm: 50, rm: 0, r: 'Wet soil' }] },
-  sugarcane: { type: 'Cash Crop', season: 'Annual', water: 'HIGH', dur: '300–360d', bU: 225, bS: 90, bM: 135, bC: 6, soil: 'Deep Loam', weather: 'Hot/Humid', sow: 'Feb-Mar', pests: [{ n: 'Borer', s: 'Carbofuran', tm: 30, hm: 80, rm: 0, r: 'Monsoon' }] },
-  cotton: { type: 'Fiber', season: 'Kharif', water: 'MEDIUM', dur: '150–180d', bU: 110, bS: 50, bM: 25, bC: 3, soil: 'Black Soil', weather: 'Sunny', sow: 'May-Jun', pests: [{ n: 'Bollworm', s: 'Synthetic', tm: 28, hm: 45, rm: 0, r: 'Dry periods' }] }
-};
-
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+// ─── MAIN COMPONENT ─────────────────────────────────────────────────────────
 
 const FarmAdvisor = () => {
   const { sensorData, user } = useApp();
   const [selectedCrop, setSelectedCrop] = useState('rice');
+  const [db, setDb] = useState({ crops: null, loading: true, error: false });
   const [area, setArea] = useState(1);
-  const [db, setDb] = useState({ crops: null, loading: true });
-  const [collapsed, setCollapsed] = useState(false);
-  const [showOnlyIssues, setShowOnlyIssues] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+
+  // Guard against missing context or sensors
+  if (!sensorData) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: COLORS.background }}><RefreshCw className="animate-spin" color={COLORS.primary} /></div>;
+
+
+  const allCropsList = useMemo(() => {
+    const csvLabels = Object.keys(db.crops || {});
+    const specLabels = Object.keys(CROP_SPECS);
+    return [...new Set([...csvLabels, ...specLabels])].sort();
+  }, [db.crops]);
 
   const { scrollY } = useScroll();
   const heroOpacity = useTransform(scrollY, [0, 80], [1, 0.98]);
 
   useEffect(() => {
-    const unsub = scrollY.on("change", (v) => setCollapsed(v > 60));
-    fetch(cropCsv).then(r => r.text()).then(t => setDb({ crops: aggregateCropProfiles(parseCSV(t)), loading: false }));
-    return () => unsub();
-  }, [scrollY]);
+    fetch(cropCsv)
+      .then(r => r.text())
+      .then(t => {
+        try {
+          const processed = aggregateCropProfiles(parseCSV(t));
+          setDb({ crops: processed, loading: false, error: false });
+        } catch (e) {
+          console.error("DB Parse Error", e);
+          setDb({ crops: {}, loading: false, error: true });
+        }
+      })
+      .catch(err => setDb({ crops: {}, loading: false, error: true }));
+  }, []);
 
   const brain = useMemo(() => {
-    if (db.loading || !db.crops?.[selectedCrop]) return null;
+    if (db.loading || !db.crops || !sensorData) return null;
+    const spec = getCropSpec(selectedCrop);
+    const p = db.crops[selectedCrop] || {};
+    
+    // Deep fallback logic: Use CSV data if available, otherwise inherit from Spec standards
+    const profile = {
+      n: p.n || { mid: ((spec.n?.[0] || 0) + (spec.n?.[1] || 100)) / 2, min: spec.n?.[0] || 0, max: spec.n?.[1] || 100, range: (spec.n?.[1] || 100) - (spec.n?.[0] || 0) || 1 },
+      p: p.p || { mid: ((spec.p?.[0] || 0) + (spec.p?.[1] || 100)) / 2, min: spec.p?.[0] || 0, max: spec.p?.[1] || 100, range: (spec.p?.[1] || 100) - (spec.p?.[0] || 0) || 1 },
+      k: p.k || { mid: ((spec.k?.[0] || 0) + (spec.k?.[1] || 100)) / 2, min: spec.k?.[0] || 0, max: spec.k?.[1] || 100, range: (spec.k?.[1] || 100) - (spec.k?.[0] || 0) || 1 },
+      ph: p.ph || { mid: ((spec.ph?.[0] || 5.5) + (spec.ph?.[1] || 7.5)) / 2, min: spec.ph?.[0] || 5.5, max: spec.ph?.[1] || 7.5, range: (spec.ph?.[1] || 7.5) - (spec.ph?.[0] || 5.5) || 1 },
+      temperature: p.temperature || { mid: ((spec.temp?.[0] || 15) + (spec.temp?.[1] || 35)) / 2, min: spec.temp?.[0] || 15, max: spec.temp?.[1] || 35, range: (spec.temp?.[1] || 35) - (spec.temp?.[0] || 15) || 1 },
+      humidity: p.humidity || { mid: ((spec.hum?.[0] || 40) + (spec.hum?.[1] || 80)) / 2, min: spec.hum?.[0] || 40, max: spec.hum?.[1] || 80, range: (spec.hum?.[1] || 80) - (spec.hum?.[0] || 40) || 1 },
+      rainfall: p.rainfall || { mid: ((spec.rain?.[0] || 500) + (spec.rain?.[1] || 1500)) / 2, min: spec.rain?.[0] || 500, max: spec.rain?.[1] || 1500, range: (spec.rain?.[1] || 1500) - (spec.rain?.[0] || 500) || 1 },
+      moisture: p.moisture || { mid: 40, min: 10, max: 70, range: 60 },
+      season: p.season, soil: p.soil, loc: p.loc, sow: p.sow,
+      fert: p.fert, comp: p.comp, pest: p.pest
+    };
+    
+    const metaSource = METADATA[spec.label || selectedCrop] || {};
 
-    const profile = db.crops[selectedCrop];
-    const metaSource = CROP_METADATA[selectedCrop] || {};
     const meta = {
-      type: metaSource.type || 'Crop',
-      season: profile.season || 'Kharif',
-      soil: profile.soil || 'Loamy',
+      type: spec.type || 'Crop',
+      season: metaSource.season || profile.season || 'Kharif',
+      soil: metaSource.soil || profile.soil || 'Loamy',
       weather: profile.weather || 'Moderate',
-      sow: profile.sow || 'Jan-Dec',
-      loc: profile.loc || 'India',
-      fert: profile.fert || 'Balanced NPK',
-      comp: profile.comp || 'Organic Manure',
-      pest: profile.pest || 'Neem Oil',
-      // Base doses for industrial calculations (if not in CSV)
-      bU: metaSource.bU || 100, bS: metaSource.bS || 60, bM: metaSource.bM || 50, bC: metaSource.bC || 3,
-      pests: metaSource.pests || [{ n: profile.pest, s: 'Integrated Mgmt', tm: 25, hm: 70, rm: 0, r: 'Standard risk' }]
+      sow: metaSource.sow || profile.sow || 'Jan-Dec',
+      loc: metaSource.loc || profile.loc || 'India',
+      fert: metaSource.fert || profile.fert || 'Balanced NPK',
+      comp: metaSource.comp || profile.comp || 'Organic Manure',
+      pest: metaSource.pest || profile.pest || 'Neem Oil',
+      // Dynamic Dose Calculation based on NPK requirements
+      bU: spec.n ? (spec.n[1] / 0.46) : 100, 
+      bS: spec.p ? (spec.p[1] / 0.16) : 60, 
+      bM: spec.k ? (spec.k[1] / 0.60) : 50, 
+      bC: 3, 
+      pests: [{ n: metaSource.pest || 'Standard Control', s: 'Integrated Mgmt', tm: 25, hm: 70, rm: 0, r: 'Standard risk' }]
     };
 
-    const month = MONTHS[new Date().getMonth()];
+    const month = MONTHS[new Date().getMonth()] || "Jan";
     const season = ['Jun','Jul','Aug','Sep','Oct'].includes(month) ? 'Kharif' : (['Nov','Dec','Jan','Feb'].includes(month) ? 'Rabi' : 'Zaid');
 
     const cur = {
-      n: sensorData.soil?.npk?.n, p: sensorData.soil?.npk?.p, k: sensorData.soil?.npk?.k,
-      ph: sensorData.soil?.ph, moisture: sensorData.soil?.moisture,
-      temp: sensorData.weather?.temp, hum: sensorData.weather?.humidity, rain: sensorData.weather?.rainLevel,
-      season, soil: sensorData.soil?.type, weather: sensorData.weather?.condition, month
+      n: sensorData?.soil?.npk?.n, p: sensorData?.soil?.npk?.p, k: sensorData?.soil?.npk?.k,
+      ph: sensorData?.soil?.ph, moisture: sensorData?.soil?.moisture,
+      temp: sensorData?.weather?.temp, hum: sensorData?.weather?.humidity, rain: sensorData?.weather?.rainLevel,
+      season, soil: sensorData?.soil?.type || 'Loamy', weather: sensorData?.weather?.condition || 'Clear', month
     };
-
-    const isAvailable = (v) => v !== null && v !== 0 && v !== undefined && v !== '---';
-    const calcScore = (val, range) => !isAvailable(val) ? 0 : Math.max(0, Math.min(1, 1 - (Math.abs(val - range.mid) / range.range)));
 
     // ─── 📊 SMART MATCH ENGINE ───
     const sensors = [
-      { id: 'Nitrogen', val: cur.n, range: profile.n, unit: 'kg/ha', rec: 'Fertilize', icon: Leaf, color: '#10B981' },
-      { id: 'Phosphorus', val: cur.p, range: profile.p, unit: 'kg/ha', rec: 'Fertilize', icon: Leaf, color: '#10B981' },
-      { id: 'Potassium', val: cur.k, range: profile.k, unit: 'kg/ha', rec: 'Fertilize', icon: Leaf, color: '#10B981' },
-      { id: 'Soil pH', val: cur.ph, range: profile.ph, unit: 'pH', rec: 'Treat Soil', icon: FlaskConical, color: '#8B5CF6' },
-      { id: 'Moisture', val: cur.moisture, range: profile.moisture, unit: '%', rec: 'Irrigate', icon: Droplets, color: '#3B82F6' },
-      { id: 'Temperature', val: cur.temp, range: profile.temperature, unit: '°C', rec: 'Cooling', icon: Thermometer, color: '#EF4444' },
-      { id: 'Rainfall', val: cur.rain, range: profile.rainfall, unit: 'mm', rec: 'Weather', icon: CloudRain, color: '#6366F1' }
+      { id: 'Nitrogen', val: cur.n, range: spec.n, unit: 'kg/ha', rec: 'Fertilize', icon: Zap, color: '#F59E0B' },
+      { id: 'Phosphorus', val: cur.p, range: spec.p, unit: 'kg/ha', rec: 'Fertilize', icon: Target, color: '#3B82F6' },
+      { id: 'Potassium', val: cur.k, range: spec.k, unit: 'kg/ha', rec: 'Fertilize', icon: Activity, color: '#8B5CF6' },
+      { id: 'Soil pH', val: cur.ph, range: spec.ph, unit: 'pH', rec: 'Treat Soil', icon: FlaskConical, color: '#EC4899' },
+      { id: 'Moisture', val: cur.moisture, range: db.crops[selectedCrop] ? profile.moisture : { min: spec.moisture?.[0] || 10, max: spec.moisture?.[1] || 80 }, unit: '%', rec: 'Irrigate', icon: Droplets, color: '#0EA5E9' },
+      { id: 'Temperature', val: cur.temp, range: spec.temp, unit: '°C', rec: 'Cooling', icon: Thermometer, color: '#F43F5E' },
+      { id: 'Rainfall', val: cur.rain, range: db.crops[selectedCrop] ? profile.rainfall : { min: spec.rain?.[0] || 0, max: spec.rain?.[1] || 2000 }, unit: 'mm', rec: 'Weather', icon: CloudRain, color: '#6366F1' }
     ].map(s => {
       const active = isAvailable(s.val);
-      let status = 'Missing';
-      let type = 'missing';
-      let action = 'Offline';
+      let status = 'Missing', type = 'missing', action = '---';
+      
+      // Range can be [min, max] or { min, max }
+      const rMin = Array.isArray(s.range) ? s.range[0] : s.range?.min;
+      const rMax = Array.isArray(s.range) ? s.range[1] : s.range?.max;
 
-      if (active && s.range && typeof s.range.min !== 'undefined') {
+      if (active && typeof rMin !== 'undefined' && rMin !== null) {
         const val = parseFloat(s.val);
-        if (val < s.range.min) { status = '🔻 Below Range'; type = 'bad'; action = s.rec; }
-        else if (val > s.range.max) { status = '🔺 Above Range'; type = 'bad'; action = 'Drain'; }
-        else { status = '✅ Optimal'; type = 'good'; action = 'None'; }
-      } else {
-        status = '⚠ Not Detected';
-        type = 'missing';
-        action = 'Offline';
+        if (isNaN(val)) {
+          status = 'Missing'; type = 'missing';
+        } else if (val < rMin) { 
+          status = '🔻 Below Range'; type = 'bad'; action = s.rec; 
+        } else if (val > rMax) { 
+          status = '🔺 Above Range'; type = 'bad'; action = 'Drain'; 
+        } else { 
+          status = '✅ Optimal'; type = 'good'; action = 'None'; 
+        }
       }
-      return { ...s, status, type, action };
+      return { ...s, status, type, action, rMin, rMax };
     });
 
-
-    // ─── ⚖️ CROP MATCH COMPARISON ENGINE ───
     const matchTable = [
-      { f: 'Season', ideal: meta.season, cur: cur.season, isMatch: meta.season.toLowerCase().includes(cur.season.toLowerCase()), icon: Clock, color: '#F59E0B' },
-      { f: 'Soil Type', ideal: meta.soil, cur: cur.soil, isMatch: meta.soil.toLowerCase().includes(cur.soil?.toLowerCase() || 'loam'), icon: Globe, color: '#10B981' },
-      { f: 'Location', ideal: meta.loc, cur: 'WB, IN', isMatch: meta.loc.toLowerCase().includes('india') || meta.loc.toLowerCase().includes('wb'), icon: MapPin, color: '#0EA5E9' },
-      { f: 'Sowing Time', ideal: meta.sow, cur: cur.month, icon: Activity, color: '#EF4444' },
-      { f: 'Fertilizer', ideal: meta.fert, cur: 'Available', isMatch: true, icon: FlaskConical, color: '#8B5CF6' },
-      { f: 'Compost', ideal: meta.comp, cur: 'Organic', isMatch: true, icon: Sprout, color: '#10B981' },
-      { f: 'Pest Control', ideal: meta.pest, cur: 'Monitored', isMatch: true, icon: Bug, color: '#F43F5E' }
+      { f: 'Season', ideal: meta.season, cur: cur.season, isMatch: String(meta.season).toLowerCase().includes(String(cur.season).toLowerCase()), icon: Clock, color: '#F59E0B' },
+      { f: 'Soil Type', ideal: meta.soil, cur: cur.soil, isMatch: String(meta.soil).toLowerCase().includes(String(cur.soil || 'loam').toLowerCase()), icon: Globe, color: '#10B981' },
+      { f: 'Location', ideal: meta.loc, cur: 'WB, IN', isMatch: String(meta.loc).toLowerCase().includes('india') || String(meta.loc).toLowerCase().includes('wb'), icon: MapPin, color: '#0EA5E9' },
+      { f: 'Sowing Time', ideal: meta.sow, cur: cur.month, icon: Activity, color: '#EF4444' }
     ].map(row => {
       let status = '❌ Not Suitable', type = 'bad';
       if (row.f === 'Sowing Time') {
-        const [sS, sE] = (row.ideal || 'Jan-Dec').split('-');
+        const [sS, sE] = (String(row.ideal || 'Jan-Dec')).split('-');
         const sIdx = MONTHS.indexOf(sS), eIdx = MONTHS.indexOf(sE), cIdx = MONTHS.indexOf(cur.month);
-        if (cIdx >= sIdx && cIdx <= eIdx) { status = '✅ Suitable'; type = 'good'; }
+        if (row.ideal === 'Year-round' || row.ideal === 'Any' || (cIdx >= sIdx && cIdx <= eIdx)) { status = '✅ Suitable'; type = 'good'; }
         else if (sIdx !== -1 && eIdx !== -1 && Math.min(Math.abs(cIdx - sIdx), Math.abs(cIdx - eIdx)) <= 1) { status = '⚠ Adjustment'; type = 'warning'; }
-        else if (row.ideal === 'Year-round') { status = '✅ Suitable'; type = 'good'; }
-      } else if (['Fertilizer', 'Compost', 'Pest Control'].includes(row.f)) {
-        status = '✅ Info Loaded'; type = 'good';
-      } else if (row.isMatch) {
-        status = '✅ Suitable'; type = 'good';
-      }
-      return { ...row, status, type, cur: isAvailable(row.cur) ? row.cur : '—' };
+      } else if (row.isMatch) { status = '✅ Suitable'; type = 'good'; }
+      return { ...row, status, type, cur: isAvailableLoc(row.cur) ? row.cur : '---' };
     });
 
-    // ─── 🧪 FERTILIZER ENGINE ───
-    const canFertilize = isAvailable(cur.n) && isAvailable(cur.p) && isAvailable(cur.k);
-    const defN = canFertilize && profile.n?.mid ? Math.max(0, profile.n.mid - cur.n) : 0;
-    const defP = canFertilize && profile.p?.mid ? Math.max(0, profile.p.mid - cur.p) : 0;
-    const defK = canFertilize && profile.k?.mid ? Math.max(0, profile.k.mid - cur.k) : 0;
+    const canFertilize = isAvailableLoc(cur.n) && isAvailableLoc(cur.p) && isAvailableLoc(cur.k);
+    const defN = canFertilize ? Math.max(0, (profile.n?.mid || 0) - parseFloat(cur.n || 0)) : 0;
+    const defP = canFertilize ? Math.max(0, (profile.p?.mid || 0) - parseFloat(cur.p || 0)) : 0;
+    const defK = canFertilize ? Math.max(0, (profile.k?.mid || 0) - parseFloat(cur.k || 0)) : 0;
     
     let urea = canFertilize ? (defN / 0.46) + (meta.bU * 0.3) : 0;
     let ssp = canFertilize ? (defP / 0.16) + (meta.bS * 0.3) : 0;
@@ -220,23 +403,21 @@ const FarmAdvisor = () => {
     
     const fertReasons = [];
     if (canFertilize) {
-      if (cur.temp > profile.temperature.max) { urea *= 0.9; fertReasons.push("High heat reduction"); }
-      if (cur.moisture < profile.moisture.min) { urea *= 1.1; fertReasons.push("Low moisture adjustment"); }
+      if (parseFloat(cur.temp) > (profile.temperature?.max || 35)) { urea *= 0.9; fertReasons.push("High heat reduction"); }
+      if (parseFloat(cur.moisture) < (profile.moisture?.min || 20)) { urea *= 1.1; fertReasons.push("Low moisture adjustment"); }
     }
     const fertReason = canFertilize ? (fertReasons.length > 0 ? fertReasons.join(" • ") : "Standard biological dose") : "Connect NPK sensors for analysis";
 
-    // ─── 🌿 COMPOST ENGINE ───
-    const canCompost = isAvailable(cur.moisture) && isAvailable(cur.ph);
+    const canCompost = isAvailableLoc(cur.moisture) && isAvailableLoc(cur.ph);
     let compost = canCompost ? meta.bC : 0;
     const cReasons = [];
     if (canCompost) {
-      if (cur.moisture < profile.moisture.min) { compost += 2; cReasons.push("Low moisture"); }
-      if (meta.soil.includes("Sandy")) { compost += 2; cReasons.push("Sandy soil"); }
-      if (isAvailable(cur.n) && cur.n < profile.n.min) { compost += 1; cReasons.push("N-Deficiency"); }
+      if (parseFloat(cur.moisture) < (profile.moisture?.min || 20)) { compost += 2; cReasons.push("Low moisture"); }
+      if (String(meta.soil).includes("Sandy")) { compost += 2; cReasons.push("Sandy soil"); }
+      if (isAvailableLoc(cur.n) && parseFloat(cur.n) < (profile.n?.min || 50)) { compost += 1; cReasons.push("N-Deficiency"); }
     }
     const compostReason = canCompost ? (cReasons.length > 0 ? cReasons.join(" + ") : "Ideal field balance") : "Connect Soil/pH sensors";
 
-    // ─── 🐛 PESTICIDE ENGINE ───
     const detectedPests = [{ 
       n: profile.pest || 'Standard Control', 
       s: 'High' , 
@@ -244,9 +425,25 @@ const FarmAdvisor = () => {
       r: `Industrial recommendation for ${selectedCrop}` 
     }];
 
+    const matchedParams = sensors.filter(s => s.type === 'good').length;
+    const confidence = Math.round((matchedParams / sensors.length) * 100);
+    const weights = { n: 0.2, p: 0.2, k: 0.2, ph: 0.15, moisture: 0.15, temperature: 0.05, rainfall: 0.05 };
+    let weightedSum = 0;
+    sensors.forEach(s => {
+      const key = s.id.toLowerCase().includes('n') ? 'n' : s.id.toLowerCase().includes('p') ? 'p' : s.id.toLowerCase().includes('k') ? 'k' : s.id.toLowerCase().includes('ph') ? 'ph' : s.id.toLowerCase().includes('moisture') ? 'moisture' : s.id.toLowerCase().includes('temperature') ? 'temperature' : 'rainfall';
+      const score = s.type === 'good' ? 100 : s.type === 'warning' ? 60 : 30;
+      weightedSum += score * (weights[key] || 0.1);
+    });
+    const matchScore = Math.round(weightedSum);
+
+    let recStatus = 'MODERATE', recColor = '#F59E0B', recIcon = AlertCircle;
+    if (matchScore > 80) { recStatus = 'RECOMMENDED'; recColor = '#10B981'; recIcon = CheckCircle2; }
+    else if (matchScore < 50) { recStatus = 'NOT RECOMMENDED'; recColor = '#EF4444'; recIcon = XCircle; }
+
+    const demand = metaSource.demand || (matchScore > 70 ? 'High' : (matchScore > 40 ? 'Medium' : 'Low'));
 
     return {
-      sensors, matchTable, 
+      sensors, matchTable, confidence, matchScore, recStatus, recColor, recIcon, demand,
       fertilizer: {
         isValid: canFertilize,
         urea: urea * area, ssp: ssp * area, mop: mop * area,
@@ -267,7 +464,13 @@ const FarmAdvisor = () => {
     };
   }, [db, selectedCrop, sensorData, area]);
 
-  if (db.loading || !brain) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><RefreshCw className="animate-spin" color={COLORS.primary} /></div>;
+  if (db.loading || !brain) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: COLORS.background }}><RefreshCw className="animate-spin" color={COLORS.primary} /></div>;
+
+  if (db.error) return <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: COLORS.background, padding: '20px', textAlign: 'center' }}>
+    <AlertTriangle size={48} color={COLORS.danger} style={{ marginBottom: '1rem' }} />
+    <h2 style={{ fontWeight: 900 }}>Database Sync Error</h2>
+    <p style={{ color: COLORS.textMuted }}>Unable to load industrial crop specifications.</p>
+  </div>;
 
   const cardStyle = {
     background: COLORS.cardBg,
@@ -278,86 +481,114 @@ const FarmAdvisor = () => {
     boxShadow: '0 4px 16px rgba(0,0,0,0.02)'
   };
 
-  const sectionHeader = { margin: '0 0 1.25rem 0', fontSize: '0.95rem', fontWeight: 800, color: COLORS.textMain, display: 'flex', alignItems: 'center', gap: '10px' };
+  const sectionHeader = { margin: '0 0 1.25rem 0', fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain, display: 'flex', alignItems: 'center', gap: '10px' };
 
   return (
     <div className="no-scrollbar" style={{ background: COLORS.background, minHeight: '100dvh', paddingBottom: '2rem', fontFamily: "'Outfit', sans-serif", overflowX: 'hidden' }}>
 
-      {/* 🚀 SMART CROP CARD ENGINE */}
-      <div style={{ padding: '1.25rem' }}>
+      {/* 🚀 CROP HERO CARD REDESIGN */}
+      <div style={{ padding: '1rem' }}>
         <motion.div 
-          initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
           style={{ 
-            background: '#FFFFFF', borderRadius: '32px', padding: '1.75rem',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.06)', border: `1px solid ${COLORS.border}`,
-            position: 'relative', overflow: 'hidden'
+            background: '#FFFFFF', borderRadius: '24px', padding: '1.5rem',
+            boxShadow: '0 8px 30px rgba(0,0,0,0.04)', border: `1px solid rgba(0,0,0,0.03)`,
           }}
         >
-          {/* 1. Header: Dropdown + Badges */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
-                <select 
-                  value={selectedCrop} 
-                  onChange={(e) => setSelectedCrop(e.target.value)}
-                  style={{ 
-                    appearance: 'none', background: 'transparent', border: 'none', 
-                    fontSize: '1.75rem', fontWeight: 950, color: COLORS.textMain, 
-                    paddingRight: '30px', outline: 'none', cursor: 'pointer', width: '100%'
-                  }}
-                >
-                  {Object.keys(db.crops).sort().map(c => <option key={c} value={c}>{c.toUpperCase()}</option>)}
-                </select>
-                <ChevronDown size={22} style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.3 }} />
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', opacity: 0.6 }}>
-                  <MapPin size={12} color={COLORS.textMuted} />
-                  <span style={{ fontSize: '0.65rem', fontWeight: 800, color: COLORS.textMuted, textTransform: 'uppercase' }}>{user?.location || 'MAKAUT, WB'}</span>
-                </div>
-                <div style={{ width: '1px', height: '10px', background: COLORS.border }} />
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <TrendingUp size={12} color={COLORS.primary} />
-                  <span style={{ fontSize: '0.65rem', fontWeight: 900, color: COLORS.primary, textTransform: 'uppercase' }}>High Demand</span>
-                </div>
-              </div>
+          {/* TOP: Crop & Meta */}
+          <div style={{ marginBottom: '1.5rem' }}>
+            <div 
+              onClick={() => setIsSheetOpen(true)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginBottom: '10px' }}
+            >
+              <h1 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '-0.02em', margin: 0 }}>
+                {formatCropName(selectedCrop)}
+              </h1>
+              <ChevronDown size={20} color="#64748B" style={{ marginTop: '2px' }} />
             </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ background: COLORS.textMain, color: 'white', padding: '6px 14px', borderRadius: '12px', fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.02em' }}>
-                {brain.meta.season}
+
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <MapPin size={14} color={COLORS.danger} />
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569' }}>{user?.location || 'MAKAUT, WB'}</span>
               </div>
-              <div style={{ fontSize: '0.6rem', fontWeight: 800, color: COLORS.textMuted, marginTop: '4px', textTransform: 'uppercase' }}>{brain.meta.type}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                {React.createElement(getCropIcon(brain.meta.type, selectedCrop).icon, { size: 14, color: getCropIcon(brain.meta.type, selectedCrop).color })}
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: getCropIcon(brain.meta.type, selectedCrop).color }}>{brain.meta.type}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                {React.createElement(getDemandIcon(brain.demand), { size: 14, color: getDemandColor(brain.demand) })}
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: getDemandColor(brain.demand) }}>{brain.demand} Demand</span>
+              </div>
             </div>
           </div>
 
-          {/* 3. Field Control: Area Selector */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: COLORS.textMain, padding: '12px 20px', borderRadius: '22px', color: 'white' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '14px', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Target size={20} color="white" />
-              </div>
-              <div>
-                <div style={{ fontSize: '0.55rem', fontWeight: 900, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Farm Area</div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 950 }}>{area} <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>Acres</span></div>
-              </div>
+          {/* RECOMMENDATION SECTION */}
+          <div style={{ 
+            background: `${brain.recColor}08`, borderRadius: '16px', padding: '1rem',
+            border: `1px solid ${brain.recColor}15`, marginBottom: '1.5rem',
+            display: 'flex', alignItems: 'center', gap: '12px'
+          }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: brain.recColor, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {React.createElement(brain.recIcon, { size: 20, color: "white" })}
             </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <motion.button whileTap={{ scale: 0.9 }} onClick={() => setArea(Math.max(1, area - 1))} style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white' }}><Minus size={18} /></motion.button>
-              <motion.button whileTap={{ scale: 0.9 }} onClick={() => setArea(area + 1)} style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'white', border: 'none', color: COLORS.textMain }}><Plus size={18} /></motion.button>
+            <div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 900, color: brain.recColor }}>{brain.recStatus}</div>
+              <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#64748B', opacity: 0.8 }}>Based on local field diagnostics</div>
             </div>
           </div>
+
+          {/* METRICS STRIP */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '1rem' }}>
+            <div>
+               <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', marginBottom: '4px' }}>Confidence</div>
+               <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1E293B' }}>{brain.confidence > 0 ? (brain.confidence > 80 ? 'Strong' : 'Medium') : '---'} <span style={{ color: '#94A3B8', fontWeight: 500 }}>•</span> {brain.confidence > 0 ? `${brain.confidence}%` : '---'}</div>
+            </div>
+            <div>
+               <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', marginBottom: '4px' }}>Match Score</div>
+               <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1E293B' }}>{brain.matchScore > 0 ? (brain.matchScore > 80 ? 'Good' : 'Fair') : '---'} <span style={{ color: '#94A3B8', fontWeight: 500 }}>•</span> {brain.matchScore > 0 ? `${brain.matchScore}%` : '---'}</div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+               <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', marginBottom: '4px' }}>Status</div>
+               <div style={{ fontSize: '0.9rem', fontWeight: 800, color: brain.recColor }}>{brain.matchScore > 0 ? (brain.matchScore > 50 ? '✔ Suitable' : '✘ Risky') : '---'}</div>
+            </div>
+          </div>
+
+          {/* AREA CONTROL */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#F8FAFC', padding: '12px 16px', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.02)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Scale size={16} color={COLORS.secondary} />
+              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#475569' }}>CULTIVATION AREA</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <motion.button whileTap={{ scale: 0.9 }} onClick={() => setArea(Math.max(0.1, area - 0.1))} style={{ width: '28px', height: '28px', borderRadius: '8px', border: 'none', background: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}><Minus size={14} color={COLORS.textMain} /></motion.button>
+              <span style={{ fontSize: '1rem', fontWeight: 900, color: COLORS.textMain, minWidth: '60px', textAlign: 'center' }}>{area.toFixed(1)} <small style={{ fontSize: '0.6em', opacity: 0.6 }}>AC</small></span>
+              <motion.button whileTap={{ scale: 0.9 }} onClick={() => setArea(area + 0.1)} style={{ width: '28px', height: '28px', borderRadius: '8px', border: 'none', background: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}><Plus size={14} color={COLORS.textMain} /></motion.button>
+            </div>
+          </div>
+
+
+
         </motion.div>
       </div>
 
-      <div style={{ padding: '0 1.25rem' }}>
-        {/*Misleading summaries removed per user request */}
+      <CropBottomSheet 
+        isOpen={isSheetOpen} 
+        onClose={() => setIsSheetOpen(false)} 
+        crops={allCropsList} 
+        onSelect={setSelectedCrop} 
+        selectedCrop={selectedCrop}
+      />
 
+      <div style={{ padding: '0 1.25rem' }}>
         {/* 📋 SMART MATCH TABLE ENGINE */}
         <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} style={cardStyle}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <div>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain }}>🌿 Sensor Data Analysis</h3>
-              <p style={{ margin: '2px 0 0 0', fontSize: '0.65rem', fontWeight: 800, color: COLORS.textMuted }}>Live comparison between field sensors and crop requirements</p>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Activity size={20} color={COLORS.primary} />
+                Sensor Data Analysis
+              </h3>
             </div>
           </div>
 
@@ -371,54 +602,47 @@ const FarmAdvisor = () => {
              ))}
           </div>
 
-          {brain.sensors.map((s, idx) => {
-              const statusColor = s.type === 'good' ? COLORS.primary : (s.type === 'missing' ? COLORS.textMuted : COLORS.danger);
-              const statusBg = s.type === 'good' ? '#ECFDF5' : (s.type === 'missing' ? '#F8FAFC' : '#FEF2F2');
-
-              return (
-                <motion.div 
-                  layout key={s.id}
-                  style={{ 
-                    display: 'grid', gridTemplateColumns: '2.2fr 1fr 1fr 0.8fr', gap: '10px', 
-                    padding: '14px 0', borderBottom: `1px solid ${COLORS.background}`, 
-                    alignItems: 'center' 
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ minWidth: '32px', height: '32px', borderRadius: '10px', background: `${s.color}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <s.icon size={16} color={s.color} />
-                    </div>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 850, color: COLORS.textMain, whiteSpace: 'nowrap' }}>{s.id}</span>
-                  </div>
-                  
-                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: s.type === 'missing' ? COLORS.textMuted : COLORS.textMain, textAlign: 'center' }}>
-                    {s.type === 'missing' ? '—' : Math.round(parseFloat(s.val))}
-                  </span>
-                  
-                  <span style={{ fontSize: '0.7rem', fontWeight: 750, color: COLORS.textMuted, textAlign: 'center' }}>
-                    {s.range ? `${Math.round(s.range.min)}-${Math.round(s.range.max)}` : '—'}
-                  </span>
-                  
-                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    {s.type === 'missing' ? <RefreshCw size={18} color={COLORS.textMuted} style={{ opacity: 0.5 }} /> : (
-                      s.type === 'good' ? <CheckCircle2 size={18} color={COLORS.primary} /> : <AlertCircle size={18} color={COLORS.danger} />
-                    )}
-                  </div>
-                </motion.div>
-              );
-            })
-          }
-          
+          {brain.sensors.map((s, idx) => (
+            <motion.div 
+              layout key={s.id}
+              style={{ 
+                display: 'grid', gridTemplateColumns: '2.2fr 1fr 1fr 0.8fr', gap: '10px', 
+                padding: '14px 0', borderBottom: `1px solid ${COLORS.background}`, 
+                alignItems: 'center' 
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ minWidth: '32px', height: '32px', borderRadius: '10px', background: `${s.color}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {React.createElement(s.icon, { size: 16, color: s.color })}
+                </div>
+                <span style={{ fontSize: '0.75rem', fontWeight: 850, color: COLORS.textMain, whiteSpace: 'nowrap' }}>{s.id}</span>
+              </div>
+              <span style={{ fontSize: '0.85rem', fontWeight: 900, color: s.type === 'missing' ? COLORS.textMuted : COLORS.textMain, textAlign: 'center' }}>
+                {s.type === 'missing' ? '---' : Math.round(parseFloat(s.val) || 0)}
+              </span>
+              <span style={{ fontSize: '0.7rem', fontWeight: 750, color: COLORS.textMuted, textAlign: 'center' }}>
+                {(typeof s.rMin !== 'undefined' && s.rMin !== null) ? `${Math.round(s.rMin)}-${Math.round(s.rMax)}` : '---'}
+              </span>
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                {s.type === 'missing' ? <RefreshCw size={18} color={COLORS.textMuted} style={{ opacity: 0.5 }} /> : (
+                  s.type === 'good' ? <CheckCircle2 size={18} color={COLORS.primary} /> : <AlertCircle size={18} color={COLORS.danger} />
+                )}
+              </div>
+            </motion.div>
+          ))}
         </motion.div>
 
         {/* 🌾 CROP SUITABILITY CHECK TABLE */}
         <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} style={cardStyle}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-            <h3 style={sectionHeader}>🌾 Crop Suitability Check</h3>
+            <h3 style={{ ...sectionHeader, gap: '10px' }}>
+              <Scale size={20} color={COLORS.secondary} />
+              Crop Suitability Check
+            </h3>
           </div>
           
           <div style={{ display: 'grid', gridTemplateColumns: '2.2fr 1fr 1fr 0.8fr', gap: '10px', paddingBottom: '10px', borderBottom: `2px solid ${COLORS.background}`, marginBottom: '10px' }}>
-            {['PARAMETER', 'YOUR FIELD', 'IDEAL FOR CROP', 'RESULT'].map((h, i) => (
+            {['PARAMETER', 'YOUR FIELD', 'IDEAL', 'RESULT'].map((h, i) => (
               <span key={i} style={{ 
                 fontSize: '0.6rem', fontWeight: 950, color: COLORS.textMuted, textTransform: 'uppercase',
                 textAlign: i === 0 ? 'left' : (i < 3 ? 'center' : 'right'),
@@ -427,40 +651,37 @@ const FarmAdvisor = () => {
             ))}
           </div>
 
-          {brain.matchTable.map((row, idx) => {
-            return (
-              <div key={row.f} style={{ 
-                display: 'grid', gridTemplateColumns: '2.2fr 1fr 1fr 0.8fr', gap: '10px', 
-                padding: '14px 0', borderBottom: idx === brain.matchTable.length - 1 ? 'none' : `1px solid ${COLORS.background}`, 
-                alignItems: 'center'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ minWidth: '32px', height: '32px', borderRadius: '10px', background: `${row.color}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <row.icon size={16} color={row.color} />
-                  </div>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 850, color: COLORS.textMain, whiteSpace: 'nowrap' }}>{row.f}</span>
+          {brain.matchTable.map((row, idx) => (
+            <div key={row.f} style={{ 
+              display: 'grid', gridTemplateColumns: '2.2fr 1fr 1fr 0.8fr', gap: '10px', 
+              padding: '14px 0', borderBottom: idx === brain.matchTable.length - 1 ? 'none' : `1px solid ${COLORS.background}`, 
+              alignItems: 'center'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ minWidth: '32px', height: '32px', borderRadius: '10px', background: `${row.color}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {React.createElement(row.icon, { size: 16, color: row.color })}
                 </div>
-                <span style={{ fontSize: '0.7rem', fontWeight: 850, color: COLORS.textMain, textAlign: 'center' }}>{row.cur}</span>
-                <span style={{ fontSize: '0.7rem', color: COLORS.textMuted, fontWeight: 750, textAlign: 'center' }}>{row.ideal}</span>
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                   {row.type === 'good' ? <CheckCircle2 size={18} color={COLORS.primary} /> : (
-                     row.type === 'warning' ? <Zap size={18} color={COLORS.warning} /> : <XCircle size={18} color={COLORS.danger} />
-                   )}
-                </div>
+                <span style={{ fontSize: '0.75rem', fontWeight: 850, color: COLORS.textMain, whiteSpace: 'nowrap' }}>{row.f}</span>
               </div>
-            );
-          })}
+              <span style={{ fontSize: '0.7rem', fontWeight: 850, color: COLORS.textMain, textAlign: 'center' }}>{row.cur}</span>
+              <span style={{ fontSize: '0.7rem', color: COLORS.textMuted, fontWeight: 750, textAlign: 'center' }}>{row.ideal}</span>
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                 {row.type === 'good' ? <CheckCircle2 size={18} color={COLORS.primary} /> : (
+                   row.type === 'warning' ? <Zap size={18} color={COLORS.warning} /> : <XCircle size={18} color={COLORS.danger} />
+                 )}
+              </div>
+            </div>
+          ))}
         </motion.div>
 
         {/* 🧪 FERTILIZER ENGINE */}
         <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} style={cardStyle}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${COLORS.primary}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <FlaskConical size={20} color={COLORS.primary} />
+            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `#8B5CF610`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <FlaskConical size={20} color="#8B5CF6" />
             </div>
             <div>
-              <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 950, color: COLORS.textMain }}>FERTILIZER ENGINE</h3>
-              <p style={{ margin: 0, fontSize: '0.6rem', fontWeight: 800, color: COLORS.textMuted, textTransform: 'uppercase' }}>Precision Nutrient Dosage</p>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain }}>Fertilizer Engine</h3>
             </div>
           </div>
 
@@ -468,7 +689,6 @@ const FarmAdvisor = () => {
             <div style={{ padding: '30px 20px', textAlign: 'center', background: '#F8FAFC', borderRadius: '20px', border: `1px dashed ${COLORS.border}` }}>
               <RefreshCw size={24} color={COLORS.textMuted} style={{ marginBottom: '10px', opacity: 0.5 }} />
               <div style={{ fontSize: '0.8rem', fontWeight: 800, color: COLORS.textMuted }}>NPK SENSORS OFFLINE</div>
-              <div style={{ fontSize: '0.65rem', color: COLORS.textMuted, opacity: 0.7, marginTop: '4px' }}>Recommendation requires live nutrient data</div>
             </div>
           ) : (
             <>
@@ -485,7 +705,6 @@ const FarmAdvisor = () => {
                 ))}
               </div>
               <div style={{ background: `${COLORS.primary}08`, padding: '14px', borderRadius: '18px', borderLeft: `3px solid ${COLORS.primary}`, marginBottom: '10px' }}>
-                <div style={{ fontSize: '0.6rem', fontWeight: 950, color: COLORS.primary, textTransform: 'uppercase', marginBottom: '4px' }}>Field Analytics</div>
                 <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 750, color: COLORS.textMain, lineHeight: 1.4 }}>{brain.fertilizer.reason}</p>
               </div>
               <div style={{ padding: '12px', borderRadius: '16px', background: '#F1F5F9', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -503,8 +722,7 @@ const FarmAdvisor = () => {
               <Leaf size={20} color={COLORS.primary} />
             </div>
             <div>
-              <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 950, color: COLORS.textMain }}>COMPOST ENGINE</h3>
-              <p style={{ margin: 0, fontSize: '0.6rem', fontWeight: 800, color: COLORS.textMuted, textTransform: 'uppercase' }}>Organic Soil Enrichment</p>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain }}>Compost Engine</h3>
             </div>
           </div>
 
@@ -512,17 +730,14 @@ const FarmAdvisor = () => {
             <div style={{ padding: '30px 20px', textAlign: 'center', background: '#F8FAFC', borderRadius: '20px', border: `1px dashed ${COLORS.border}` }}>
               <RefreshCw size={24} color={COLORS.textMuted} style={{ marginBottom: '10px', opacity: 0.5 }} />
               <div style={{ fontSize: '0.8rem', fontWeight: 800, color: COLORS.textMuted }}>SOIL SENSORS OFFLINE</div>
-              <div style={{ fontSize: '0.65rem', color: COLORS.textMuted, opacity: 0.7, marginTop: '4px' }}>Requires Soil pH & Moisture feedback</div>
             </div>
           ) : (
             <>
               <div style={{ background: '#F8FAFC', padding: '24px', borderRadius: '24px', textAlign: 'center', marginBottom: '1.25rem', border: '1px solid rgba(0,0,0,0.02)' }}>
                 <div style={{ fontSize: '0.6rem', fontWeight: 900, color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Organic Requirement</div>
                 <div style={{ fontSize: '2.4rem', fontWeight: 950, color: COLORS.textMain, lineHeight: 1, margin: '8px 0' }}>{brain.compost.total.toFixed(1)} <span style={{ fontSize: '0.8rem', fontWeight: 800, opacity: 0.5 }}>Ton</span></div>
-                <div style={{ fontSize: '0.7rem', fontWeight: 850, color: COLORS.primary }}>({brain.compost.perAcre} Ton / Acre)</div>
               </div>
               <div style={{ background: `${COLORS.primary}08`, padding: '14px', borderRadius: '18px', borderLeft: `3px solid ${COLORS.primary}`, marginBottom: '10px' }}>
-                <div style={{ fontSize: '0.6rem', fontWeight: 950, color: COLORS.primary, textTransform: 'uppercase', marginBottom: '4px' }}>Soil Health Report</div>
                 <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 750, color: COLORS.textMain, lineHeight: 1.4 }}>{brain.compost.reason}</p>
               </div>
               <div style={{ padding: '12px', borderRadius: '16px', background: '#F1F5F9', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -536,12 +751,11 @@ const FarmAdvisor = () => {
         {/* 🐛 PESTICIDE ENGINE */}
         <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} style={cardStyle}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${COLORS.primary}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Bug size={20} color={COLORS.primary} />
+            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${COLORS.danger}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Bug size={20} color={COLORS.danger} />
             </div>
             <div>
-              <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 950, color: COLORS.textMain }}>PESTICIDE SCAN</h3>
-              <p style={{ margin: 0, fontSize: '0.6rem', fontWeight: 800, color: COLORS.textMuted, textTransform: 'uppercase' }}>Bio-Security & Pest Risk</p>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain }}>Pesticide Engine</h3>
             </div>
           </div>
 
@@ -551,7 +765,7 @@ const FarmAdvisor = () => {
                 <div key={i} style={{ padding: '16px', borderRadius: '22px', background: '#F8FAFC', border: '1px solid rgba(0,0,0,0.02)', marginBottom: '10px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div style={{ background: '#FFFFFF', padding: '8px', borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}><Bug size={16} color={COLORS.danger} /></div>
+                      <Bug size={16} color={COLORS.danger} />
                       <span style={{ fontSize: '0.8rem', fontWeight: 950, color: COLORS.textMain }}>{p.n}</span>
                     </div>
                     <span style={{ fontSize: '0.6rem', fontWeight: 950, padding: '4px 10px', borderRadius: '20px', background: '#FEF2F2', color: COLORS.danger }}>{p.s} RISK</span>
@@ -564,7 +778,6 @@ const FarmAdvisor = () => {
             <div style={{ textAlign: 'center', padding: '40px 20px', background: '#F8FAFC', borderRadius: '24px', border: '1px solid rgba(0,0,0,0.02)' }}>
               <ShieldCheck size={32} color={COLORS.primary} style={{ opacity: 0.3, marginBottom: '12px' }} />
               <div style={{ fontSize: '0.8rem', fontWeight: 850, color: COLORS.textMain }}>SECURE ENVIRONMENT</div>
-              <p style={{ margin: '4px 0 0 0', fontSize: '0.65rem', color: COLORS.textMuted, fontWeight: 700 }}>No active pest risks detected in current climate</p>
             </div>
           )}
         </motion.div>

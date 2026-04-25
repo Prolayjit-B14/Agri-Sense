@@ -84,7 +84,7 @@ const TimelineItem = ({ stage, isLast }) => {
           }}>
             {details.map((d, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <d.icon size={12} color={COLORS.subtext} />
+                {React.createElement(d.icon, { size: 12, color: COLORS.subtext })}
                 <span style={{ fontSize: '0.65rem', fontWeight: 700, color: COLORS.text }}>{d.label}</span>
               </div>
             ))}

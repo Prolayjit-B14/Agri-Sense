@@ -86,7 +86,7 @@ const MapView = () => {
                       style={{ position: 'absolute', inset: '-8px', background: dev.color, borderRadius: '50%' }} 
                     />
                     <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 16px rgba(0,0,0,0.2)', position: 'relative' }}>
-                       <dev.icon size={18} color={dev.color} strokeWidth={3} />
+                       {React.createElement(dev.icon, { size: 18, color: dev.color, strokeWidth: 3 })}
                     </div>
                 </div>
             </div>
