@@ -23,7 +23,8 @@ allprojects {
         mavenCentral()
     }
 
-
+    // Redirect build directory to avoid OneDrive/Windows file locks on Desktop
+    buildDir = "C:/Users/polu1/AppData/Local/Temp/AgriSenseBuild/${project.name}"
 }
 
 

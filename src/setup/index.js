@@ -26,6 +26,7 @@ export const MASTER_CONFIG = {
   LOGIN_PASSWORD: "PASSWORD_HERE",     // Fallback for Login UI
   
   // 📡 OPERATION MODE
+  // 📡 OPERATION MODE
   USE_MOCK_DATA: false, // Set to true for demo, false for ESP32 hardware
   
   // 🛰️ API & INFRASTRUCTURE

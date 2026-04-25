@@ -63,6 +63,24 @@ export const getAIv2Recommendations = (data) => {
     });
   }
 
+  // NPK Deficiencies
+  if (soil.npk?.n < 50) {
+    recs.push({
+      id: 'npk_n', category: 'Fertilizer', priority: 'High',
+      title: 'Nitrogen Depletion',
+      message: `Nitrogen at ${soil.npk.n} kg/ha. Growth stagnation risk detected.`,
+      action: 'Apply Urea'
+    });
+  }
+  if (soil.npk?.p < 30) {
+    recs.push({
+      id: 'npk_p', category: 'Fertilizer', priority: 'Med',
+      title: 'Phosphorus Warning',
+      message: `Low Phosphorus (${soil.npk.p}) may impact root development.`,
+      action: 'Apply DAP'
+    });
+  }
+
   // Weather Intelligence
   if (weather.temp > 35) {
     recs.push({
@@ -133,13 +151,17 @@ export const calculateNodeHealth = (nodeType, data) => {
   switch (nodeType) {
     case 'soil': {
       const s = data;
-      const mScore = getParamScore(s.moisture, 30, 70, 20); // Broader moisture range
-      const phScore = getParamScore(s.ph, 5.8, 7.8, 1.0); // Standard agricultural pH
-      const tScore = getParamScore(s.temp, 18, 35, 10); // Standard soil temp range
+      const mScore = getParamScore(s.moisture, 30, 70, 20);
+      const phScore = getParamScore(s.ph, 5.8, 7.8, 1.0);
+      const nScore = getParamScore(s.npk?.n, 70, 120, 30);
+      const pScore = getParamScore(s.npk?.p, 40, 70, 20);
+      const kScore = getParamScore(s.npk?.k, 150, 250, 50);
       
-      if (mScore !== null) { scores.push(mScore); weights.push(0.50); }
-      if (phScore !== null) { scores.push(phScore); weights.push(0.30); }
-      if (tScore !== null) { scores.push(tScore); weights.push(0.20); }
+      if (mScore !== null) { scores.push(mScore); weights.push(0.40); }
+      if (phScore !== null) { scores.push(phScore); weights.push(0.20); }
+      if (nScore !== null) { scores.push(nScore); weights.push(0.15); }
+      if (pScore !== null) { scores.push(pScore); weights.push(0.15); }
+      if (kScore !== null) { scores.push(kScore); weights.push(0.10); }
       break;
     }
     case 'weather': {

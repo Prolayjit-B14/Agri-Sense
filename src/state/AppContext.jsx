@@ -189,37 +189,48 @@ export const AppProvider = ({ children }) => {
   // 4. MQTT Linkage
   useEffect(() => {
     const bootTimer = setTimeout(() => {
-      if (!MASTER_CONFIG.USE_MOCK_DATA) {
-        mqttService.connect(
-          (topic, data) => {
-            if (!data) return;
-            lastSensorUpdate.current = Date.now();
-            setSensorData(prev => {
-              const updated = processMqttMessage(topic, data, prev);
+      mqttService.connect(
+        (topic, data) => {
+          if (!data) return;
+          console.log("📥 [MQTT] Received:", topic, data);
+          
+          lastSensorUpdate.current = Date.now();
+          setSensorData(prev => {
+            const updated = processMqttMessage(topic, data, prev);
+            
+            // 🛰️ DEVICE STATUS SYNC (Unified Node Wake-Up)
+            setDevices(prevDevs => {
               const parts = topic.split('/');
-              let type = parts[parts.length - 1];
-              if (type === 'telemetry') type = parts[parts.length - 2];
-              
-              setDevices(prevDevs => {
-                let nextDevs = { ...prevDevs };
-                const up = (t, d) => { if(!d) return; const id = d.device_id || `${t}_node`; nextDevs[id] = processDeviceState(id, t, d); nextDevs[`${t}_node`] = nextDevs[id]; };
-                if (type === 'sensors' || data.soil || data.weather) {
-                  if(data.soil) up('soil', data.soil); if(data.weather) up('weather', data.weather); if(data.storage) up('storage', data.storage); if(data.water) up('water', data.water);
-                } else if (['soil', 'weather', 'storage', 'water'].includes(type)) { up(type, data); }
-                setSystemOverview(calculateSystemOverview(nextDevs));
-                return nextDevs;
-              });
-              return updated;
+              const topicType = parts[parts.length - 1];
+              const nextDevs = { ...prevDevs };
+              const timestamp = Date.now();
+
+              // If it's a unified sensors payload, wake up ALL nodes
+              if (topicType === 'sensors' || data.soil || data.weather) {
+                ['soil_node', 'weather_node', 'storage_node', 'water_node'].forEach(id => {
+                  if (nextDevs[id]) nextDevs[id] = { ...nextDevs[id], status: 'ACTIVE', lastUpdate: timestamp };
+                });
+              } else {
+                // Handle discrete node topics
+                const id = `${topicType}_node`;
+                if (nextDevs[id]) nextDevs[id] = { ...nextDevs[id], status: 'ACTIVE', lastUpdate: timestamp };
+              }
+
+              setSystemOverview(calculateSystemOverview(nextDevs));
+              return nextDevs;
             });
-            setIsDataLoading(false);
-            setLastGlobalUpdate(new Date().toLocaleTimeString());
-          },
-          (status) => setMqttStatus(status)
-        );
-      } else {
-        setIsDataLoading(false);
-      }
-    }, 1000);
+
+            return updated;
+          });
+
+          setIsDataLoading(false);
+          setLastGlobalUpdate(new Date().toLocaleTimeString());
+          setConnectivityStatus('Online');
+        },
+        (status) => setMqttStatus(status)
+      );
+    }, 1500);
+
     return () => clearTimeout(bootTimer);
   }, []);
 

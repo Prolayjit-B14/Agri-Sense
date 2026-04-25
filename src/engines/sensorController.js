@@ -26,46 +26,48 @@ export const processMqttMessage = (topic, data, prev) => {
 
   const newState = JSON.parse(JSON.stringify(prev));
   
-  // 🛰️ NODE DETECTION VIA TOPIC PATH
-  let nodeType = parts[parts.length - 1]; 
-  if (nodeType === 'telemetry' && parts.length >= 3) {
-    nodeType = parts[parts.length - 2];
-  }
+  // 🛰️ NODE DETECTION (Robust Keyword Matching)
+  let nodeType = 'unknown';
+  const topicLower = topic.toLowerCase();
+  
+  if (topicLower.includes('sensors')) nodeType = 'sensors';
+  else if (topicLower.includes('soil')) nodeType = 'soil';
+  else if (topicLower.includes('weather')) nodeType = 'weather';
+  else if (topicLower.includes('water') || topicLower.includes('irrigation')) nodeType = 'water';
+  else if (topicLower.includes('storage')) nodeType = 'storage';
 
-  // Handle Unified Payload (topic: sensors)
-  if (nodeType === 'sensors') {
-    if (data.soil) {
-      newState.soil.moisture = getVal(data.soil, ['moisture', 'm'], prev.soil.moisture);
-      newState.soil.temp = getVal(data.soil, ['temp', 't', 'temperature'], prev.soil.temp);
-      newState.soil.ph = getVal(data.soil, ['ph'], prev.soil.ph);
-      if (data.soil.npk) {
-        newState.soil.npk.n = getVal(data.soil.npk, ['n'], prev.soil.npk.n);
-        newState.soil.npk.p = getVal(data.soil.npk, ['p'], prev.soil.npk.p);
-        newState.soil.npk.k = getVal(data.soil.npk, ['k'], prev.soil.npk.k);
-      }
+  // 🛰️ UNIFIED DATA ACCEPTANCE (Accept any valid telemetry)
+  if (nodeType === 'sensors' || data.soil || data.weather || data.water || data.storage) {
+    if (data.soil || data.npk) {
+      const sData = data.soil || data;
+      newState.soil.moisture = getVal(sData, ['moisture', 'm'], prev.soil.moisture);
+      newState.soil.ph = getVal(sData, ['ph'], prev.soil.ph);
+      newState.soil.temp = getVal(sData, ['temp', 'soilTemp', 'st'], prev.soil.temp);
+      
+      const npkSource = sData.npk || sData;
+      newState.soil.npk.n = getVal(npkSource, ['n', 'N'], prev.soil.npk.n);
+      newState.soil.npk.p = getVal(npkSource, ['p', 'P'], prev.soil.npk.p);
+      newState.soil.npk.k = getVal(npkSource, ['k', 'K'], prev.soil.npk.k);
       newState.soil.healthIndex = calculateNodeHealth('soil', newState.soil);
     }
-    // Unified flat weather or nested
-    if (data.weather || data.temp || data.humidity || data.ldr || data.rain) {
+    if (data.weather || data.temp || data.humidity) {
       const wData = data.weather || data;
-      newState.weather.temp = getVal(wData, ['temp', 't', 'temperature'], prev.weather.temp);
+      newState.weather.temp = getVal(wData, ['temp', 't'], prev.weather.temp);
       newState.weather.humidity = getVal(wData, ['humidity', 'h'], prev.weather.humidity);
-      newState.weather.lightIntensity = getVal(wData, ['lightIntensity', 'light', 'ldr', 'lux'], prev.weather.lightIntensity);
-      newState.weather.rainLevel = getVal(wData, ['rainLevel', 'rain', 'rainfall'], prev.weather.rainLevel);
-      newState.weather.isRaining = wData.isRaining ?? (newState.weather.humidity > 95) ?? (newState.weather.rainLevel > 0) ?? prev.weather.isRaining;
+      newState.weather.lightIntensity = getVal(wData, ['lightIntensity', 'light', 'ldr'], prev.weather.lightIntensity);
+      newState.weather.rainLevel = getVal(wData, ['rainLevel', 'rain'], prev.weather.rainLevel);
       newState.weather.healthIndex = calculateNodeHealth('weather', newState.weather);
     }
-    if (data.water || data.irrigation) {
-      const wData = data.water || data.irrigation;
-      newState.water.level = getVal(wData, ['level', 'l'], prev.water.level);
-      newState.water.flowRate = getVal(wData, ['flowRate', 'flow'], prev.water.flowRate);
-      newState.water.pumpActive = wData.pumpActive ?? prev.water.pumpActive;
-      newState.water.healthIndex = calculateNodeHealth('water', newState.water);
+    if (data.water || data.level) {
+      const waData = data.water || data;
+      newState.water.level = getVal(waData, ['level', 'l'], prev.water.level);
+      newState.water.pumpActive = (waData.pumpActive === 1 || waData.pump === 1 || waData.pumpActive === true);
     }
-    if (data.storage) {
-      newState.storage.temp = getVal(data.storage, ['temp', 't', 'temperature'], prev.storage.temp);
-      newState.storage.humidity = getVal(data.storage, ['humidity', 'h'], prev.storage.humidity);
-      newState.storage.mq135 = getVal(data.storage, ['mq135', 'aqi', 'gas'], prev.storage.mq135);
+    if (data.storage || data.gas) {
+      const stData = data.storage || data;
+      newState.storage.temp = getVal(stData, ['temp', 't'], prev.storage.temp);
+      newState.storage.humidity = getVal(stData, ['humidity', 'h'], prev.storage.humidity);
+      newState.storage.mq135 = getVal(stData, ['mq135', 'gas'], prev.storage.mq135);
       newState.storage.healthIndex = calculateNodeHealth('storage', newState.storage);
     }
   }
