@@ -230,9 +230,71 @@ export const AppProvider = ({ children }) => {
         (status) => setMqttStatus(status)
       );
     }, 1500);
-
     return () => clearTimeout(bootTimer);
   }, []);
+
+  // 5. Weather Satellite & Forecast Link
+  useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        if (!MASTER_CONFIG.OPENWEATHER_API_KEY) throw new Error("No API Key");
+        const key = MASTER_CONFIG.OPENWEATHER_API_KEY;
+        const city = MASTER_CONFIG.WEATHER_CITY;
+
+        // Fetch Current Weather
+        const currRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${key}`);
+        const currData = await currRes.json();
+        
+        if (currData && currData.main) {
+          setApiWeather({
+            temp: currData.main.temp,
+            feelsLike: currData.main.feels_like,
+            humidity: currData.main.humidity,
+            pressure: currData.main.pressure,
+            windSpeed: currData.wind?.speed,
+            clouds: currData.clouds?.all,
+            condition: currData.weather?.[0]?.main,
+            icon: currData.weather?.[0]?.icon,
+            city: currData.name,
+            sunrise: new Date(currData.sys.sunrise * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            sunset: new Date(currData.sys.sunset * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            lastUpdate: new Date().toLocaleTimeString()
+          });
+        }
+
+        // Fetch 5-Day Forecast
+        const foreRes = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${key}`);
+        const foreData = await foreRes.json();
+        if (foreData && foreData.list) {
+          // Filter to get 1 forecast per day (around noon)
+          const daily = foreData.list.filter(f => f.dt_txt.includes("12:00:00")).map(f => ({
+            date: new Date(f.dt * 1000).toLocaleDateString([], { weekday: 'short' }),
+            temp: Math.round(f.main.temp),
+            condition: f.weather[0].main,
+            rainProb: `${Math.round((f.pop || 0) * 100)}%`
+          }));
+          setApiForecast(daily);
+        }
+
+      } catch (e) {
+        console.warn("Weather Satellite Failed - Hardware Backup Active", e);
+        if (sensorData?.weather?.temp) {
+          setApiWeather(prev => ({
+            ...prev,
+            temp: sensorData.weather.temp,
+            humidity: sensorData.weather.humidity,
+            condition: 'Hardware Stream',
+            city: 'Field A',
+            lastUpdate: 'Live'
+          }));
+        }
+      }
+    };
+
+    fetchWeather();
+    const timer = setInterval(fetchWeather, 600000); 
+    return () => clearInterval(timer);
+  }, [sensorData?.weather?.temp]);
 
   return (
     <AppContext.Provider value={{

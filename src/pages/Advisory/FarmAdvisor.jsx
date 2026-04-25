@@ -339,10 +339,10 @@ const FarmAdvisor = () => {
     }));
 
     // ─── 🧪 FERTILIZER ENGINE ───────────────────────────────────────────────
-    const canFertilize = isAvailableLoc(cur.n) && isAvailableLoc(cur.p) && isAvailableLoc(cur.k);
-    const defN = canFertilize ? Math.max(0, (profile.n?.mid || 0) - parseFloat(cur.n || 0)) : 0;
-    const defP = canFertilize ? Math.max(0, (profile.p?.mid || 0) - parseFloat(cur.p || 0)) : 0;
-    const defK = canFertilize ? Math.max(0, (profile.k?.mid || 0) - parseFloat(cur.k || 0)) : 0;
+    const canFertilize = isAvailableLoc(cur.npk?.n) && isAvailableLoc(cur.npk?.p) && isAvailableLoc(cur.npk?.k);
+    const defN = canFertilize ? Math.max(0, (profile.n?.mid || 0) - parseFloat(cur.npk?.n || 0)) : 0;
+    const defP = canFertilize ? Math.max(0, (profile.p?.mid || 0) - parseFloat(cur.npk?.p || 0)) : 0;
+    const defK = canFertilize ? Math.max(0, (profile.k?.mid || 0) - parseFloat(cur.npk?.k || 0)) : 0;
     
     const fertEntry = profile.fert && typeof profile.fert === 'object' ? profile.fert : null;
     let urea = canFertilize ? (defN / 0.46) + (meta.bU * 0.3) : 0;
@@ -363,7 +363,7 @@ const FarmAdvisor = () => {
     if (canCompost) {
       if (parseFloat(cur.moisture) < (profile.moisture?.min || 20)) { compost += 2; cReasons.push("Low moisture"); }
       if (String(meta.soil).includes("Sandy")) { compost += 2; cReasons.push("Sandy soil"); }
-      if (isAvailableLoc(cur.n) && parseFloat(cur.n) < (profile.n?.min || 50)) { compost += 1; cReasons.push("N-Deficiency"); }
+      if (isAvailableLoc(cur.npk?.n) && parseFloat(cur.npk?.n) < (profile.n?.min || 50)) { compost += 1; cReasons.push("N-Deficiency"); }
     }
     const compostReason = canCompost ? (cReasons.length > 0 ? cReasons.join(" + ") : (fertEntry?.soil || "Ideal field balance")) : "OFFLINE - CONNECT SOIL SENSORS";
 
@@ -397,28 +397,24 @@ const FarmAdvisor = () => {
       checkActiveTrigger(pestEntry.water, cur.moisture, 'moist')
     );
 
-    const detectedPests = !canAnalyzePest ? [{
-      n: 'Sensor Offline',
-      s: 'OFFLINE',
-      isActive: false,
-      r: 'Connect weather & soil sensors for threat detection.',
-      stage: '---'
+    const detectedPests = !canAnalyzePest ? [{ 
+      n: 'Sensor Offline', 
+      s: 'OFFLINE', 
+      isActive: false, 
+      intel: 'Connect sensors for threat analysis', 
+      action: 'OFFLINE' 
     }] : (pestEntry ? [{
       n: pestEntry.most || (pestEntry.all && typeof pestEntry.all === 'string' ? pestEntry.all.split(',')[0] : 'Standard Pest'),
       s: isThreatActive ? 'ACTIVE THREAT' : 'POTENTIAL',
       isActive: isThreatActive,
-      tm: pestEntry.weather || 'Varies',
-      hm: pestEntry.water || 'Varies',
-      r: pestEntry.others || 'General precaution',
-      stage: pestEntry.trigger || 'All stages',
-      all: pestEntry.all
+      intel: `${pestEntry.weather || 'Warm weather'} + ${pestEntry.water || 'High water'} → Risk (${pestEntry.trigger || 'All Stages'})`,
+      action: isThreatActive ? "Take action within 24–48 hrs" : "Monitor field for early signs"
     }] : [{ 
-      n: typeof meta.pest === 'string' ? meta.pest : (typeof profile.pest === 'string' ? profile.pest : 'Standard Control'), 
+      n: 'Standard Control', 
       s: 'PREVENTATIVE', 
-      isActive: false,
-      tm: 'Standard', hm: 'Standard', 
-      r: `Apply ${typeof meta.pest === 'string' ? meta.pest : (typeof profile.pest === 'string' ? profile.pest : 'standard treatment')} as per industrial schedule.`,
-      stage: 'Any'
+      isActive: false, 
+      intel: 'Industrial schedule preventative care', 
+      action: 'Routine Schedule' 
     }]);
 
     const confidence = Math.round((sensors.filter(s => s.type === 'good').length / sensors.length) * 100);
@@ -820,8 +816,8 @@ const FarmAdvisor = () => {
         {/* 🧪 FERTILIZER ENGINE */}
         <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} style={cardStyle}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `#8B5CF610`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <FlaskConical size={20} color="#8B5CF6" />
+            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${COLORS.secondary}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Calculator size={20} color={COLORS.secondary} />
             </div>
             <div>
               <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain }}>Fertilizer Engine</h3>
@@ -835,31 +831,42 @@ const FarmAdvisor = () => {
             </div>
           ) : (
             <>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '1.25rem' }}>
+              {/* HERO VALUE CARDS */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '1.25rem' }}>
                 {[
                   { label: 'Urea', val: brain.fertilizer.urea },
                   { label: 'SSP', val: brain.fertilizer.ssp },
                   { label: 'MOP', val: brain.fertilizer.mop }
-                ].map(f => (
-                  <div key={f.label} style={{ padding: '16px 10px', borderRadius: '20px', background: '#F8FAFC', textAlign: 'center', border: '1px solid rgba(0,0,0,0.02)' }}>
-                    <div style={{ fontSize: '0.55rem', fontWeight: 900, color: COLORS.textMuted, textTransform: 'uppercase', marginBottom: '6px' }}>{f.label}</div>
-                    <div style={{ fontSize: '1.2rem', fontWeight: 950, color: COLORS.textMain }}>{Math.round(f.val)}<span style={{ fontSize: '0.5em', marginLeft: '2px', opacity: 0.6 }}>kg</span></div>
+                ].map((f, i) => (
+                  <div key={i} style={{ 
+                    background: '#F8FAFC', borderRadius: '16px', padding: '12px 8px', 
+                    border: '1px solid rgba(0,0,0,0.02)', textAlign: 'center'
+                  }}>
+                    <div style={{ fontSize: '0.62rem', fontWeight: 900, color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{f.label}</div>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 950, color: COLORS.textMain, marginTop: '2px' }}>{Math.round(f.val)}<span style={{ fontSize: '0.7rem', marginLeft: '2px', opacity: 0.5 }}>kg</span></div>
                   </div>
                 ))}
               </div>
-              <div style={{ background: `${COLORS.primary}08`, padding: '14px', borderRadius: '18px', borderLeft: `3px solid ${COLORS.primary}`, marginBottom: '10px' }}>
-                <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 750, color: COLORS.textMain, lineHeight: 1.4 }}>{brain.fertilizer.reason}</p>
-              </div>
-              <div style={{ padding: '12px', borderRadius: '16px', background: '#F1F5F9', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ background: '#FFFFFF', padding: '6px', borderRadius: '8px' }}><Sparkles size={14} color={COLORS.primary} /></div>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ fontSize: '0.7rem', fontWeight: 850, color: COLORS.textMain }}>Recommendation: <span style={{ color: COLORS.primaryDark }}>{brain.fertilizer.product}</span></span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                      <Clock size={10} color="#64748B" />
-                      <span style={{ fontSize: '0.6rem', fontWeight: 700, color: '#64748B' }}>Target Stage: {brain.fertilizer.stage}</span>
-                    </div>
-                  </div>
+
+              {/* ACTIONABLE ADVISORY */}
+              <div style={{ padding: '0 4px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'start', gap: '10px' }}>
+                   <Scale size={13} color={COLORS.primary} style={{ marginTop: '2px' }} />
+                   <div>
+                     <div style={{ fontSize: '0.6rem', fontWeight: 900, color: COLORS.textMuted, textTransform: 'uppercase', marginBottom: '2px' }}>Apply:</div>
+                     <span style={{ fontSize: '0.8rem', fontWeight: 850, color: COLORS.textMain, lineHeight: 1.3 }}>
+                       DAP + SSP (Basal), Urea split, MOP as Potash source
+                     </span>
+                   </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'start', gap: '10px', opacity: 0.7 }}>
+                   <Clock size={13} color={COLORS.primary} style={{ marginTop: '2px' }} />
+                   <div>
+                     <div style={{ fontSize: '0.6rem', fontWeight: 900, color: COLORS.textMuted, textTransform: 'uppercase', marginBottom: '2px' }}>Schedule:</div>
+                     <span style={{ fontSize: '0.75rem', fontWeight: 750, color: COLORS.textMuted, lineHeight: 1.3 }}>
+                       Basal → Tillering → Panicle (split N application)
+                     </span>
+                   </div>
                 </div>
               </div>
             </>
@@ -884,97 +891,79 @@ const FarmAdvisor = () => {
             </div>
           ) : (
             <>
-              <div style={{ background: '#F8FAFC', padding: '24px', borderRadius: '24px', textAlign: 'center', marginBottom: '1.25rem', border: '1px solid rgba(0,0,0,0.02)' }}>
-                <div style={{ fontSize: '0.6rem', fontWeight: 900, color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Organic Requirement</div>
-                <div style={{ fontSize: '2.4rem', fontWeight: 950, color: COLORS.textMain, lineHeight: 1, margin: '8px 0' }}>{brain.compost.perAcre}</div>
-              </div>
-              <div style={{ background: `${COLORS.primary}08`, padding: '14px', borderRadius: '18px', borderLeft: `3px solid ${COLORS.primary}`, marginBottom: '10px' }}>
-                <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 750, color: COLORS.textMain, lineHeight: 1.4 }}>{brain.compost.reason}</p>
-              </div>
-              <div style={{ padding: '12px', borderRadius: '16px', background: '#F1F5F9', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ background: '#FFFFFF', padding: '6px', borderRadius: '8px' }}><Sprout size={14} color={COLORS.primary} /></div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '0.7rem', fontWeight: 850, color: COLORS.textMain }}>Method: <span style={{ color: COLORS.primaryDark }}>{brain.compost.product}</span></span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                    <Clock size={10} color="#64748B" />
-                    <span style={{ fontSize: '0.6rem', fontWeight: 700, color: '#64748B' }}>Timing: {brain.compost.stage}</span>
-                  </div>
+              {/* BALANCE STATUS CARD */}
+              <div style={{ background: '#F8FAFC', padding: '16px 20px', borderRadius: '24px', textAlign: 'center', marginBottom: '0.75rem', border: '1px solid rgba(0,0,0,0.02)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '1.6rem', fontWeight: 950, color: COLORS.textMain, lineHeight: 1 }}>{brain.compost.perAcre}</span>
+                  <span style={{ fontSize: '1.6rem', fontWeight: 950, color: '#E2E8F0' }}>•</span>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 900, color: brain.compost.perAcre.startsWith('0') ? COLORS.primary : COLORS.warning }}>
+                    {brain.compost.perAcre.startsWith('0') ? 'Balanced Soil' : 'Adjustment Needed'}
+                  </span>
                 </div>
+              </div>
+
+              {/* COMPACT FOOTER */}
+              <div style={{ padding: '4px', display: 'flex', alignItems: 'center', gap: '16px', opacity: 0.5 }}>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                   <Sprout size={11} color={COLORS.primary} />
+                   <span style={{ fontSize: '0.62rem', fontWeight: 800, color: COLORS.textMain }}>{brain.compost.product}</span>
+                 </div>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                   <Clock size={11} color={COLORS.primary} />
+                   <span style={{ fontSize: '0.62rem', fontWeight: 800, color: COLORS.textMain }}>{brain.compost.stage}</span>
+                 </div>
               </div>
             </>
           )}
         </motion.div>
 
-        {/* 🐛 PESTICIDE ENGINE */}
+        {/* 🛡️ PEST ENGINE */}
         <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} style={cardStyle}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem' }}>
             <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${COLORS.danger}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Bug size={20} color={COLORS.danger} />
             </div>
             <div>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain }}>Pesticide Engine</h3>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain }}>Pest Analysis</h3>
             </div>
           </div>
 
-          {brain.pests.detected.some(p => p.isActive || p.s === 'PREVENTATIVE') ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {brain.pests.detected.filter(p => p.isActive || p.s === 'PREVENTATIVE').map((p, i) => (
-                <div key={i} style={{ 
-                  padding: '16px', borderRadius: '22px', 
-                  background: p.isActive ? `${COLORS.danger}05` : '#F8FAFC', 
-                  border: p.isActive ? `1px solid ${COLORS.danger}20` : '1px solid rgba(0,0,0,0.02)',
-                  marginBottom: '10px' 
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div style={{ padding: '6px', borderRadius: '8px', background: p.isActive ? COLORS.danger : `${COLORS.danger}20` }}>
-                        <Bug size={16} color={p.isActive ? 'white' : COLORS.danger} />
-                      </div>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 950, color: COLORS.textMain }}>{p.n}</span>
-                    </div>
-                    <span style={{ 
-                      fontSize: '0.6rem', fontWeight: 950, padding: '4px 10px', borderRadius: '20px', 
-                      background: p.isActive ? COLORS.danger : '#E2E8F0', 
-                      color: p.isActive ? 'white' : COLORS.textMuted 
-                    }}>
-                      {p.s}
-                    </span>
-                  </div>
-                  
-                  <p style={{ margin: '8px 0', fontSize: '0.7rem', color: COLORS.textMuted, fontWeight: 750, lineHeight: 1.4 }}>
-                    <span style={{ color: COLORS.textMain }}>Warning:</span> {p.r}
-                  </p>
-
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '10px' }}>
-                    <div style={{ background: '#EEF2FF', padding: '4px 10px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <CloudRain size={12} color="#6366F1" />
-                      <span style={{ fontSize: '0.65rem', fontWeight: 850, color: '#4F46E5' }}>{p.tm}</span>
-                    </div>
-                    <div style={{ background: '#ECFDF5', padding: '4px 10px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Droplets size={12} color="#10B981" />
-                      <span style={{ fontSize: '0.65rem', fontWeight: 850, color: '#059669' }}>{p.hm}</span>
-                    </div>
-                    <div style={{ background: '#FFF7ED', padding: '4px 10px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Target size={12} color="#F97316" />
-                      <span style={{ fontSize: '0.65rem', fontWeight: 850, color: '#C2410C' }}>{p.stage}</span>
-                    </div>
-                  </div>
-
-                  {p.all && (
-                    <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed #E2E8F0' }}>
-                      <span style={{ fontSize: '0.6rem', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase' }}>Secondary Threats:</span>
-                      <p style={{ margin: '4px 0 0 0', fontSize: '0.65rem', color: '#64748B', fontWeight: 600 }}>{p.all}</p>
-                    </div>
-                  )}
+          {brain.pests.detected.map((p, i) => (
+            <div key={i} style={{ 
+              padding: '20px', borderRadius: '24px', 
+              background: p.isActive ? `${COLORS.danger}05` : '#F8FAFC', 
+              border: p.isActive ? `1px solid ${COLORS.danger}20` : '1px solid rgba(0,0,0,0.02)'
+            }}>
+              {/* TOP LINE: ICON + PEST | STATUS */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <Bug size={20} color={p.isActive ? COLORS.danger : COLORS.textMuted} />
+                  <span style={{ fontSize: '1rem', fontWeight: 950, color: COLORS.textMain }}>{p.n}</span>
                 </div>
-              ))}
+                <span style={{ 
+                  fontSize: '0.65rem', fontWeight: 950, padding: '6px 12px', borderRadius: '100px', 
+                  background: p.isActive ? COLORS.danger : '#E2E8F0', 
+                  color: p.isActive ? 'white' : COLORS.textMuted,
+                  letterSpacing: '0.05em'
+                }}>
+                  {p.s}
+                </span>
+              </div>
+              
+              {/* SINGLE-LINE INTELLIGENCE SENTENCE */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: COLORS.textMuted, fontSize: '0.72rem', fontWeight: 750, marginBottom: '16px' }}>
+                <span style={{ color: p.isActive ? COLORS.textMain : COLORS.textMuted }}>{p.intel}</span>
+              </div>
+
+              {/* ACTIONABLE LINE */}
+              <div style={{ padding: '12px', borderRadius: '16px', background: p.isActive ? `${COLORS.danger}12` : '#F1F5F9', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                 <AlertCircle size={14} color={p.isActive ? COLORS.danger : COLORS.primary} />
+                 <span style={{ fontSize: '0.75rem', fontWeight: 900, color: p.isActive ? COLORS.danger : COLORS.textMain }}>
+                   {p.action}
+                 </span>
+              </div>
             </div>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '40px 20px', background: '#F8FAFC', borderRadius: '24px', border: '1px solid rgba(0,0,0,0.02)' }}>
-              <ShieldCheck size={32} color={COLORS.primary} style={{ opacity: 0.3, marginBottom: '12px' }} />
-              <div style={{ fontSize: '0.8rem', fontWeight: 850, color: COLORS.textMain }}>SECURE ENVIRONMENT</div>
-            </div>
-          )}
+          ))}
         </motion.div>
 
       </div>
