@@ -1,5 +1,5 @@
 /**
- * AgriSense v2.8.0 Sensor Controller
+ * AgriSense Pro v17.1.0 Sensor Controller
  * Processes incoming MQTT messages and routes them to the correct node state.
  */
 

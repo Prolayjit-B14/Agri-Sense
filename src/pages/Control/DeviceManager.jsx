@@ -1,5 +1,5 @@
 /**
- * AgriSense v5.2.0 - Responsive Device Area
+ * AgriSense Pro v17.1.0 - Responsive Device Area
  * Optimized for mobile screens with adaptive grid and scrollable container.
  * Fixed "Out of screen" overflow issue.
  */

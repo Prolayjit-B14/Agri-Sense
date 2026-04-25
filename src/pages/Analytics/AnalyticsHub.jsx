@@ -1,5 +1,5 @@
 /**
- * AgriSense v3.85 High-Density Analytical Intelligence Hub
+ * AgriSense Pro v17.1.0 High-Density Analytical Intelligence Hub
  * 8-Chart Diagnostic Matrix per module for Deep Insight.
  * Fixed: Synchronized with global sensor history for immediate graph rendering.
  */

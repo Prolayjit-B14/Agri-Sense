@@ -13,6 +13,114 @@ export const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "
 export const isAvailable = (val) => val !== undefined && val !== null && val !== '' && val !== '---';
 export const isAvailableLoc = (v) => v !== null && v !== undefined && v !== '' && v !== '---';
 
+export const detectSoilType = (ph, moist, n, p, k) => {
+  if (!isAvailableLoc(ph) || !isAvailableLoc(moist)) return 'Missing';
+  
+  const vPh = parseFloat(ph);
+  const vMoist = parseFloat(moist);
+  const vN = parseFloat(n || 0);
+  const vP = parseFloat(p || 0);
+  const vK = parseFloat(k || 0);
+
+  // 1. Loamy: pH 6-7 && moisture medium && good NPK
+  if (vPh >= 6 && vPh <= 7.2 && vMoist >= 35 && vMoist <= 65 && vN > 30 && vP > 30 && vK > 30) {
+    return 'Loamy';
+  }
+
+  // 2. Sandy: low moisture
+  if (vMoist < 35) {
+    return 'Sandy';
+  }
+
+  // 3. Clay: high moisture
+  if (vMoist > 65) {
+    return 'Clay';
+  }
+
+  return 'Loamy'; // Default fallback for stable fields
+};
+
+export const getPHLabel = (ph) => {
+  if (!isAvailableLoc(ph)) return '---';
+  const v = parseFloat(ph);
+  if (v < 6.0) return 'Acidic';
+  if (v <= 7.5) return 'Neutral';
+  return 'Alkaline';
+};
+
+export const getMoistureLabel = (moist) => {
+  if (!isAvailableLoc(moist)) return '---';
+  const v = parseFloat(moist);
+  if (v < 35) return 'Dry';
+  if (v <= 65) return 'Medium';
+  return 'Wet';
+};
+
+export const getFertilityLabel = (n, p, k) => {
+  if (!isAvailableLoc(n) || !isAvailableLoc(p) || !isAvailableLoc(k)) return '---';
+  const avg = (parseFloat(n) + parseFloat(p) + parseFloat(k)) / 3;
+  if (avg > 60) return 'High Fertility';
+  if (avg > 30) return 'Medium Fertility';
+  return 'Low Fertility';
+};
+
+const CLIMATE_ZONES = {
+  'wb': 'Subtropical',
+  'rajasthan': 'Arid',
+  'punjab': 'Semi-Arid',
+  'haryana': 'Semi-Arid',
+  'karnataka': 'Tropical',
+  'maharashtra': 'Tropical',
+  'himachal': 'Temperate',
+  'uttarakhand': 'Temperate',
+  'kerala': 'Tropical Humid',
+  'tamil nadu': 'Tropical Coastal',
+  'india': 'Subtropical'
+};
+
+export const getLocationClimate = (loc) => {
+  if (!loc) return 'Unknown';
+  const l = loc.toLowerCase();
+  for (const [key, zone] of Object.entries(CLIMATE_ZONES)) {
+    if (l.includes(key)) return zone;
+  }
+  return 'Subtropical'; // Default Indian climate
+};
+
+/**
+ * Advanced Climate Matching Logic
+ * Detects compatibility between crop required climate and user local climate.
+ */
+export const isClimateCompatible = (cropLoc, userLoc) => {
+  if (!cropLoc || !userLoc) return false;
+  const idl = cropLoc.toLowerCase();
+  const cur = userLoc.toLowerCase();
+  
+  if (idl === 'all' || idl.includes('india') || idl.includes('any')) return true;
+
+  // 1. Tokenized Matching (Space, Slash, Comma)
+  const idlWords = idl.split(/[\/\s,]+/).filter(w => w.length > 2);
+  const curWords = cur.split(/[\/\s,]+/).filter(w => w.length > 2);
+  
+  const hasDirectOverlap = curWords.some(cw => idlWords.some(iw => iw.includes(cw) || cw.includes(iw)));
+  if (hasDirectOverlap) return true;
+
+  // 2. High-Fidelity Agronomic Overlaps
+  const isTropicalUser = cur.includes('tropical');
+  const isSubtropicalUser = cur.includes('subtropical');
+  const isTropicalCrop = idl.includes('tropical');
+  const isSubtropicalCrop = idl.includes('subtropical');
+
+  // Tropical/Subtropical are generally interchangeable for modern cultivars
+  if ((isTropicalUser && isSubtropicalCrop) || (isSubtropicalUser && isTropicalCrop)) return true;
+  
+  // Specific coastal/wetland mappings
+  if (idl.includes('wetland') && isTropicalUser) return true;
+  if (idl.includes('coastal') && (cur.includes('humid') || cur.includes('tropical'))) return true;
+
+  return false;
+};
+
 export const getCropIcon = (type, name = '') => {
   const t = type?.toLowerCase() || '';
   const n = name?.toLowerCase() || '';

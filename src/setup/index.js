@@ -56,9 +56,9 @@ export const MASTER_CONFIG = {
 
   // 🕹️ ACTUATOR COMMANDS (For toggleActuator logic)
   ACTUATOR_COMMANDS: {
-    'Irrigation Pump': { ON: 'PUMP_ON', OFF: 'PUMP_OFF' },
-    'Solenoid Valve': { ON: 'VALVE_OPEN', OFF: 'VALVE_CLOSE' },
-    'Ultrasonic Repellent': { ON: 'BUZZER_ON', OFF: 'BUZZER_OFF' },
-    'Pest Sprayer': { ON: 'SPRAY_ON', OFF: 'SPRAY_OFF' }
+    'PUMP': { ON: 'PUMP_ON', OFF: 'PUMP_OFF' },
+    'VALVE': { ON: 'VALVE_OPEN', OFF: 'VALVE_CLOSE' },
+    'BUZZER': { ON: 'BUZZER_ON', OFF: 'BUZZER_OFF' },
+    'SPRAYER': { ON: 'SPRAY_ON', OFF: 'SPRAY_OFF' }
   }
 };

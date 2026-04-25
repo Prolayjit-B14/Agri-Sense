@@ -1,5 +1,5 @@
 /**
- * AgriSense v2.8.0 Data Models
+ * AgriSense Pro v17.1.0 Data Models
  * Defines the initial state structures for sensors, actuators, and weather.
  */
 

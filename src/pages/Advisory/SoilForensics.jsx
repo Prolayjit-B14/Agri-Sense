@@ -1,5 +1,5 @@
 /**
- * AgriSense v3.20 Forensic Diagnostic Engine
+ * AgriSense Pro v17.1.0 Forensic Diagnostic Engine
  * Native Share Bridge, High-Res Canvas Capture, and Consolidated NPK Ledger.
  */
 

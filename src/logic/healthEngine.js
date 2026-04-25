@@ -1,5 +1,5 @@
 /**
- * AgriSense v3.75 Agricultural Health & Logic Engine
+ * AgriSense Pro v17.1.0 Agricultural Health & Logic Engine
  * Clinical parameters for soil, weather, irrigation, and storage stability.
  */
 

@@ -1,5 +1,5 @@
 /**
- * AgriSense v4.0.0 - Farm-to-Table Transparency
+ * AgriSense Pro v17.1.0 - Farm-to-Table Transparency
  * Visualizes the product journey from harvest to market.
  */
 

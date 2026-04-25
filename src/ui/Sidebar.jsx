@@ -117,7 +117,7 @@ const Sidebar = () => {
         <div style={{ padding: '16px 20px', borderTop: `1px solid ${COLORS.border}`, background: 'rgba(0,0,0,0.12)' }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '0.62rem', color: '#FFF', fontWeight: 700, letterSpacing: '0.06em', opacity: 0.15 }}>ADVISOR ENGINE V17.1.0</div>
-            <div style={{ fontSize: '0.55rem', color: COLORS.primary, fontWeight: 800, marginTop: '2px', letterSpacing: '0.15em', textTransform: 'uppercase', opacity: 0.3 }}>AgriSense Industrial</div>
+            <div style={{ fontSize: '0.55rem', color: COLORS.primary, fontWeight: 800, marginTop: '2px', letterSpacing: '0.15em', textTransform: 'uppercase', opacity: 0.3 }}>AgriSense Pro</div>
           </div>
         </div>
       </motion.div>

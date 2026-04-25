@@ -78,46 +78,27 @@ const ControlButton = ({ icon: Icon, label, active, onClick, color = COLORS.seco
 // ─── MAIN COMPONENT ────────────────────────────────────────────────────────
 
 const VisualMonitor = () => {
-  const { sensorData } = useApp();
+  const { sensorData, actuators, ACTUATORS, toggleActuator } = useApp();
   
   // ─── STATE ────────────────────────────────────────────────────────────────
-  const [deviceStatus, setDeviceStatus] = useState('ONLINE');
-  const [streamUrl, setStreamUrl] = useState('https://images.unsplash.com/photo-1599933334297-586b51491f21?auto=format&fit=crop&q=80&w=1000');
-  const [controls, setControls] = useState({
-    repellent: false,
-    alarm: false,
-    light: false,
-    autoMode: true
-  });
-  const [logs, setLogs] = useState([
+  // ─── HARDWARE LOGIC ───
+  const deviceStatus = sensorData?.weather?.temp !== null ? 'ONLINE' : 'OFFLINE';
+  
+  const telemetry = {
+    wifi: '---',
+    temp: sensorData?.weather?.temp || '---',
+    fps: '---',
+    latency: '---',
+    battery: '---',
+    detection: { active: false, type: '---', level: 'Normal', zone: '---', duration: 0 }
+  };
+
+  const streamUrl = 'https://images.unsplash.com/photo-1599933334297-586b51491f21?auto=format&fit=crop&q=80&w=1000';
+  const logs = [
     { id: 1, type: 'Motion Detected', zone: 'Main Gate', time: '14:45:22', level: 'Medium', action: 'Monitor Only' },
     { id: 2, type: 'Sensor Trigger', zone: 'Perimeter B', time: '14:32:10', level: 'High', action: 'Alarm Triggered' },
     { id: 3, type: 'Motion Detected', zone: 'Main Gate', time: '14:15:05', level: 'Low', action: 'Ignored' },
-  ]);
-
-  // ─── HARDWARE LOGIC SIMULATION ───
-  // In real implementation, this would poll /status and /stream endpoints
-  const [telemetry, setTelemetry] = useState({
-    wifi: -64,
-    temp: 42,
-    fps: 18.4,
-    latency: 145,
-    battery: 88,
-    detection: { active: false, type: '---', level: 'Normal', zone: '---', duration: 0 }
-  });
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      // Simulate real-time polling logic
-      setTelemetry(prev => ({
-        ...prev,
-        fps: (15 + Math.random() * 5).toFixed(1),
-        latency: Math.floor(100 + Math.random() * 100),
-        wifi: -60 - Math.floor(Math.random() * 10)
-      }));
-    }, 2000);
-    return () => clearInterval(timer);
-  }, []);
+  ];
 
   // ─── RENDER ───────────────────────────────────────────────────────────────
   return (
@@ -161,7 +142,7 @@ const VisualMonitor = () => {
               <div style={{ display: 'flex', gap: '8px' }}>
                 <div style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)', padding: '6px 12px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)' }}>
                   <div style={{ fontSize: '0.5rem', fontWeight: 900, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>Mode</div>
-                  <div style={{ fontSize: '0.7rem', fontWeight: 850, color: 'white' }}>{controls.autoMode ? 'Auto-Protect' : 'Manual Scan'}</div>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 850, color: 'white' }}>Industrial Scan</div>
                 </div>
               </div>
               <motion.button whileTap={{ scale: 0.9 }} style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
@@ -252,16 +233,16 @@ const VisualMonitor = () => {
       {/* 4. CONTROL PANEL */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '1.5rem' }}>
         <ControlButton 
-          icon={Wind} label="Repellent" active={controls.repellent} 
-          onClick={() => setControls(c => ({...c, repellent: !c.repellent}))} 
+          icon={Wind} label="Repellent" active={actuators[ACTUATORS.BUZZER]} 
+          onClick={() => toggleActuator(ACTUATORS.BUZZER)} 
         />
         <ControlButton 
-          icon={Bell} label="Alarm" active={controls.alarm} color={COLORS.danger}
-          onClick={() => setControls(c => ({...c, alarm: !c.alarm}))} 
+          icon={Bell} label="Alarm" active={actuators[ACTUATORS.SPRAYER]} color={COLORS.danger}
+          onClick={() => toggleActuator(ACTUATORS.SPRAYER)} 
         />
         <ControlButton 
-          icon={Lightbulb} label="Flash" active={controls.light} color={COLORS.warning}
-          onClick={() => setControls(c => ({...c, light: !c.light}))} 
+          icon={Lightbulb} label="Flash" active={actuators[ACTUATORS.VALVE]} color={COLORS.warning}
+          onClick={() => toggleActuator(ACTUATORS.VALVE)} 
         />
         <ControlButton 
           icon={CaptureIcon} label="Capture" active={false} 

@@ -1,5 +1,5 @@
 /**
- * AgriSense v3.70 IoT Device Management Service
+ * AgriSense Pro v17.1.0 IoT Device Management Service
  * Clinical health calculation, weighted scoring, and issue detection engine.
  * CONSOLIDATED SENSOR ARCHITECTURE
  */

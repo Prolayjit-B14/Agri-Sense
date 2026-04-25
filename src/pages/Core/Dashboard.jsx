@@ -1,5 +1,5 @@
 /**
- * AgriSense v2.8.0 Dashboard
+ * AgriSense Pro v17.1.0 Dashboard
  * High-level overview of farm health, core metrics, and active controls.
  */
 
@@ -315,7 +315,7 @@ const Dashboard = () => {
 
       <footer style={{ textAlign: 'center', marginTop: '1.5rem', paddingBottom: '5px' }}>
         <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#CBD5E1', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-          AgriSense Industrial • v{farmInfo?.version || '2.8.0'}
+          AgriSense Pro • v{farmInfo?.version || '2.8.0'}
         </div>
       </footer>
     </div>

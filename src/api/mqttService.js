@@ -1,5 +1,5 @@
 /**
- * AgriSense v2.8.0 MQTT Service
+ * AgriSense Pro v17.1.0 MQTT Service
  * Manages real-time telemetry stream and command publishing to hardware nodes.
  */
 
@@ -84,10 +84,10 @@ class MqttService {
 
   publishCommand(action) {
     if (this.client) {
-      const topic = 'agrisense/field_a/water/commands';
+      const topic = MASTER_CONFIG.FIELD_TOPIC_COMMANDS || 'agrisense/field_a/commands';
       const message = JSON.stringify(action);
       this.client.publish(topic, message);
-      console.log(`🕹️ MQTT: Command Published:`, action);
+      console.log(`🕹️ MQTT: Command Published [${topic}]:`, action);
     }
   }
 

@@ -1,5 +1,5 @@
 /**
- * AgriSense v2.8.0 Math Utilities
+ * AgriSense Pro v17.1.0 Math Utilities
  * Geometric calculations for field mapping and sensor diagnostics.
  */
 
