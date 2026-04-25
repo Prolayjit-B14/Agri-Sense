@@ -73,20 +73,61 @@ const AlertCard = ({ alert, onDismiss }) => {
 // ─── MAIN SCREEN ──────────────────────────────────────────────────────────
 
 const Alerts = () => {
+  const { sensorData, systemOverview } = useApp();
   const [filter, setFilter] = useState('all');
-  const [alerts, setAlerts] = useState([
-    { id: 1, title: 'Critical Soil Dryness', message: 'Field A-1 moisture dropped below 15%. Irrigation recommended.', type: 'critical', time: '2m ago' },
-    { id: 3, title: 'Market Price Alert', message: 'Current market price for Tomatoes up by 12%.', type: 'success', time: '1h ago' },
-    { id: 4, title: 'System Update', message: 'Firmware v2.5.0 deployed successfully.', type: 'info', time: '3h ago' }
-  ]);
+  const [dismissedAlerts, setDismissedAlerts] = useState(new Set());
+
+  const generatedAlerts = useMemo(() => {
+    if (!sensorData) return [];
+    const alerts = [];
+
+    const addAlert = (id, title, message, type) => {
+      if (!dismissedAlerts.has(id)) {
+        alerts.push({ id, title, message, type, time: 'Live Stream' });
+      }
+    };
+
+    // 1. Soil Node
+    if (sensorData.soil?.moisture !== null) {
+      if (sensorData.soil.moisture < 20) addAlert('soil_dry', 'Critical Soil Dryness', `Field moisture dropped to ${sensorData.soil.moisture}%. Immediate irrigation recommended.`, 'critical');
+      else if (sensorData.soil.moisture > 80) addAlert('soil_wet', 'Waterlogging Risk', `Field moisture is critically high at ${sensorData.soil.moisture}%. Check drainage.`, 'warning');
+    }
+    if (sensorData.soil?.ph !== null) {
+      if (sensorData.soil.ph < 5.5) addAlert('soil_acidic', 'High Soil Acidity', `Soil pH dropped to ${sensorData.soil.ph}. Acidic conditions detected.`, 'warning');
+      else if (sensorData.soil.ph > 7.5) addAlert('soil_alkaline', 'High Soil Alkalinity', `Soil pH spiked to ${sensorData.soil.ph}. Alkaline conditions detected.`, 'warning');
+    }
+    if (sensorData.soil?.npk?.n !== null && sensorData.soil.npk.n < 40) addAlert('soil_n_low', 'Nitrogen Deficiency', `Soil Nitrogen level is low (${sensorData.soil.npk.n} mg/kg). Fertilization required.`, 'warning');
+
+    // 2. Weather Node
+    if (sensorData.weather?.temp !== null) {
+      if (sensorData.weather.temp > 35) addAlert('temp_high', 'Heat Stress Alert', `Extreme temperature detected (${sensorData.weather.temp}°C). Thermal stress on crops likely.`, 'critical');
+      else if (sensorData.weather.temp < 10) addAlert('temp_low', 'Cold Stress Alert', `Low temperature detected (${sensorData.weather.temp}°C). Frost risk possible.`, 'warning');
+    }
+    if (sensorData.weather?.rainLevel !== null && sensorData.weather.rainLevel > 100) addAlert('rain_heavy', 'Heavy Rainfall Warning', `Precipitation volume high (${sensorData.weather.rainLevel}mm). Monitor for flooding.`, 'critical');
+
+    // 3. Storage Node
+    if (sensorData.storage?.temp !== null && sensorData.storage.temp > 25) addAlert('storage_hot', 'Storage Overheating', `Warehouse temp reached ${sensorData.storage.temp}°C. Risk of rapid spoilage.`, 'critical');
+    if (sensorData.storage?.ethylene !== null && sensorData.storage.ethylene > 50) addAlert('ethylene_high', 'Ethylene Accumulation', `Ethylene gas level high (${sensorData.storage.ethylene} ppm). Accelerated ripening detected.`, 'critical');
+
+    // 4. Water Node
+    if (sensorData.water?.tankLevel !== null && sensorData.water.tankLevel < 20) addAlert('tank_low', 'Low Reservoir', `Water tank capacity critically low (${sensorData.water.tankLevel}%). Refill needed.`, 'critical');
+
+    // 5. System Health
+    if (systemOverview?.offline_nodes > 0) addAlert('nodes_offline', 'Node Disconnection', `${systemOverview.offline_nodes} hardware nodes are currently offline. Check power and network.`, 'critical');
+    else if (systemOverview?.active_nodes === 4 && sensorData.soil?.moisture !== null) addAlert('system_ok', 'System Update', 'All Industrial Nodes operating optimally.', 'success');
+
+    if (alerts.length === 0 && systemOverview?.offline_nodes === 4) addAlert('blackout', 'Total Blackout', 'System is completely disconnected from field hardware.', 'critical');
+
+    return alerts;
+  }, [sensorData, systemOverview, dismissedAlerts]);
 
   const filteredAlerts = useMemo(() => {
-    if (filter === 'all') return alerts;
-    return alerts.filter(a => a.type === filter);
-  }, [alerts, filter]);
+    if (filter === 'all') return generatedAlerts;
+    return generatedAlerts.filter(a => a.type === filter);
+  }, [generatedAlerts, filter]);
 
-  const dismissAlert = (id) => setAlerts(alerts.filter(a => a.id !== id));
-  const clearAll = () => setAlerts([]);
+  const dismissAlert = (id) => setDismissedAlerts(prev => new Set(prev).add(id));
+  const clearAll = () => setDismissedAlerts(new Set(generatedAlerts.map(a => a.id)));
 
   return (
     <div style={{ padding: '1.25rem', paddingBottom: '100px', background: COLORS.bg }}>

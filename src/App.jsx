@@ -132,9 +132,17 @@ const MainLayout = ({ children }) => {
 };
 
 const AppRoutes = () => {
-  const { user } = useApp();
+  const { user, isDarkMode } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+  }, [isDarkMode]);
 
   useEffect(() => {
     let listener;

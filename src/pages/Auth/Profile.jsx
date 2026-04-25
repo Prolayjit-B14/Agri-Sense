@@ -89,40 +89,93 @@ const Profile = () => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, photo: reader.result }));
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_SIZE = 400;
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height *= MAX_SIZE / width;
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width *= MAX_SIZE / height;
+              height = MAX_SIZE;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+          setFormData(prev => ({ ...prev, photo: compressedBase64 }));
+        };
+        img.src = event.target.result;
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleGPSDetect = () => {
+  const handleGPSDetect = async () => {
     setIsLocating(true);
-    if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your device");
-      setIsLocating(false);
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        setFormData(prev => ({ 
-          ...prev, 
-          location: `${latitude.toFixed(4)}° N, ${longitude.toFixed(4)}° E • Farm Node Alpha` 
-        }));
-        setIsLocating(false);
-      },
-      () => {
-        alert("Unable to retrieve location. Using default.");
-        setFormData(prev => ({ ...prev, location: "22.97° N, 88.43° E • Kalyani Field Alpha" }));
-        setIsLocating(false);
+    try {
+      const { Geolocation } = await import('@capacitor/geolocation');
+      const permissions = await Geolocation.checkPermissions();
+      if (permissions.location !== 'granted') {
+        const req = await Geolocation.requestPermissions();
+        if (req.location !== 'granted') {
+          alert("Location permission denied");
+          setIsLocating(false);
+          return;
+        }
       }
-    );
+
+      const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
+      const { latitude, longitude } = position.coords;
+      
+      // Perform Reverse Geocoding to get actual city/village name
+      let placeName = "Unknown Area";
+      try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`, {
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'AgriSense/17.1.0 (Contact: admin@agrisense.tech)'
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          // Fallback cascade to find the most accurate locality name
+          if (data.address) {
+            placeName = data.address.neighbourhood || data.address.suburb || data.address.village || data.address.town || data.address.city || data.address.county || data.address.state || "Local Field";
+          } else if (data.display_name) {
+            placeName = data.display_name.split(',')[0];
+          }
+        }
+      } catch (err) {
+        console.error("Reverse geocoding failed", err);
+      }
+
+      setFormData(prev => ({ 
+        ...prev, 
+        location: `${latitude.toFixed(4)}° N, ${longitude.toFixed(4)}° E • ${placeName}` 
+      }));
+    } catch (err) {
+      console.error(err);
+      alert("Unable to retrieve location from device GPS.");
+    } finally {
+      setIsLocating(false);
+    }
   };
 
   return (
-    <div style={{ background: COLORS.bg, minHeight: '100vh', paddingBottom: '100px' }}>
+    <div style={{ background: COLORS.bg, minHeight: '100%', paddingBottom: '0' }}>
       
       {/* 1. COMPACT IDENTITY HEADER */}
       <div style={{ 
@@ -210,64 +263,6 @@ const Profile = () => {
             </button>
           </div>
         </ControlCard>
-
-        {/* 3. QUICK ACTION CONTROLS */}
-        <SectionHeader title="System Pulse" icon={Zap} color={COLORS.warning} />
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
-          <ActionButton 
-            icon={RefreshCw} 
-            label="Refresh" 
-            onClick={() => { setIsRefreshing(true); setTimeout(() => setIsRefreshing(false), 1500); }} 
-            color={COLORS.primary} 
-            active={isRefreshing}
-          />
-          <ActionButton 
-            icon={Power} 
-            label="Logout" 
-            onClick={logout} 
-            color={COLORS.danger} 
-          />
-        </div>
-
-        {/* 4. ACTIVITY ANALYTICS (COLLAPSIBLE) */}
-        <div style={{ marginBottom: '16px' }}>
-          <button 
-            onClick={() => setShowAnalytics(!showAnalytics)}
-            style={{ 
-              width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              padding: '12px 16px', background: 'white', border: `1px solid ${COLORS.border}`,
-              borderRadius: '14px', cursor: 'pointer'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Terminal size={14} color={COLORS.secondary} />
-              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: COLORS.text }}>Platform Diagnostics</span>
-            </div>
-            <motion.div animate={{ rotate: showAnalytics ? 90 : 0 }}><ChevronRight size={14} color={COLORS.subtext} /></motion.div>
-          </button>
-          
-          <AnimatePresence>
-            {showAnalytics && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                style={{ overflow: 'hidden' }}
-              >
-                <div style={{ padding: '12px', background: 'white', border: `1px solid ${COLORS.border}`, borderTop: 'none', borderRadius: '0 0 14px 14px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    <div>
-                      <p style={{ fontSize: '0.55rem', fontWeight: 700, color: COLORS.subtext, marginBottom: '2px' }}>COMMANDS ISSUED</p>
-                      <h4 style={{ fontSize: '1.2rem', fontWeight: 900, margin: 0 }}>{profileMeta.commandsIssued.toLocaleString()}</h4>
-                    </div>
-                    <div style={{ borderLeft: `1px solid ${COLORS.border}`, paddingLeft: '12px' }}>
-                      <p style={{ fontSize: '0.55rem', fontWeight: 700, color: COLORS.subtext, marginBottom: '2px' }}>ALERTS RESOLVED</p>
-                      <h4 style={{ fontSize: '1.2rem', fontWeight: 900, margin: 0 }}>{profileMeta.alertsResolved}</h4>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
 
         {/* VERSION */}
         <div style={{ textAlign: 'center', opacity: 0.2, marginTop: '20px' }}>

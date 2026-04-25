@@ -39,6 +39,18 @@
   --shadow-premium: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
+html[data-theme='dark'] {
+  filter: invert(1) hue-rotate(180deg);
+  background: #F8FAFC; 
+}
+
+html[data-theme='dark'] img,
+html[data-theme='dark'] iframe,
+html[data-theme='dark'] canvas,
+html[data-theme='dark'] video {
+  filter: invert(1) hue-rotate(180deg);
+}
+
 * {
   margin: 0;
   padding: 0;

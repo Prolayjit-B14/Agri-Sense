@@ -68,12 +68,7 @@ const Settings = () => {
   const { logout, isDarkMode, toggleTheme, farmInfo, updateBranding, profileMeta, updateProfileMeta } = useApp();
 
   return (
-    <div style={{ padding: '1.5rem', background: COLORS.bg, minHeight: '100vh', paddingBottom: '100px' }}>
-      
-      <header style={{ marginBottom: '2.5rem' }}>
-        <h2 style={{ fontSize: '1.75rem', fontWeight: 950, color: COLORS.text, margin: 0, letterSpacing: '-0.02em' }}>Platform Config</h2>
-        <p style={{ color: COLORS.subtext, fontSize: '0.8rem', fontWeight: 700, marginTop: '4px' }}>Industrial System v{farmInfo?.version || '2.8.0'}</p>
-      </header>
+    <div style={{ padding: '1.5rem', background: COLORS.bg, minHeight: '100%', paddingBottom: '0' }}>
 
       {/* 1. CORE BRANDING */}
       <SettingSection title="Engine Identity" icon={Palette}>
@@ -97,38 +92,9 @@ const Settings = () => {
               </div>
            </div>
         </div>
-      </SettingSection>
-
-      {/* 2. INTERFACE & AI */}
-      <SettingSection title="Interface & Intelligence" icon={Cpu}>
+      </SettingSection>      {/* 2. INTERFACE & AI */}
+      <SettingSection title="Interface Options" icon={Cpu}>
         <SettingItem icon={isDarkMode ? Moon : Sun} label="Interstellar Dark Mode" type="toggle" enabled={isDarkMode} onClick={toggleTheme} />
-        
-        <div style={{ padding: '14px 20px', borderBottom: `1px solid ${COLORS.border}` }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Brain size={16} color="#8B5CF6" />
-            </div>
-            <div>
-              <h4 style={{ fontSize: '0.85rem', fontWeight: 800, margin: 0 }}>AI Sensory Control</h4>
-              <p style={{ fontSize: '0.65rem', color: COLORS.subtext, fontWeight: 600, margin: 0 }}>Current Sensitivity: <span style={{ color: COLORS.primary }}>{profileMeta.aiSensitivity}</span></p>
-            </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px', background: '#F1F5F9', padding: '3px', borderRadius: '10px' }}>
-            {['Low', 'Balanced', 'High'].map(lv => (
-              <button key={lv} onClick={() => updateProfileMeta({ aiSensitivity: lv })} style={{ padding: '8px', borderRadius: '8px', border: 'none', background: profileMeta.aiSensitivity === lv ? 'white' : 'transparent', color: profileMeta.aiSensitivity === lv ? COLORS.primary : COLORS.subtext, fontSize: '0.7rem', fontWeight: 800, cursor: 'pointer', transition: '0.2s' }}>{lv}</button>
-            ))}
-          </div>
-        </div>
-
-        <SettingItem icon={Bell} label="Push Notifications" type="toggle" enabled={true} />
-        <SettingItem icon={RefreshCw} label="Telemetry Sync Rate" value="1.5s" />
-      </SettingSection>
-
-      {/* 3. SYSTEM PROTOCOLS */}
-      <SettingSection title="Protocol Matrix" icon={Terminal}>
-        <SettingItem icon={Database} label="MQTT Gateway" value="Secure (TLS)" />
-        <SettingItem icon={Globe} label="Region" value="Global/India" />
-        <SettingItem icon={Info} label="Build Environment" value="Production" />
       </SettingSection>
 
       {/* 4. INDUSTRIAL FOOTER */}
@@ -150,15 +116,6 @@ const Settings = () => {
           <span style={{ fontSize: '0.85rem', fontWeight: 800, color: COLORS.primary }}>v{farmInfo?.version || '2.8.0'}</span>
         </div>
       </div>
-
-      <motion.button 
-        whileTap={{ scale: 0.96 }}
-        onClick={logout}
-        style={{ width: '100%', padding: '16px', background: '#FEE2E2', color: '#DC2626', border: 'none', borderRadius: '16px', fontWeight: 800, fontSize: '0.9rem', marginTop: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' }}
-      >
-        <LogOut size={18} /> TERMINATE SESSION
-      </motion.button>
-
     </div>
   );
 };

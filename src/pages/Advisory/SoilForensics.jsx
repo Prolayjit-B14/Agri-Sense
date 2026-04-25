@@ -15,6 +15,7 @@ import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
+import { Geolocation } from '@capacitor/geolocation';
 
 // Context & Utils
 import { useApp } from '../../state/AppContext';
@@ -101,11 +102,56 @@ const SoilForensics = () => {
   const [analysisLayer, setAnalysisLayer] = useState('Moisture');
   const [lockedBBox, setLockedBBox] = useState(null);
   const [zoom] = useState(19); 
-  const [mapCenter] = useState({ lat: MASTER_CONFIG.MAP_LAT || 22.5726, lng: MASTER_CONFIG.MAP_LNG || 88.3639 });
+  const [mapCenter, setMapCenter] = useState({ lat: MASTER_CONFIG.MAP_LAT || 22.5726, lng: MASTER_CONFIG.MAP_LNG || 88.3639 });
+  const [isMapInteractive, setIsMapInteractive] = useState(true);
+  const [locationName, setLocationName] = useState('Locating...');
 
   useEffect(() => {
-    const watchId = navigator.geolocation.watchPosition((pos) => setGpsAccuracy(pos.coords.accuracy.toFixed(1)), (err) => console.error(err), { enableHighAccuracy: true });
-    return () => navigator.geolocation.clearWatch(watchId);
+    let watchId;
+    const initLocation = async () => {
+      try {
+        const permissions = await Geolocation.checkPermissions();
+        if (permissions.location !== 'granted') {
+          const req = await Geolocation.requestPermissions();
+          if (req.location !== 'granted') return;
+        }
+        
+        const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setMapCenter({ lat, lng });
+        setGpsAccuracy(pos.coords.accuracy.toFixed(1));
+
+        // Reverse Geocoding
+        try {
+          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`, {
+            headers: { 'Accept': 'application/json', 'User-Agent': 'AgriSense/17.1.0 (Contact: admin@agrisense.tech)' }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            if (data.address) {
+              setLocationName(data.address.neighbourhood || data.address.suburb || data.address.village || data.address.town || data.address.city || data.address.county || data.address.state || "Local Field");
+            } else if (data.display_name) {
+              setLocationName(data.display_name.split(',')[0]);
+            }
+          }
+        } catch (e) {}
+
+        watchId = await Geolocation.watchPosition({ enableHighAccuracy: true }, (pos, err) => {
+          if (pos) {
+            setMapCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+            setGpsAccuracy(pos.coords.accuracy.toFixed(1));
+          }
+        });
+      } catch (e) {
+        console.error("GPS Error:", e);
+      }
+    };
+    initLocation();
+    
+    return () => {
+      if (watchId) Geolocation.clearWatch({ id: watchId });
+    };
   }, []);
 
   const calculateBBox = useCallback(() => {
@@ -254,22 +300,32 @@ const SoilForensics = () => {
   );
 
   return (
-    <div style={{ background: COLORS.background, minHeight: '100dvh', paddingBottom: '2rem', fontFamily: "'Outfit', sans-serif" }}>
+    <div style={{ background: COLORS.background, minHeight: '100%', paddingBottom: '0', fontFamily: "'Outfit', sans-serif" }}>
       <StepIndicator currentStep={currentStep} />
       <div style={{ padding: '1.25rem' }}>
         <AnimatePresence mode="wait">
           {currentStep === 1 && (
             <motion.div key="st1" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.25rem', alignItems: 'center' }}>
-                <h2 style={{ fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain }}>Field Mapping</h2>
-                <div style={{ padding: '6px 12px', background: '#ECFDF5', borderRadius: '10px', fontSize: '0.65rem', fontWeight: 900, color: COLORS.primaryDark, border: `1px solid ${COLORS.primary}20` }}>GPS: {gpsAccuracy}m</div>
+                <div>
+                  <h2 style={{ fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain, margin: 0 }}>Field Mapping</h2>
+                  <p style={{ fontSize: '0.65rem', fontWeight: 800, color: COLORS.subtext, margin: '2px 0 0 0' }}>{locationName}</p>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <div style={{ padding: '6px 10px', background: '#ECFDF5', borderRadius: '10px', fontSize: '0.65rem', fontWeight: 900, color: COLORS.primaryDark, border: `1px solid ${COLORS.primary}20` }}>GPS: {gpsAccuracy}m</div>
+                  <motion.button whileTap={{ scale: 0.95 }} onClick={() => setIsMapInteractive(!isMapInteractive)} style={{ padding: '6px 12px', background: isMapInteractive ? COLORS.warning : COLORS.primary, color: 'white', borderRadius: '10px', border: 'none', fontSize: '0.65rem', fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
+                    {isMapInteractive ? 'LOCK TO DRAW' : 'UNLOCK MAP'}
+                  </motion.button>
+                </div>
               </div>
-              <div onClick={handleAddPoint} style={{ height: '400px', background: '#E2E8F0', borderRadius: RAD.card, position: 'relative', border: `4px solid white`, boxShadow: '0 10px 30px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
-                 <iframe width="100%" height="100%" frameBorder="0" src={`https://www.openstreetmap.org/export/embed.html?bbox=${calculateBBox()}&layer=mapnik`} style={{ filter: 'grayscale(0.3)', pointerEvents: 'none' }} />
-                 <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
-                   <polygon points={boundaryPoints.map(p => `${p.x},${p.y}`).join(' ')} fill={`${COLORS.primary}15`} stroke={COLORS.primary} strokeWidth="3" strokeDasharray="6 4" />
-                   {boundaryPoints.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r="8" fill="white" stroke={COLORS.primary} strokeWidth="3" />)}
-                 </svg>
+              <div onClick={isMapInteractive ? undefined : handleAddPoint} style={{ height: '400px', background: '#E2E8F0', borderRadius: RAD.card, position: 'relative', border: `4px solid ${isMapInteractive ? COLORS.warning : 'white'}`, boxShadow: '0 10px 30px rgba(0,0,0,0.05)', overflow: 'hidden', transition: '0.3s' }}>
+                 <iframe width="100%" height="100%" frameBorder="0" src={`https://www.openstreetmap.org/export/embed.html?bbox=${calculateBBox()}&layer=mapnik&marker=${mapCenter.lat},${mapCenter.lng}`} style={{ filter: 'grayscale(0.3)', pointerEvents: isMapInteractive ? 'auto' : 'none' }} />
+                 {!isMapInteractive && (
+                   <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+                     <polygon points={boundaryPoints.map(p => `${p.x},${p.y}`).join(' ')} fill={`${COLORS.primary}15`} stroke={COLORS.primary} strokeWidth="3" strokeDasharray="6 4" />
+                     {boundaryPoints.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r="8" fill="white" stroke={COLORS.primary} strokeWidth="3" />)}
+                   </svg>
+                 )}
                  <div style={{ position: 'absolute', bottom: '15px', left: '15px', background: COLORS.terminal, color: 'white', padding: '8px 16px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800 }}>{areaAcre} Acres</div>
               </div>
               <div style={{ marginTop: '1.25rem', display: 'flex', gap: '10px' }}>
