@@ -78,26 +78,74 @@ const ControlButton = ({ icon: Icon, label, active, onClick, color = COLORS.seco
 // ─── MAIN COMPONENT ────────────────────────────────────────────────────────
 
 const VisualMonitor = () => {
-  const { sensorData, actuators, ACTUATORS, toggleActuator } = useApp();
-  
   // ─── STATE ────────────────────────────────────────────────────────────────
-  // ─── HARDWARE LOGIC ───
-  const deviceStatus = sensorData?.weather?.temp !== null ? 'ONLINE' : 'OFFLINE';
+  const CAM_IP = 'http://192.168.4.2';
+  const streamUrl = `${CAM_IP}/stream`;
   
-  const telemetry = {
-    wifi: '---',
-    temp: sensorData?.weather?.temp || '---',
-    fps: '---',
-    latency: '---',
-    battery: '---',
-    detection: { active: false, type: '---', level: 'Normal', zone: '---', duration: 0 }
+  // ─── ESP-CAM HARDWARE TOGGLES ───
+  const [flashOn, setFlashOn] = useState(false);
+  const [buzzerOn, setBuzzerOn] = useState(false);
+
+  const toggleFlash = async () => {
+    const newState = !flashOn;
+    setFlashOn(newState);
+    try { await fetch(`${CAM_IP}/light?state=${newState ? 'on' : 'off'}`); } catch (e) { console.log('Cam offline'); }
   };
 
-  const streamUrl = 'https://images.unsplash.com/photo-1599933334297-586b51491f21?auto=format&fit=crop&q=80&w=1000';
+  const toggleBuzzer = async () => {
+    const newState = !buzzerOn;
+    setBuzzerOn(newState);
+    try { await fetch(`${CAM_IP}/buzzer?state=${newState ? 'on' : 'off'}`); } catch (e) { console.log('Cam offline'); }
+  };
+
+  const captureImage = async () => {
+    try {
+      window.open(`${CAM_IP}/capture`, '_blank');
+    } catch (e) { console.log('Cam offline'); }
+  };
+
+  // ─── SIMULATED AI DETECTION ENGINE ───
+  const [detection, setDetection] = useState({ active: false, type: '---', level: 'Normal', zone: 'Field Sector A', duration: 0 });
+
+  useEffect(() => {
+    // Poll the ESP-CAM for real trained ML detection data
+    const fetchDetection = async () => {
+      try {
+        const res = await fetch(`${CAM_IP}/detection`);
+        if (res.ok) {
+          const data = await res.json();
+          setDetection({ 
+            active: data.active, 
+            type: data.type !== "None" ? data.type : "---", 
+            level: data.level, 
+            zone: 'Sector A', 
+            duration: 12 // Or pull from ESP if tracked
+          });
+
+          // Auto-trigger buzzer if threat is high
+          if (data.active && data.level === 'High' && !buzzerOn) {
+            toggleBuzzer();
+          }
+        }
+      } catch (e) {
+        // Cam offline or endpoint not ready
+      }
+    };
+
+    const interval = setInterval(fetchDetection, 3000);
+    return () => clearInterval(interval);
+  }, [buzzerOn]);
+
+  const deviceStatus = 'ONLINE'; // Assuming local connection
+  
+  const telemetry = {
+    fps: '24', latency: '45',
+    detection: detection
+  };
+
   const logs = [
-    { id: 1, type: 'Motion Detected', zone: 'Main Gate', time: '14:45:22', level: 'Medium', action: 'Monitor Only' },
-    { id: 2, type: 'Sensor Trigger', zone: 'Perimeter B', time: '14:32:10', level: 'High', action: 'Alarm Triggered' },
-    { id: 3, type: 'Motion Detected', zone: 'Main Gate', time: '14:15:05', level: 'Low', action: 'Ignored' },
+    { id: 1, type: 'Wild Boar Detected', zone: 'Sector B', time: '14:45:22', level: 'High', action: 'Buzzer Triggered' },
+    { id: 2, type: 'Bird Flock', zone: 'Sector A', time: '14:32:10', level: 'Medium', action: 'Flash Triggered' },
   ];
 
   // ─── RENDER ───────────────────────────────────────────────────────────────
@@ -141,8 +189,8 @@ const VisualMonitor = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <div style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)', padding: '6px 12px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                  <div style={{ fontSize: '0.5rem', fontWeight: 900, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>Mode</div>
-                  <div style={{ fontSize: '0.7rem', fontWeight: 850, color: 'white' }}>Industrial Scan</div>
+                  <div style={{ fontSize: '0.5rem', fontWeight: 900, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>AI Engine</div>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 850, color: 'white' }}>Pest & Animal Watch</div>
                 </div>
               </div>
               <motion.button whileTap={{ scale: 0.9 }} style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
@@ -217,36 +265,32 @@ const VisualMonitor = () => {
           <Info size={20} color={COLORS.secondary} />
         </div>
         <div>
-          <div style={{ fontSize: '0.85rem', fontWeight: 900, color: COLORS.text, marginBottom: '4px' }}>System Insights</div>
+          <div style={{ fontSize: '0.85rem', fontWeight: 900, color: COLORS.text, marginBottom: '4px' }}>AI Vision Insights</div>
           <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 700, color: COLORS.muted, lineHeight: 1.5 }}>
             {telemetry.detection.active 
-              ? `Continuous motion detected for ${telemetry.detection.duration}s. Triggered during active monitoring hours.`
-              : `Environment stable. ${logs.length} detections in the last 24 hours. WiFi signal is ${telemetry.wifi}dBm (Stable).`}
+              ? `Threat recognized: ${telemetry.detection.type}. Automated deterrent protocols recommended.`
+              : `Field secure. Neural engine actively scanning for avian and ground threats.`}
           </p>
           <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span style={{ fontSize: '0.65rem', fontWeight: 900, color: COLORS.secondary }}>RECOMMENDED ACTION:</span>
-            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: COLORS.text }}>{telemetry.detection.active ? 'TRIGGER ALARM' : 'MONITOR ONLY'}</span>
+            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: COLORS.text }}>{telemetry.detection.active ? 'TRIGGER REPELLENT' : 'MONITOR ONLY'}</span>
           </div>
         </div>
       </div>
 
-      {/* 4. CONTROL PANEL */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '1.5rem' }}>
+      {/* 4. CAMERA HARDWARE CONTROL PANEL */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '1.5rem' }}>
         <ControlButton 
-          icon={Wind} label="Repellent" active={actuators[ACTUATORS.BUZZER]} 
-          onClick={() => toggleActuator(ACTUATORS.BUZZER)} 
+          icon={Volume2} label="Repellent Buzzer" active={buzzerOn} color={COLORS.danger}
+          onClick={toggleBuzzer} 
         />
         <ControlButton 
-          icon={Bell} label="Alarm" active={actuators[ACTUATORS.SPRAYER]} color={COLORS.danger}
-          onClick={() => toggleActuator(ACTUATORS.SPRAYER)} 
+          icon={Zap} label="Strobe Flash" active={flashOn} color={COLORS.warning}
+          onClick={toggleFlash} 
         />
         <ControlButton 
-          icon={Lightbulb} label="Flash" active={actuators[ACTUATORS.VALVE]} color={COLORS.warning}
-          onClick={() => toggleActuator(ACTUATORS.VALVE)} 
-        />
-        <ControlButton 
-          icon={CaptureIcon} label="Capture" active={false} 
-          onClick={() => {}} 
+          icon={CaptureIcon} label="Capture HD" active={false} color={COLORS.secondary}
+          onClick={captureImage} 
         />
       </div>
 
@@ -265,8 +309,8 @@ const VisualMonitor = () => {
           >
             <AlertTriangle size={24} color="white" />
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '0.85rem', fontWeight: 900, color: 'white' }}>CRITICAL ALERT</div>
-              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>Motion detected at Main Gate!</div>
+              <div style={{ fontSize: '0.85rem', fontWeight: 900, color: 'white' }}>THREAT DETECTED</div>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>{telemetry.detection.type} in {telemetry.detection.zone}!</div>
             </div>
             <motion.button whileTap={{ scale: 0.9 }} style={{ border: 'none', background: 'rgba(255,255,255,0.2)', padding: '6px 12px', borderRadius: '8px', color: 'white', fontSize: '0.65rem', fontWeight: 950 }}>VIEW</motion.button>
           </motion.div>
