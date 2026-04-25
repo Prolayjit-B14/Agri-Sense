@@ -12,13 +12,18 @@ import {
   Bug, ShieldCheck, Leaf, Sprout, Globe, AlertCircle, CheckCircle2,
   XCircle, Waves, Clock, FlaskConical, BarChart3, CloudRain, Thermometer,
   ChevronDown, TrendingUp, Droplets, Search, X, ChevronRight, Scale, Microscope,
-  Sparkles, Info, TrendingDown, Apple, Flower, Wheat, Citrus, Grape, Carrot, Nut, Banana, AlertTriangle
+  Sparkles, Info, TrendingDown, Apple, Flower, Wheat, Citrus, Grape, Carrot, Nut, Banana, AlertTriangle,
+  Coffee, Brain, Cloud, Trees, TreePine, TreeDeciduous, Shrub, Clover, Shell, Milk, Sun, Cherry, Bean
 } from 'lucide-react';
 import { useApp } from '../../state/AppContext';
 
 // ─── ASSET IMPORTS ──────────────────────────────────────────────────────────
-import cropCsv from '../../data/CropSuitabilityData_Final.csv?url';
-import { CROP_SPECS, METADATA, ALIASES } from '../../data/CropDatabase';
+import cropCsv from '../../data/geo/CropSuitabilityData_Final.csv?url';
+import { CROP_SPECS, METADATA, ALIASES } from '../../data/core/CropDatabase';
+import { 
+  MONTHS, isAvailable, isAvailableLoc, getCropIcon, getDemandIcon, 
+  getDemandColor, formatCropName, parseCSV, aggregateCropProfiles 
+} from '../../data/core/AgronomyUtils';
 
 // ─── DESIGN TOKENS ─────────────────────────────────────────────────────────
 const COLORS = {
@@ -38,63 +43,6 @@ const RAD = {
   card: '24px',
   inner: '18px',
   btn: '14px'
-};
-
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const isAvailable = (val) => val !== undefined && val !== null && val !== '' && val !== '---';
-const isAvailableLoc = (v) => v !== null && v !== undefined && v !== '' && v !== '---';
-
-// ─── HELPERS ────────────────────────────────────────────────────────────────
-
-const getCropIcon = (type, name = '') => {
-  const t = type?.toLowerCase() || '';
-  const n = name?.toLowerCase() || '';
-
-  // Specific Crop Mappings
-  // Specific Crop Mappings (LITERAL MATCHES)
-  if (n.includes('apple') || n.includes('pomegranate')) return { icon: Apple, color: '#EF4444' };
-  if (n.includes('grape')) return { icon: Grape, color: '#8B5CF6' };
-  if (n.includes('banana')) return { icon: Banana, color: '#EAB308' };
-  if (n.includes('citrus') || n.includes('orange') || n.includes('lemon')) return { icon: Citrus, color: '#F59E0B' };
-  if (n.includes('mango') || n.includes('papaya')) return { icon: Citrus, color: '#F97316' };
-  if (n.includes('watermelon') || n.includes('muskmelon')) return { icon: Citrus, color: '#22C55E' }; // Using Citrus for round fruits
-  if (n.includes('coconut')) return { icon: Nut, color: '#78350F' };
-  if (n.includes('potato') || n.includes('radish') || n.includes('onion')) return { icon: Nut, color: '#92400E' };
-  if (n.includes('carrot')) return { icon: Carrot, color: '#F97316' };
-  if (n.includes('sunflower') || n.includes('marigold')) return { icon: Flower, color: '#FBBF24' };
-  if (n.includes('wheat') || n.includes('barley') || n.includes('jowar') || n.includes('bajra')) return { icon: Wheat, color: '#EAB308' };
-  if (n.includes('rice') || n.includes('paddy')) return { icon: Sprout, color: '#10B981' };
-  if (n.includes('cotton') || n.includes('jute')) return { icon: Waves, color: '#CBD5E1' };
-  if (n.includes('gram') || n.includes('pulse') || n.includes('bean') || n.includes('lentil')) return { icon: Sprout, color: '#10B981' };
-
-  // Category Fallbacks (LITERAL REPRESENTATIONS)
-  if (t.includes('grain') || t.includes('cereal') || t.includes('pulse')) return { icon: Wheat, color: '#10B981' };
-  if (t.includes('veg')) return { icon: Carrot, color: '#22C55E' };
-  if (t.includes('fruit')) return { icon: Apple, color: '#F97316' };
-  if (t.includes('flower')) return { icon: Flower, color: '#EC4899' };
-  if (t.includes('seed')) return { icon: Sprout, color: '#6366F1' };
-  if (t.includes('oilseed')) return { icon: Droplets, color: '#F59E0B' };
-  if (t.includes('fiber') || t.includes('cash')) return { icon: Waves, color: '#8B5CF6' };
-  return { icon: Sprout, color: '#10B981' };
-};
-
-const getDemandIcon = (demand) => {
-  const d = demand?.toLowerCase() || '';
-  if (d.includes('high')) return TrendingUp;
-  if (d.includes('low')) return TrendingDown;
-  return Activity;
-};
-
-const getDemandColor = (demand) => {
-  const d = demand?.toLowerCase() || '';
-  if (d.includes('high')) return '#10B981';
-  if (d.includes('medium')) return '#F59E0B';
-  return '#94A3B8';
-};
-
-const formatCropName = (name) => {
-  if (!name) return '';
-  return name.split('(')[0].trim().replace(/\b\w/g, l => l.toUpperCase());
 };
 
 const getCropSpec = (name) => {
@@ -136,7 +84,7 @@ const CropBottomSheet = ({ isOpen, onClose, crops, onSelect, selectedCrop }) => 
                 <Search size={18} color="#94A3B8" style={{ position: 'absolute', left: '16px' }} />
                 <input 
                   autoFocus
-                  placeholder="Search 75+ Crops..."
+                  placeholder="Search 86 Industrial Crops..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   style={{ 
@@ -192,72 +140,6 @@ const CropBottomSheet = ({ isOpen, onClose, crops, onSelect, selectedCrop }) => 
   );
 };
 
-// ─── UTILS & PARSERS ────────────────────────────────────────────────────────
-
-const parseCSV = (t) => {
-  if (!t || t.trim().length === 0) return [];
-  const lines = t.trim().split('\n');
-  if (lines.length < 1) return [];
-  const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, '').toLowerCase());
-  return lines.slice(1).map(line => {
-    const values = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || line.split(',');
-    return headers.reduce((obj, header, i) => { obj[header] = values[i]?.trim().replace(/"/g, ''); return obj; }, {});
-  });
-};
-
-const aggregateCropProfiles = (data) => {
-  if (!Array.isArray(data) || data.length === 0) return {};
-  const crops = {};
-  data.forEach(row => {
-    if (!row || typeof row !== 'object') return;
-    const label = row.label?.toLowerCase().trim();
-    if (!label) return;
-    if (!crops[label]) {
-      crops[label] = { 
-        n: [], p: [], k: [], temperature: [], humidity: [], ph: [], rainfall: [],
-        season: row.season || 'Kharif', 
-        soil: row.soil_type || 'Loamy', 
-        loc: row.location || 'India', 
-        sow: row.sowing_time || 'Jan-Dec',
-        fert: row.fertilizer || 'Balanced NPK', 
-        comp: row.compost || 'Organic Manure', 
-        pest: row.pest_control || 'Standard Control'
-      };
-    }
-    ['n', 'p', 'k', 'temperature', 'humidity', 'ph', 'rainfall'].forEach(key => {
-      const val = parseFloat(row[key]); 
-      if (!isNaN(val)) crops[label][key].push(val);
-    });
-  });
-  
-  const final = {};
-  Object.keys(crops).forEach(label => {
-    const r = crops[label];
-    final[label] = { ...r };
-    ['n', 'p', 'k', 'temperature', 'humidity', 'ph', 'rainfall'].forEach(key => {
-      const v = r[key];
-      if (!v || v.length === 0) { 
-        final[label][key] = { min: 0, max: 0, avg: 0, range: 1, mid: 0 }; 
-      } else {
-        const min = Math.min(...v);
-        const max = Math.max(...v);
-        const avg = v.reduce((a, b) => a + b, 0) / v.length;
-        final[label][key] = { min, max, avg, range: Math.max(1, max - min), mid: (min + max) / 2 };
-      }
-    });
-    
-    const rain = final[label].rainfall || { min: 0, max: 0, avg: 0 };
-    final[label].moisture = {
-      min: Math.max(5, (rain.min || 0) / 20),
-      max: Math.min(100, (rain.max || 1000) / 10),
-      avg: Math.min(90, (rain.avg || 500) / 15)
-    };
-    final[label].moisture.mid = (final[label].moisture.min + final[label].moisture.max) / 2;
-    final[label].moisture.range = Math.max(1, final[label].moisture.max - final[label].moisture.min);
-  });
-  return final;
-};
-
 // ─── MAIN COMPONENT ─────────────────────────────────────────────────────────
 
 const FarmAdvisor = () => {
@@ -277,7 +159,7 @@ const FarmAdvisor = () => {
     const specLabels = Object.keys(CROP_SPECS);
     
     // Also include crops from CSV IF they are in CROP_SPECS or are ALIASES of something in CROP_SPECS
-    const csvLabels = Object.keys(db.crops || {});
+    const csvLabels = Object.keys(db?.crops || {});
     const combined = [...new Set([...specLabels, ...csvLabels])];
 
     const finalUnique = new Set();
@@ -300,22 +182,25 @@ const FarmAdvisor = () => {
   useEffect(() => {
     fetch(cropCsv)
       .then(r => r.text())
-      .then(t => {
+      .then(cropTxt => {
         try {
-          const processed = aggregateCropProfiles(parseCSV(t));
-          setDb({ crops: processed, loading: false, error: false });
+          const crops = aggregateCropProfiles(parseCSV(cropTxt));
+          setDb({ crops, loading: false, error: false });
         } catch (e) {
           console.error("DB Parse Error", e);
           setDb({ crops: {}, loading: false, error: true });
         }
       })
-      .catch(err => setDb({ crops: {}, loading: false, error: true }));
+      .catch(err => {
+        console.error("Fetch Error", err);
+        setDb({ crops: {}, loading: false, error: true });
+      });
   }, []);
 
   const brain = useMemo(() => {
-    if (db.loading || !db.crops || !sensorData) return null;
+    if (db.loading || !db?.crops || !sensorData) return null;
     const spec = getCropSpec(selectedCrop);
-    const p = db.crops[selectedCrop] || {};
+    const p = db?.crops?.[selectedCrop] || {};
     
     // Deep fallback logic: Use CSV data if available, otherwise inherit from Spec standards
     const profile = {
@@ -409,11 +294,13 @@ const FarmAdvisor = () => {
       return { ...row, status, type, cur: isAvailableLoc(row.cur) ? row.cur : '---' };
     });
 
+    // ─── 🧪 FERTILIZER ENGINE ───────────────────────────────────────────────
     const canFertilize = isAvailableLoc(cur.n) && isAvailableLoc(cur.p) && isAvailableLoc(cur.k);
     const defN = canFertilize ? Math.max(0, (profile.n?.mid || 0) - parseFloat(cur.n || 0)) : 0;
     const defP = canFertilize ? Math.max(0, (profile.p?.mid || 0) - parseFloat(cur.p || 0)) : 0;
     const defK = canFertilize ? Math.max(0, (profile.k?.mid || 0) - parseFloat(cur.k || 0)) : 0;
     
+    const fertEntry = profile.fert && typeof profile.fert === 'object' ? profile.fert : null;
     let urea = canFertilize ? (defN / 0.46) + (meta.bU * 0.3) : 0;
     let ssp = canFertilize ? (defP / 0.16) + (meta.bS * 0.3) : 0;
     let mop = canFertilize ? (defK / 0.60) + (meta.bM * 0.3) : 0;
@@ -423,7 +310,9 @@ const FarmAdvisor = () => {
       if (parseFloat(cur.temp) > (profile.temperature?.max || 35)) { urea *= 0.9; fertReasons.push("High heat reduction"); }
       if (parseFloat(cur.moisture) < (profile.moisture?.min || 20)) { urea *= 1.1; fertReasons.push("Low moisture adjustment"); }
     }
-    const fertReason = canFertilize ? (fertReasons.length > 0 ? fertReasons.join(" • ") : "Standard biological dose") : "Connect NPK sensors for analysis";
+    const fertReason = canFertilize ? (fertReasons.length > 0 ? fertReasons.join(" • ") : (fertEntry?.weather || "Standard biological dose")) : "OFFLINE - CONNECT NPK SENSORS";
+
+    // ─── 🍃 COMPOST ENGINE ──────────────────────────────────────────────────
     const canCompost = isAvailableLoc(cur.moisture) && isAvailableLoc(cur.ph);
     let compost = canCompost ? meta.bC : 0;
     const cReasons = [];
@@ -432,14 +321,61 @@ const FarmAdvisor = () => {
       if (String(meta.soil).includes("Sandy")) { compost += 2; cReasons.push("Sandy soil"); }
       if (isAvailableLoc(cur.n) && parseFloat(cur.n) < (profile.n?.min || 50)) { compost += 1; cReasons.push("N-Deficiency"); }
     }
-    const compostReason = canCompost ? (cReasons.length > 0 ? cReasons.join(" + ") : "Ideal field balance") : "Connect Soil/pH sensors";
+    const compostReason = canCompost ? (cReasons.length > 0 ? cReasons.join(" + ") : (fertEntry?.soil || "Ideal field balance")) : "OFFLINE - CONNECT SOIL SENSORS";
 
-    const detectedPests = [{ 
-      n: profile.pest || 'Standard Control', 
-      s: 'High' , 
-      tm: 0, hm: 0, rm: 0, 
-      r: `Industrial recommendation for ${selectedCrop}` 
-    }];
+    // ─── 🛡️ PEST ENGINE (OFFLINE AWARE) ──────────────────────────────────────
+    const canAnalyzePest = isAvailableLoc(cur.temp) || isAvailableLoc(cur.hum) || isAvailableLoc(cur.moisture);
+    const checkActiveTrigger = (trigger, val, type) => {
+      if (!trigger || trigger === '---') return false;
+      const t = trigger.toLowerCase();
+      const v = parseFloat(val);
+      if (isNaN(v)) return false;
+      if (type === 'temp') {
+        if (t.includes('warm') && v > 26) return true;
+        if (t.includes('hot') && v > 32) return true;
+        if (t.includes('cool') && v < 22) return true;
+      }
+      if (type === 'hum') {
+        if (t.includes('humid') && v > 75) return true;
+        if (t.includes('dry') && v < 40) return true;
+      }
+      if (type === 'moist') {
+        if ((t.includes('wet') || t.includes('high')) && v > 70) return true;
+        if (t.includes('dry') && v < 30) return true;
+      }
+      return false;
+    };
+
+    const pestEntry = profile.pest && typeof profile.pest === 'object' ? profile.pest : null;
+    const isThreatActive = canAnalyzePest && pestEntry && (
+      checkActiveTrigger(pestEntry.weather, cur.temp, 'temp') || 
+      checkActiveTrigger(pestEntry.weather, cur.hum, 'hum') || 
+      checkActiveTrigger(pestEntry.water, cur.moisture, 'moist')
+    );
+
+    const detectedPests = !canAnalyzePest ? [{
+      n: 'Sensor Offline',
+      s: 'OFFLINE',
+      isActive: false,
+      r: 'Connect weather & soil sensors for threat detection.',
+      stage: '---'
+    }] : (pestEntry ? [{
+      n: pestEntry.most || pestEntry.all?.split(',')[0] || 'Standard Pest',
+      s: isThreatActive ? 'ACTIVE THREAT' : 'POTENTIAL',
+      isActive: isThreatActive,
+      tm: pestEntry.weather || 'Varies',
+      hm: pestEntry.water || 'Varies',
+      r: pestEntry.others || 'General precaution',
+      stage: pestEntry.trigger || 'All stages',
+      all: pestEntry.all
+    }] : [{ 
+      n: typeof profile.pest === 'string' ? profile.pest : 'Standard Control', 
+      s: 'PREVENTATIVE', 
+      isActive: false,
+      tm: 'Standard', hm: 'Standard', 
+      r: `Apply ${typeof profile.pest === 'string' ? profile.pest : 'standard treatment'} as per industrial schedule.`,
+      stage: 'Any'
+    }]);
 
     const confidence = Math.round((sensors.filter(s => s.type === 'good').length / sensors.length) * 100);
 
@@ -532,15 +468,17 @@ const FarmAdvisor = () => {
       fertilizer: {
         isValid: canFertilize,
         urea: urea * area, ssp: ssp * area, mop: mop * area,
-        product: profile.fert,
-        reason: fertReason
+        product: fertEntry?.common || (typeof profile.fert === 'string' ? profile.fert : 'NPK Mix'),
+        reason: fertReason,
+        stage: fertEntry?.stage || 'Vegetative'
       },
       compost: {
         isValid: canCompost,
         total: compost * area,
         perAcre: compost,
-        product: profile.comp,
-        reason: compostReason
+        product: fertEntry?.compost || (typeof profile.comp === 'string' ? profile.comp : 'Farmyard Manure'),
+        reason: compostReason,
+        others: fertEntry?.others || 'No additional notes'
       },
       pests: {
         detected: detectedPests
@@ -581,29 +519,38 @@ const FarmAdvisor = () => {
           }}
         >
           {/* TOP: Crop & Meta */}
-          <div style={{ marginBottom: '1.5rem' }}>
+          <div style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div 
               onClick={() => setIsSheetOpen(true)}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginBottom: '10px' }}
+              style={{ 
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
+                background: '#F8FAFC', padding: '12px 16px', borderRadius: '16px',
+                border: '1px solid rgba(0,0,0,0.03)', cursor: 'pointer'
+              }}
             >
-              <h1 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '-0.02em', margin: 0 }}>
-                {formatCropName(selectedCrop)}
-              </h1>
-              <ChevronDown size={20} color="#64748B" style={{ marginTop: '2px' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                 <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: getCropIcon(brain.meta.type, selectedCrop).color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {React.createElement(getCropIcon(brain.meta.type, selectedCrop).icon, { size: 18, color: 'white' })}
+                 </div>
+                 <h1 style={{ fontSize: '1.25rem', fontWeight: 950, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '-0.01em', margin: 0 }}>
+                  {formatCropName(selectedCrop)}
+                 </h1>
+              </div>
+              <ChevronDown size={20} color="#94A3B8" />
             </div>
 
-            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <MapPin size={14} color={COLORS.danger} />
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569' }}>{user?.location || 'MAKAUT, WB'}</span>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', padding: '0 4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(239, 68, 68, 0.05)', padding: '4px 10px', borderRadius: '8px' }}>
+                <MapPin size={12} color={COLORS.danger} />
+                <span style={{ fontSize: '0.7rem', fontWeight: 850, color: COLORS.danger }}>{user?.location || 'MAKAUT, WB'}</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                {React.createElement(getCropIcon(brain.meta.type, selectedCrop).icon, { size: 14, color: getCropIcon(brain.meta.type, selectedCrop).color })}
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: getCropIcon(brain.meta.type, selectedCrop).color }}>{brain.meta.type}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(16, 185, 129, 0.05)', padding: '4px 10px', borderRadius: '8px' }}>
+                <Activity size={12} color={COLORS.primary} />
+                <span style={{ fontSize: '0.7rem', fontWeight: 850, color: COLORS.primary }}>{brain.meta.type}</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                {React.createElement(getDemandIcon(brain.demand), { size: 14, color: getDemandColor(brain.demand) })}
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: getDemandColor(brain.demand) }}>{brain.demand} Demand</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(14, 165, 233, 0.05)', padding: '4px 10px', borderRadius: '8px' }}>
+                {React.createElement(getDemandIcon(brain.demand), { size: 12, color: getDemandColor(brain.demand) })}
+                <span style={{ fontSize: '0.7rem', fontWeight: 850, color: getDemandColor(brain.demand) }}>{brain.demand} Demand</span>
               </div>
             </div>
           </div>
@@ -623,25 +570,43 @@ const FarmAdvisor = () => {
             </div>
           </div>
 
-          {/* METRICS STRIP */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '1rem' }}>
-            <div>
-               <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', marginBottom: '4px' }}>Confidence</div>
-               <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1E293B' }}>{brain.confidence > 0 ? (brain.confidence > 80 ? 'Strong' : 'Medium') : '---'} <span style={{ color: '#94A3B8', fontWeight: 500 }}>•</span> {brain.confidence > 0 ? `${brain.confidence}%` : '---'}</div>
-            </div>
-            <div>
-               <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', marginBottom: '4px' }}>Match Score</div>
-               <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1E293B' }}>{brain.matchScore > 0 ? (brain.matchScore > 80 ? 'Good' : 'Fair') : '---'} <span style={{ color: '#94A3B8', fontWeight: 500 }}>•</span> {brain.matchScore > 0 ? `${brain.matchScore}%` : '---'}</div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-               <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', marginBottom: '4px' }}>Status</div>
-               <div style={{ fontSize: '0.9rem', fontWeight: 800, color: brain.recColor }}>{brain.matchScore > 0 ? (brain.matchScore > 50 ? '✔ Suitable' : '✘ Risky') : '---'}</div>
-            </div>
+          {/* 📊 HIGH-FIDELITY METRICS DASHBOARD */}
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 1fr 1fr', 
+            gap: '12px', 
+            marginBottom: '0.5rem' 
+          }}>
+            {[
+              { label: 'Confidence', val: brain.confidence, type: brain.confidence > 80 ? 'Strong' : 'Medium', color: '#6366F1' },
+              { label: 'Match Score', val: brain.matchScore, type: brain.matchScore > 80 ? 'Good' : 'Fair', color: COLORS.secondary },
+              { label: 'Suitability', val: brain.matchScore, type: brain.matchScore > 50 ? 'Suitable' : 'Risky', color: brain.recColor }
+            ].map((m, i) => (
+              <div key={i} style={{ 
+                background: '#F8FAFC', 
+                borderRadius: '16px', 
+                padding: '12px',
+                border: `1px solid rgba(0,0,0,0.03)`,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '4px'
+              }}>
+                <span style={{ fontSize: '0.6rem', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{m.label}</span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                  <span style={{ fontSize: '1rem', fontWeight: 950, color: '#1E293B' }}>
+                    {m.val > 0 ? (m.label === 'Suitability' ? (m.type === 'Suitable' ? '✔' : '✘') : `${m.val}%`) : '---'}
+                  </span>
+                  <span style={{ fontSize: '0.65rem', fontWeight: 800, color: m.color }}>{m.val > 0 ? m.type : 'Offline'}</span>
+                </div>
+                <div style={{ width: '100%', height: '3px', background: '#E2E8F0', borderRadius: '2px', overflow: 'hidden', marginTop: '4px' }}>
+                  <motion.div 
+                    initial={{ width: 0 }} animate={{ width: `${m.val}%` }}
+                    style={{ height: '100%', background: m.color }} 
+                  />
+                </div>
+              </div>
+            ))}
           </div>
-
-
-
-
         </motion.div>
       </div>
 
@@ -783,7 +748,13 @@ const FarmAdvisor = () => {
               </div>
               <div style={{ padding: '12px', borderRadius: '16px', background: '#F1F5F9', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{ background: '#FFFFFF', padding: '6px', borderRadius: '8px' }}><Sparkles size={14} color={COLORS.primary} /></div>
-                <span style={{ fontSize: '0.7rem', fontWeight: 850, color: COLORS.textMain }}>Recommendation: <span style={{ color: COLORS.primaryDark }}>{brain.fertilizer.product}</span></span>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 850, color: COLORS.textMain }}>Recommendation: <span style={{ color: COLORS.primaryDark }}>{brain.fertilizer.product}</span></span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                    <Clock size={10} color="#64748B" />
+                    <span style={{ fontSize: '0.6rem', fontWeight: 700, color: '#64748B' }}>Target Stage: {brain.fertilizer.stage}</span>
+                  </div>
+                </div>
               </div>
             </>
           )}
@@ -818,6 +789,14 @@ const FarmAdvisor = () => {
                 <div style={{ background: '#FFFFFF', padding: '6px', borderRadius: '8px' }}><Sprout size={14} color={COLORS.primary} /></div>
                 <span style={{ fontSize: '0.7rem', fontWeight: 850, color: COLORS.textMain }}>Ideal Method: <span style={{ color: COLORS.primaryDark }}>{brain.compost.product}</span></span>
               </div>
+
+              {brain.compost.others !== 'No additional notes' && (
+                <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px dashed #E2E8F0' }}>
+                  <p style={{ margin: 0, fontSize: '0.65rem', color: COLORS.textMuted, fontWeight: 700, lineHeight: 1.4 }}>
+                    <span style={{ color: COLORS.textMain, fontWeight: 850 }}>Pro Tip:</span> {brain.compost.others}
+                  </p>
+                </div>
+              )}
             </>
           )}
         </motion.div>
@@ -836,15 +815,53 @@ const FarmAdvisor = () => {
           {brain.pests.detected.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {brain.pests.detected.map((p, i) => (
-                <div key={i} style={{ padding: '16px', borderRadius: '22px', background: '#F8FAFC', border: '1px solid rgba(0,0,0,0.02)', marginBottom: '10px' }}>
+                <div key={i} style={{ 
+                  padding: '16px', borderRadius: '22px', 
+                  background: p.isActive ? `${COLORS.danger}05` : '#F8FAFC', 
+                  border: p.isActive ? `1px solid ${COLORS.danger}20` : '1px solid rgba(0,0,0,0.02)',
+                  marginBottom: '10px' 
+                }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <Bug size={16} color={COLORS.danger} />
+                      <div style={{ padding: '6px', borderRadius: '8px', background: p.isActive ? COLORS.danger : `${COLORS.danger}20` }}>
+                        <Bug size={16} color={p.isActive ? 'white' : COLORS.danger} />
+                      </div>
                       <span style={{ fontSize: '0.8rem', fontWeight: 950, color: COLORS.textMain }}>{p.n}</span>
                     </div>
-                    <span style={{ fontSize: '0.6rem', fontWeight: 950, padding: '4px 10px', borderRadius: '20px', background: '#FEF2F2', color: COLORS.danger }}>{p.s} RISK</span>
+                    <span style={{ 
+                      fontSize: '0.6rem', fontWeight: 950, padding: '4px 10px', borderRadius: '20px', 
+                      background: p.isActive ? COLORS.danger : '#E2E8F0', 
+                      color: p.isActive ? 'white' : COLORS.textMuted 
+                    }}>
+                      {p.s}
+                    </span>
                   </div>
-                  <p style={{ margin: 0, fontSize: '0.7rem', color: COLORS.textMuted, fontWeight: 750, lineHeight: 1.4 }}>{p.r}</p>
+                  
+                  <p style={{ margin: '8px 0', fontSize: '0.7rem', color: COLORS.textMuted, fontWeight: 750, lineHeight: 1.4 }}>
+                    <span style={{ color: COLORS.textMain }}>Warning:</span> {p.r}
+                  </p>
+
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '10px' }}>
+                    <div style={{ background: '#EEF2FF', padding: '4px 10px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <CloudRain size={12} color="#6366F1" />
+                      <span style={{ fontSize: '0.65rem', fontWeight: 850, color: '#4F46E5' }}>{p.tm}</span>
+                    </div>
+                    <div style={{ background: '#ECFDF5', padding: '4px 10px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Droplets size={12} color="#10B981" />
+                      <span style={{ fontSize: '0.65rem', fontWeight: 850, color: '#059669' }}>{p.hm}</span>
+                    </div>
+                    <div style={{ background: '#FFF7ED', padding: '4px 10px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Target size={12} color="#F97316" />
+                      <span style={{ fontSize: '0.65rem', fontWeight: 850, color: '#C2410C' }}>{p.stage}</span>
+                    </div>
+                  </div>
+
+                  {p.all && (
+                    <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed #E2E8F0' }}>
+                      <span style={{ fontSize: '0.6rem', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase' }}>Secondary Threats:</span>
+                      <p style={{ margin: '4px 0 0 0', fontSize: '0.65rem', color: '#64748B', fontWeight: 600 }}>{p.all}</p>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
