@@ -64,20 +64,29 @@ export const AppProvider = ({ children }) => {
   const [lastGlobalUpdate, setLastGlobalUpdate] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [actuators, setActuators] = useState({
-    [ACTUATORS.PUMP]: false,
-    [ACTUATORS.VALVE]: false,
+    [ACTUATORS.PUMP]:    false,
+    [ACTUATORS.VALVE]:   false,
     [ACTUATORS.SPRAYER]: false,
-    [ACTUATORS.BUZZER]: false,
+    [ACTUATORS.BUZZER]:  false,
+    [ACTUATORS.DISPLAY]: false,
+    [ACTUATORS.LIGHT]:   false,
   });
 
   const [farmInfo, setFarmInfo] = useState(() => {
     try {
       const saved = localStorage.getItem('agrisense_branding');
-      const data = saved ? JSON.parse(saved) : {
-        name: MASTER_CONFIG.FARM_NAME,
-        projectName: MASTER_CONFIG.PROJECT_NAME,
-        tagline: MASTER_CONFIG.TAGLINE,
-      };
+      const parsed = saved ? JSON.parse(saved) : null;
+      // Migrate stale defaults from old installs
+      if (parsed?.projectName === 'Agri Sense' || parsed?.name === 'MAKAUT, WB') {
+        localStorage.removeItem('agrisense_branding');
+      }
+      const data = (parsed?.projectName && parsed.projectName !== 'Agri Sense')
+        ? parsed
+        : {
+            name: MASTER_CONFIG.FARM_NAME,
+            projectName: MASTER_CONFIG.PROJECT_NAME,
+            tagline: MASTER_CONFIG.TAGLINE,
+          };
       data.version = "17.1.0"; 
       return data;
     } catch (e) {
@@ -151,6 +160,25 @@ export const AppProvider = ({ children }) => {
     setTimeout(() => setConnectivityStatus('Online'), 2000);
   };
 
+  const syncDeviceId = (codename, clientIdentifier) => {
+    const toId = (raw) => raw?.trim() ? raw.trim().toLowerCase().replace(/\s+/g, '_') : null;
+    const primary   = toId(codename)   || 'innovatex';
+    const secondary = toId(clientIdentifier) || 'semicolon';
+    console.log(`🔐 [PAIRING] Auth: ${primary} / ${secondary}`);
+    setConnectivityStatus('Pairing...');
+    mqttService.connect(
+      primary, secondary,
+      (topic, data) => {
+        if (!data) return;
+        setSensorData(prev => processMqttMessage(topic, data, prev));
+        setIsDataLoading(false);
+        setLastGlobalUpdate(new Date().toLocaleTimeString());
+        setConnectivityStatus('Online');
+      },
+      (status) => setMqttStatus(status)
+    );
+  };
+
   // 1. Derived Health Logic (Pure Derivation)
   const systemHealth = React.useMemo(() => {
     if (!sensorData) return INITIAL_SYSTEM_HEALTH;
@@ -189,7 +217,12 @@ export const AppProvider = ({ children }) => {
   // 4. MQTT Linkage
   useEffect(() => {
     const bootTimer = setTimeout(() => {
+      const toId = (raw) => raw?.trim() ? raw.trim().toLowerCase().replace(/\s+/g, '_') : null;
+      const primary   = toId(farmInfo?.projectName) || 'innovatex';
+      const secondary = toId(farmInfo?.name)        || 'semicolon';
+
       mqttService.connect(
+        primary, secondary,
         (topic, data) => {
           if (!data) return;
           console.log("📥 [MQTT] Received:", topic, data);
@@ -302,7 +335,7 @@ export const AppProvider = ({ children }) => {
       isDarkMode, toggleTheme, sensorData, apiWeather, apiForecast, recommendations, sensorHistory,
       actuators, toggleActuator, isSidebarOpen, setIsSidebarOpen, ACTUATORS,
       farmHealthScore, systemHealth, connectivityStatus, cloudSyncStatus, profileMeta, updateProfileMeta,
-      isDataLoading, lastGlobalUpdate, mqttStatus, syncData,
+      isDataLoading, lastGlobalUpdate, mqttStatus, syncData, syncDeviceId,
       devices, systemOverview
     }}>
       {children}

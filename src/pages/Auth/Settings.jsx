@@ -65,7 +65,17 @@ const SettingItem = ({ icon: Icon, label, value, type = 'text', onClick, enabled
 // ─── MAIN SCREEN ──────────────────────────────────────────────────────────
 
 const Settings = () => {
-  const { logout, isDarkMode, toggleTheme, farmInfo, updateBranding, profileMeta, updateProfileMeta } = useApp();
+  const { logout, isDarkMode, toggleTheme, farmInfo, updateBranding, syncDeviceId } = useApp();
+  const [codename, setCodename] = React.useState(farmInfo?.projectName || '');
+  const [clientId, setClientId] = React.useState(farmInfo?.name || '');
+  const [paired, setPaired] = React.useState(false);
+
+  const handleSavePair = () => {
+    updateBranding({ projectName: codename, name: clientId });
+    syncDeviceId(codename, clientId);
+    setPaired(true);
+    setTimeout(() => setPaired(false), 3000);
+  };
 
   return (
     <div style={{ padding: '1.5rem', background: COLORS.bg, minHeight: '100%', paddingBottom: '0' }}>
@@ -75,21 +85,39 @@ const Settings = () => {
         <div style={{ padding: '16px' }}>
            <div style={{ display: 'grid', gap: '16px' }}>
               <div>
-                 <p style={{ fontSize: '0.55rem', fontWeight: 900, color: COLORS.subtext, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Project Codename</p>
+                 <p style={{ fontSize: '0.55rem', fontWeight: 900, color: COLORS.subtext, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Project Codename (Device ID)</p>
                  <input 
-                    type="text" value={farmInfo?.projectName || ''} 
-                    onChange={(e) => updateBranding({ projectName: e.target.value })}
+                    type="text" value={codename} 
+                    onChange={(e) => setCodename(e.target.value)}
+                    placeholder="e.g. innovatex"
                     style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: `1px solid ${COLORS.border}`, background: '#F8FAFC', fontWeight: 700, color: COLORS.text, fontSize: '0.9rem', outline: 'none' }} 
                  />
               </div>
               <div>
                  <p style={{ fontSize: '0.55rem', fontWeight: 900, color: COLORS.subtext, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Client Identifier</p>
                  <input 
-                    type="text" value={farmInfo?.name || ''} 
-                    onChange={(e) => updateBranding({ name: e.target.value })}
+                    type="text" value={clientId} 
+                    onChange={(e) => setClientId(e.target.value)}
                     style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: `1px solid ${COLORS.border}`, background: '#F8FAFC', fontWeight: 700, color: COLORS.text, fontSize: '0.9rem', outline: 'none' }} 
                  />
               </div>
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={handleSavePair}
+                style={{
+                  width: '100%', padding: '13px', borderRadius: '12px', border: 'none', cursor: 'pointer',
+                  background: paired ? '#ECFDF5' : COLORS.primary,
+                  color: paired ? COLORS.primary : 'white',
+                  fontWeight: 800, fontSize: '0.85rem',
+                  transition: 'all 0.3s',
+                  boxShadow: paired ? 'none' : `0 4px 14px ${COLORS.primary}40`
+                }}
+              >
+                {paired ? '✅ PAIRED & CONNECTED' : '🔗 SAVE & PAIR HARDWARE'}
+              </motion.button>
+              <p style={{ fontSize: '0.62rem', color: COLORS.subtext, fontWeight: 600, textAlign: 'center', marginTop: '-8px' }}>
+                Must match <code style={{ background: '#F1F5F9', padding: '1px 5px', borderRadius: '4px' }}>device_id</code> in your ESP32 firmware
+              </p>
            </div>
         </div>
       </SettingSection>      {/* 2. INTERFACE & AI */}

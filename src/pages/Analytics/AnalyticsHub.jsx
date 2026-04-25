@@ -86,7 +86,13 @@ const AnalyticsHub = () => {
 
   const getIsOffline = (type) => {
     const node = devices[`${type}_node`];
-    return !node || node.status === 'OFFLINE';
+    const deviceOffline = !node || node.status === 'OFFLINE';
+    if (!deviceOffline) return false;
+    // Fallback: if sensorHistory has data for this type, it's NOT offline
+    if (type === 'soil') return !sensorData?.soil?.moisture && sensorHistory.length === 0;
+    if (type === 'weather') return !sensorData?.weather?.temp && sensorHistory.length === 0;
+    if (type === 'storage') return !sensorData?.storage?.temp && sensorHistory.length === 0;
+    return deviceOffline;
   };
 
   const renderGrid = (tabId) => {

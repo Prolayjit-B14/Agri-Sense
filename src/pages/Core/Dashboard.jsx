@@ -255,34 +255,34 @@ const Dashboard = () => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.1rem', marginBottom: '1.8rem' }}>
         <SensorCard
           title="Soil Health" nodeType="soil"
-          value={devices?.['soil_node']?.status !== 'OFFLINE' && systemHealth?.soil !== null ? `${Math.round(systemHealth?.soil || 0)} %` : '---'}
+          value={systemHealth?.soil != null ? `${Math.round(systemHealth.soil || 0)} %` : '---'}
           icon={Sprout} color="#10B981"
-          status={devices?.['soil_node']?.status}
-          score={devices?.['soil_node']?.status !== 'OFFLINE' ? systemHealth?.soil : null}
+          status={devices?.['soil_node']?.status || (sensorData?.soil?.moisture ? 'ACTIVE' : 'OFFLINE')}
+          score={systemHealth?.soil}
           onClick={() => navigate('/soil-monitoring')}
         />
         <SensorCard
           title="Irrigation Health" nodeType="irrigation"
-          value={devices?.['water_node']?.status !== 'OFFLINE' && systemHealth?.water !== null ? `${Math.round(systemHealth?.water || 0)} %` : '---'}
+          value={systemHealth?.water != null ? `${Math.round(systemHealth.water || 0)} %` : '---'}
           icon={Droplets} color="#0EA5E9"
-          status={devices?.['water_node']?.status}
-          score={devices?.['water_node']?.status !== 'OFFLINE' ? systemHealth?.water : null}
+          status={devices?.['water_node']?.status || (sensorData?.water?.level ? 'ACTIVE' : 'OFFLINE')}
+          score={systemHealth?.water}
           onClick={() => navigate('/irrigation')}
         />
         <SensorCard
           title="Weather Health" nodeType="weather"
-          value={devices?.['weather_node']?.status !== 'OFFLINE' && systemHealth?.weather !== null ? `${Math.round(systemHealth?.weather || 0)} %` : '---'}
+          value={systemHealth?.weather != null ? `${Math.round(systemHealth.weather || 0)} %` : '---'}
           icon={CloudRain} color="#14B8A6"
-          status={devices?.['weather_node']?.status}
-          score={devices?.['weather_node']?.status !== 'OFFLINE' ? systemHealth?.weather : null}
+          status={devices?.['weather_node']?.status || (sensorData?.weather?.temp ? 'ACTIVE' : 'OFFLINE')}
+          score={systemHealth?.weather}
           onClick={() => navigate('/weather')}
         />
         <SensorCard
           title="Storage Health" nodeType="storage"
-          value={devices?.['storage_node']?.status !== 'OFFLINE' && systemHealth?.storage !== null ? `${Math.round(systemHealth?.storage || 0)} %` : '---'}
+          value={systemHealth?.storage != null ? `${Math.round(systemHealth.storage || 0)} %` : '---'}
           icon={Archive} color="#8B5CF6"
-          status={devices?.['storage_node']?.status}
-          score={devices?.['storage_node']?.status !== 'OFFLINE' ? systemHealth?.storage : null}
+          status={devices?.['storage_node']?.status || (sensorData?.storage?.temp ? 'ACTIVE' : 'OFFLINE')}
+          score={systemHealth?.storage}
           onClick={() => navigate('/storage-hub')}
         />
       </div>

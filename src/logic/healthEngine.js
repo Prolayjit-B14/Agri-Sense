@@ -6,10 +6,12 @@
 // ─── THRESHOLDS & SCORING LOGIC ─────────────────────────────────────────────
 
 export const ACTUATORS = {
-  PUMP: 'PUMP',
-  VALVE: 'VALVE',
+  PUMP:    'PUMP',
+  VALVE:   'VALVE',
   SPRAYER: 'SPRAYER',
-  BUZZER: 'BUZZER'
+  BUZZER:  'BUZZER',
+  DISPLAY: 'DISPLAY',
+  LIGHT:   'LIGHT'
 };
 
 /**

@@ -28,8 +28,7 @@ import Settings from './pages/Auth/Settings';
 
 import Dashboard from './pages/Core/Dashboard';
 import AlertCenter from './pages/Core/AlertCenter';
-import FarmMap from './pages/Core/FarmMap';
-import Traceability from './pages/Core/Traceability';
+
 
 import SoilMonitor from './pages/Monitoring/SoilMonitor';
 import WeatherMonitor from './pages/Monitoring/WeatherMonitor';
@@ -98,19 +97,19 @@ const MainLayout = ({ children }) => {
   const titles = {
     '/dashboard': 'Dashboard',
     '/analytics': 'Analytics Hub',
-    '/irrigation': 'Irrigation System',
-    '/weather': 'Weather Station',
-    '/soil-monitoring': 'Soil Monitor',
-    '/storage-hub': 'Storage Monitor',
-    '/device-area': 'Device Manager',
-    '/camera': 'Visual Monitor',
-    '/alerts': 'Alert Center',
-    '/profile': 'User Profile',
-    '/settings': 'Settings',
-    '/reports': 'Farm Reports',
+    '/irrigation':             'Irrigation System',
+    '/weather':                'Weather Station',
+    '/soil-monitoring':        'Soil Monitor',
+    '/storage-hub':            'Storage Hub',
+    '/device-area':            'Device Network',
+    '/camera':                 'Field Vision',
+    '/alerts':                 'Alert Center',
+    '/profile':                'My Profile',
+    '/settings':               'System Settings',
+    '/reports':                'Farm Reports',
     '/precision-soil-testing': 'Soil Forensics',
-    '/crop-advisor': 'Farm Advisor',
-    '/traceability': 'Product Journey'
+    '/crop-advisor':           'AI Field Advisor',
+    '/analytics':              'Analytics Hub',
   };
 
   return (
@@ -183,7 +182,6 @@ const AppRoutes = () => {
       <Route path="/weather" element={<MainLayout><WeatherMonitor /></MainLayout>} />
       <Route path="/precision-soil-testing" element={<MainLayout><SoilForensics /></MainLayout>} />
       <Route path="/crop-advisor" element={<MainLayout><FarmAdvisor /></MainLayout>} />
-      <Route path="/traceability" element={<MainLayout><Traceability /></MainLayout>} />
       <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
     </Routes>
   );

@@ -23,13 +23,20 @@ class MqttService {
     this.onStatus = null;
   }
 
-  connect(onMessageCallback, onStatusCallback) {
-    if (this.client) return;
+  connect(primaryId, secondaryId, onMessageCallback, onStatusCallback) {
+    if (this.client) {
+      this.client.end();
+      this.client = null;
+    }
     
-    this.onMessage = onMessageCallback;
-    this.onStatus = onStatusCallback;
+    // Both IDs required — acts like username + password for the hardware
+    this.primaryId   = (primaryId   || 'innovatex').trim().toLowerCase().replace(/\s+/g, '_');
+    this.secondaryId = (secondaryId || 'semicolon').trim().toLowerCase().replace(/\s+/g, '_');
+    this.onMessage   = onMessageCallback;
+    this.onStatus    = onStatusCallback;
 
-    console.log('📡 MQTT: Initiating connection to', MQTT_CONFIG.host);
+    const pairedTopic = `agrisense/${this.primaryId}/${this.secondaryId}/#`;
+    console.log(`🔐 MQTT: Pairing with [${pairedTopic}]`);
     this.onStatus?.('connecting');
 
     try {
@@ -44,8 +51,8 @@ class MqttService {
       this.client.on('connect', () => {
         console.log('✅ MQTT: Cloud Bridge Established');
         this.onStatus?.('connected');
-        this.client.subscribe('agrisense/#', (err) => {
-          if (!err) console.log('🛰️ MQTT: Subscribed to Wildcard [agrisense/#]');
+        this.client.subscribe(pairedTopic, (err) => {
+          if (!err) console.log(`🔐 MQTT: Authenticated & Subscribed to [${pairedTopic}]`);
           else console.error('❌ MQTT: Subscription Failed', err);
         });
       });
@@ -83,8 +90,8 @@ class MqttService {
   }
 
   publishCommand(action) {
-    if (this.client) {
-      const topic = MASTER_CONFIG.FIELD_TOPIC_COMMANDS || 'agrisense/field_a/commands';
+    if (this.client && this.primaryId && this.secondaryId) {
+      const topic = `agrisense/${this.primaryId}/${this.secondaryId}/commands`;
       const message = JSON.stringify(action);
       this.client.publish(topic, message);
       console.log(`🕹️ MQTT: Command Published [${topic}]:`, action);

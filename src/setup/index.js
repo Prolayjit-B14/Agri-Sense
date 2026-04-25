@@ -9,8 +9,8 @@
 
 export const MASTER_CONFIG = {
   // 🎨 BRANDING & IDENTITY
-  PROJECT_NAME: "Agri Sense",
-  FARM_NAME: "MAKAUT, WB",
+  PROJECT_NAME: "innovatex",
+  FARM_NAME: "semicolon",
   TAGLINE: "For Better Farming",
   FOOTER_CREDIT: "by Prolayjit Biswas",
   VERSION: "2.9.0",
@@ -57,9 +57,11 @@ export const MASTER_CONFIG = {
 
   // 🕹️ ACTUATOR COMMANDS (For toggleActuator logic)
   ACTUATOR_COMMANDS: {
-    'PUMP': { ON: 'PUMP_ON', OFF: 'PUMP_OFF' },
-    'VALVE': { ON: 'VALVE_OPEN', OFF: 'VALVE_CLOSE' },
-    'BUZZER': { ON: 'BUZZER_ON', OFF: 'BUZZER_OFF' },
-    'SPRAYER': { ON: 'SPRAY_ON', OFF: 'SPRAY_OFF' }
+    'PUMP':    { ON: 'PUMP_ON',    OFF: 'PUMP_OFF' },
+    'VALVE':   { ON: 'VALVE_OPEN', OFF: 'VALVE_CLOSE' },
+    'BUZZER':  { ON: 'BUZZER_ON',  OFF: 'BUZZER_OFF' },
+    'SPRAYER': { ON: 'SPRAY_ON',   OFF: 'SPRAY_OFF' },
+    'DISPLAY': { ON: 'DISPLAY_ON', OFF: 'DISPLAY_OFF' },
+    'LIGHT':   { ON: 'LIGHT_ON',   OFF: 'LIGHT_OFF' }
   }
 };
