@@ -245,6 +245,11 @@ const Login = () => {
 
       </motion.div>
 
+      {/* VERSION INFO */}
+      <div style={{ marginTop: '2rem', color: 'rgba(255,255,255,0.2)', fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.1em' }}>
+        AGRISENSE PRO • v17.1.0
+      </div>
+
     </div>
   );
 };

@@ -206,7 +206,14 @@ export const AppProvider = ({ children }) => {
   const [sensorHistory, setSensorHistory] = useState(() => {
     try {
       const saved = localStorage.getItem('agrisense_history');
-      return saved ? JSON.parse(saved) : [];
+      if (!saved) return [];
+      const parsed = JSON.parse(saved);
+      // 🧪 MIGRATION: Clear history if it's corrupted (timestamp: 0 or missing)
+      if (Array.isArray(parsed) && parsed.length > 0 && (!parsed[0].timestamp || parsed[0].timestamp < 1000000)) {
+        localStorage.removeItem('agrisense_history');
+        return [];
+      }
+      return Array.isArray(parsed) ? parsed : [];
     } catch (e) {
       return [];
     }
@@ -268,18 +275,34 @@ export const AppProvider = ({ children }) => {
     return () => clearTimeout(timer);
   }, [sensorHistory]);
 
+  const lastHistoryUpdate = useRef(0);
+  const [, setTick] = useState(0);
+
+  // 🚀 HEARTBEAT: Force re-render every 5 seconds to keep Live charts moving
   useEffect(() => {
-    if (sensorData && (sensorData.soil || sensorData.weather)) {
+    const interval = setInterval(() => setTick(t => t + 1), 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const sensorDataRef = useRef(sensorData);
+  useEffect(() => { sensorDataRef.current = sensorData; }, [sensorData]);
+
+  // 🚀 PULSE ENGINE: Dedicated 5-second heartbeat for history logging
+  useEffect(() => {
+    const loggerInterval = setInterval(() => {
+      const currentData = sensorDataRef.current;
+      if (!currentData || (!currentData.soil && !currentData.weather)) return;
+
       setSensorHistory(prev => {
-        const timestamp = Date.now();
-        const lastEntry = prev[prev.length - 1];
-        if (lastEntry && JSON.stringify(lastEntry.soil) === JSON.stringify(sensorData.soil) && 
-            JSON.stringify(lastEntry.weather) === JSON.stringify(sensorData.weather)) return prev;
-            
-        return [...prev, { ...sensorData, timestamp }].slice(-2000);
+        const now = Date.now();
+        lastHistoryUpdate.current = now;
+        const newEntry = { ...currentData, timestamp: now };
+        return [...prev, newEntry].slice(-5000); 
       });
-    }
-  }, [sensorData]);
+    }, 5000); 
+    
+    return () => clearInterval(loggerInterval);
+  }, []); // Run once, uses ref for stable data access
 
   // 🛰️ DYNAMIC VISION ZONE SYNC: Inherit from profile/location
   useEffect(() => {

@@ -32,7 +32,14 @@ export const processMqttMessage = (topic, data, prev) => {
   const parts = topic.split('/');
   if (parts.length < 2) return prev;
 
-  const newState = JSON.parse(JSON.stringify(prev));
+  const newState = {
+    ...prev,
+    soil: { ...prev.soil, npk: { ...prev.soil.npk } },
+    weather: { ...prev.weather },
+    water: { ...prev.water },
+    storage: { ...prev.storage },
+    vision: { ...prev.vision }
+  };
   
   // 🛰️ NODE DETECTION (Robust Keyword Matching)
   let nodeType = 'unknown';

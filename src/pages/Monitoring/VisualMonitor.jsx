@@ -176,7 +176,6 @@ const VisualMonitor = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div style={{ display: 'flex', gap: '8px' }}>
               <div style={{ display: 'flex', gap: '8px' }}>
-                {deviceStatus === 'ACTIVE' && <Badge color={COLORS.danger} pulse>LIVE</Badge>}
                 <Badge color={deviceStatus === 'ACTIVE' ? COLORS.primary : COLORS.muted}>
                   {deviceStatus === 'ACTIVE' ? 'ONLINE' : deviceStatus}
                 </Badge>

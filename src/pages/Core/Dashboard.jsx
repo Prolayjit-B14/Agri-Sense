@@ -397,7 +397,7 @@ const Dashboard = () => {
           {[
             { key: ACTUATORS?.PUMP,   icon: Power,     label: 'Pump',   color: '#3B82F6', bg: '#EFF6FF' },
             { key: ACTUATORS?.BUZZER, icon: BellRing,  label: 'Buzzer', color: '#EF4444', bg: '#FEF2F2' },
-            { key: ACTUATORS?.LIGHT,  icon: Lightbulb, label: 'Light',  color: '#EAB308', bg: '#FEFCE8' },
+            { key: ACTUATORS?.LIGHT,  icon: Lightbulb, label: 'Light',  color: '#10B981', bg: '#ECFDF5' },
           ].map(({ key, icon: Icon, label, color, bg }) => {
             const isOn = actuators?.[key] ?? false;
             return (

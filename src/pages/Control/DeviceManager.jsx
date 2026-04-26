@@ -136,24 +136,8 @@ const NodeCard = ({ icon: Icon, label, color, isOnline, sensors, children }) => 
           {label}
         </span>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '4px',
-          padding: '3px 8px', borderRadius: '20px',
-          background: isOnline ? `${T.green}14` : `${T.grey}14`,
-        }}>
-          <PulseDot active={isOnline} size={5} />
-          <span style={{
-            fontSize: '0.5rem', fontWeight: 900,
-            color: isOnline ? T.green : T.grey,
-            textTransform: 'uppercase', letterSpacing: '0.07em',
-          }}>
-            {isOnline ? 'LIVE' : 'OFFLINE'}
-          </span>
-        </div>
         <SignalBars active={isOnline} />
       </div>
-    </div>
 
     {sensors && <SensorDotRow sensors={sensors} />}
     {children}
@@ -209,8 +193,8 @@ const NetworkHealthCard = ({ activeCount, totalCount, mqttStatus }) => {
           />
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
-          <span style={{ fontSize: '0.7rem', fontWeight: 900, color: T.green }}>🟢 {activeCount} Active</span>
-          <span style={{ fontSize: '0.7rem', fontWeight: 700, color: T.grey }}>⚪ {offlineCount} Offline</span>
+          <span style={{ fontSize: '0.7rem', fontWeight: 900, color: T.green }}>{activeCount} Active</span>
+          <span style={{ fontSize: '0.7rem', fontWeight: 700, color: T.grey }}>{offlineCount} Offline</span>
         </div>
       </div>
     </div>
@@ -278,36 +262,36 @@ const StatusTile = ({ icon: Icon, label, isOn, color }) => (
   <div
     style={{
       background: isOn ? color : T.card,
-      border: `2px solid ${isOn ? color : T.border}`,
-      borderRadius: '16px',
-      padding: '14px 8px',
+      border: `1px solid ${isOn ? color : T.border}`,
+      borderRadius: '14px',
+      padding: '10px 4px',
       display: 'flex', flexDirection: 'column',
-      alignItems: 'center', gap: '7px',
+      alignItems: 'center', gap: '5px',
       flex: 1,
-      boxShadow: isOn ? `0 4px 16px ${color}30` : '0 1px 6px rgba(0,0,0,0.04)',
-      transition: 'all 0.3s ease',
+      boxShadow: isOn ? `0 4px 12px ${color}25` : '0 1px 4px rgba(0,0,0,0.03)',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       minWidth: 0,
       userSelect: 'none',
       pointerEvents: 'none',
     }}
   >
     <div style={{
-      width: '36px', height: '36px', borderRadius: '12px',
-      background: isOn ? 'rgba(255,255,255,0.22)' : `${color}12`,
+      width: '30px', height: '30px', borderRadius: '10px',
+      background: isOn ? 'rgba(255,255,255,0.2)' : `${color}10`,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
-      <Icon size={17} color={isOn ? '#fff' : color} strokeWidth={2} />
+      <Icon size={14} color={isOn ? '#fff' : color} strokeWidth={2.5} />
     </div>
     <div style={{ textAlign: 'center' }}>
-      <div style={{ fontSize: '0.62rem', fontWeight: 800, color: isOn ? '#fff' : T.text }}>
+      <div style={{ fontSize: '0.55rem', fontWeight: 900, color: isOn ? '#fff' : T.text, textTransform: 'uppercase', letterSpacing: '0.02em' }}>
         {label}
       </div>
       <div style={{
-        fontSize: '0.48rem', fontWeight: 900,
-        color: isOn ? 'rgba(255,255,255,0.75)' : T.grey,
-        textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '2px',
+        fontSize: '0.45rem', fontWeight: 900,
+        color: isOn ? 'rgba(255,255,255,0.8)' : T.grey,
+        textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '1px',
       }}>
-        {isOn ? '● ON' : '○ OFF'}
+        {isOn ? 'ON' : 'OFF'}
       </div>
     </div>
   </div>
@@ -343,12 +327,12 @@ const ControlPanel = ({ actuators, mqttStatus }) => {
         <span style={{ fontSize: '0.78rem', fontWeight: 900, color: T.text }}>Control Panel</span>
       </div>
 
-      {/* 2×2 Status Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-        <StatusTile icon={BellRing}  label="Buzzer"  isOn={isBuzzerOn}  color={T.amber}  />
-        <StatusTile icon={Lightbulb} label="Light"   isOn={isLightOn}   color='#EAB308'  />
-        <StatusTile icon={Monitor}   label="Display" isOn={isDisplayOn} color={T.blue}   />
-        <StatusTile icon={Zap}       label="Pump"    isOn={isPumpOn}    color={T.green}  />
+      {/* 4-Column Status Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+        <StatusTile icon={BellRing}  label="Buzzer"  isOn={isBuzzerOn}  color="#EF4444"  />
+        <StatusTile icon={Lightbulb} label="Light"   isOn={isLightOn}   color={T.green}  />
+        <StatusTile icon={Zap}       label="Pump"    isOn={isPumpOn}    color={T.blue}   />
+        <StatusTile icon={Monitor}   label="Display" isOn={isDisplayOn} color={T.amber}  />
       </div>
     </div>
   );
@@ -392,8 +376,7 @@ const DeviceManager = () => {
   // ── Irrigation: Water Level only ──────────────────────────────────────────
   const irrigSensors = useMemo(() => [
     { label: 'Water Level', active: waterOnline && id.level != null },
-    { label: 'Pump',        active: waterOnline && actuators?.[ACTUATORS.PUMP] },
-  ], [waterOnline, id, actuators, ACTUATORS]);
+  ], [waterOnline, id]);
 
   // ── Storage: Temp, Humidity, Gas (MQ135) — NO level sensor ───────────────
   const storageSensors = useMemo(() => [
