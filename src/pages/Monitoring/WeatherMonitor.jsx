@@ -204,7 +204,7 @@ const WeatherMonitoring = () => {
         />
       </div>
 
-      {/* ─── REGIONAL & FORECAST (REMAIN AS IS BUT CLEANED) ─── */}
+      {/* ─── REGIONAL & FORECAST ─── */}
       <section style={{ background: 'white', borderRadius: '28px', padding: '1.5rem', border: `1px solid ${COLORS.border}`, marginBottom: '1.5rem' }}>
         <h3 style={{ fontSize: '0.75rem', fontWeight: 800, color: COLORS.text, marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Navigation size={18} color={COLORS.primary} /> Regional Data
@@ -226,7 +226,7 @@ const WeatherMonitoring = () => {
           <LineChart size={18} color={COLORS.primary} /> 5-Day Forecast
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {apiForecast.map((day, idx) => {
+          {(apiForecast || []).map((day, idx) => {
             const getIcon = (cond) => {
               const c = (cond || '').toLowerCase();
               if (c.includes('rain')) return <CloudRain size={16} color={COLORS.secondary} />;

@@ -47,11 +47,12 @@ export const AppProvider = ({ children }) => {
     'soil_node': processDeviceState('soil_node', 'soil', null),
     'weather_node': processDeviceState('weather_node', 'weather', null),
     'storage_node': processDeviceState('storage_node', 'storage', null),
-    'water_node': processDeviceState('water_node', 'water', null)
+    'water_node': processDeviceState('water_node', 'water', null),
+    'vision_node': processDeviceState('vision_node', 'vision', null)
   });
 
   const [systemOverview, setSystemOverview] = useState({
-    total_nodes: 4, active_nodes: 0, partial_nodes: 0, offline_nodes: 4,
+    total_nodes: 5, active_nodes: 0, partial_nodes: 0, offline_nodes: 5,
     overall_status: 'OFFLINE', health_percent: 0, nodes: []
   });
 
@@ -201,18 +202,95 @@ export const AppProvider = ({ children }) => {
   }, [sensorData]);
 
 
-  // 3. Sensor History Logger (Stateful Sync)
-  const [sensorHistory, setSensorHistory] = useState([]);
+  // 3. Sensor History Logger (Stateful Sync with Multi-Tab Persistence)
+  const [sensorHistory, setSensorHistory] = useState(() => {
+    try {
+      const saved = localStorage.getItem('agrisense_history');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  // 🏥 SYNC HISTORY ACROSS TABS
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'agrisense_history' && e.newValue) {
+        try {
+          const remoteHistory = JSON.parse(e.newValue);
+          setSensorHistory(prev => {
+            if (remoteHistory.length > prev.length) {
+              // Mark as saved so we don't trigger a circular save loop
+              lastSavedLen.current = remoteHistory.length;
+              return remoteHistory;
+            }
+            return prev;
+          });
+        } catch (err) { /* silent fail */ }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // 🏥 STATE RECOVERY: Restore last known data on boot
+  useEffect(() => {
+    if (sensorHistory.length > 0) {
+      const last = sensorHistory[sensorHistory.length - 1];
+      if (last && !last.isInitial) {
+        setSensorData(prev => ({
+          ...prev,
+          soil: last.soil || prev.soil,
+          weather: last.weather || prev.weather,
+          water: last.water || prev.water,
+          storage: last.storage || prev.storage,
+          vision: last.vision || prev.vision
+        }));
+        setIsDataLoading(false);
+      }
+    }
+  }, []); // Run once on mount
+
+  // Throttled persistence with multi-tab safety
+  const lastSavedLen = useRef(0);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (sensorHistory.length > lastSavedLen.current) {
+        try {
+          localStorage.setItem('agrisense_history', JSON.stringify(sensorHistory));
+          lastSavedLen.current = sensorHistory.length;
+        } catch (e) {
+          console.warn("Storage Full - pruning history");
+          setSensorHistory(prev => prev.slice(-500));
+        }
+      }
+    }, 3000); 
+    return () => clearTimeout(timer);
+  }, [sensorHistory]);
+
   useEffect(() => {
     if (sensorData && (sensorData.soil || sensorData.weather)) {
       setSensorHistory(prev => {
         const timestamp = Date.now();
         const lastEntry = prev[prev.length - 1];
-        if (lastEntry && JSON.stringify(lastEntry.soil) === JSON.stringify(sensorData.soil)) return prev;
-        return [...prev, { ...sensorData, timestamp }].slice(-100);
+        if (lastEntry && JSON.stringify(lastEntry.soil) === JSON.stringify(sensorData.soil) && 
+            JSON.stringify(lastEntry.weather) === JSON.stringify(sensorData.weather)) return prev;
+            
+        return [...prev, { ...sensorData, timestamp }].slice(-2000);
       });
     }
   }, [sensorData]);
+
+  // 🛰️ DYNAMIC VISION ZONE SYNC: Inherit from profile/location
+  useEffect(() => {
+    if (sensorData.vision.zone === '---' || sensorData.vision.zone === 'Sector A') {
+      const loc = farmInfo?.location || user?.location || 'Field A';
+      setSensorData(prev => ({
+        ...prev,
+        vision: { ...prev.vision, zone: loc }
+      }));
+    }
+  }, [user, farmInfo, sensorData.vision.zone]);
 
   // 4. MQTT Linkage
   useEffect(() => {
@@ -244,8 +322,9 @@ export const AppProvider = ({ children }) => {
                   if (nextDevs[id]) nextDevs[id] = { ...nextDevs[id], status: 'ACTIVE', lastUpdate: timestamp };
                 });
               } else {
-                // Handle discrete node topics
-                const id = `${topicType}_node`;
+                // Handle discrete node topics (camera/vision/cam -> vision_node)
+                let id = `${topicType}_node`;
+                if (['camera', 'vision', 'cam'].includes(topicType)) id = 'vision_node';
                 if (nextDevs[id]) nextDevs[id] = { ...nextDevs[id], status: 'ACTIVE', lastUpdate: timestamp };
               }
 
@@ -279,6 +358,29 @@ export const AppProvider = ({ children }) => {
         const currData = await currRes.json();
         
         if (currData && currData.main) {
+          const { lat, lon } = currData.coord;
+          
+          // Fetch Air Pollution (AQI)
+          let aqiLabel = '---';
+          let uvIndex = 'Low';
+          try {
+            const [aqiRes, uvRes] = await Promise.all([
+              fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${key}`),
+              fetch(`https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${key}`)
+            ]);
+            const aqiData = await aqiRes.json();
+            const uvData = await uvRes.json();
+            
+            const aqiValue = aqiData?.list?.[0]?.main?.aqi;
+            const aqiMap = { 1: 'Good', 2: 'Fair', 3: 'Moderate', 4: 'Poor', 5: 'Critical' };
+            aqiLabel = aqiMap[aqiValue] || '---';
+            
+            const uvVal = uvData?.value;
+            uvIndex = uvVal !== undefined ? (uvVal < 3 ? 'Low' : (uvVal < 6 ? 'Mod' : (uvVal < 8 ? 'High' : 'Extreme'))) : 'Low';
+          } catch (err) {
+            console.warn("AQI/UV Fetch Failed:", err);
+          }
+
           setApiWeather({
             temp: currData.main.temp,
             feelsLike: currData.main.feels_like,
@@ -289,6 +391,8 @@ export const AppProvider = ({ children }) => {
             condition: currData.weather?.[0]?.main,
             icon: currData.weather?.[0]?.icon,
             city: currData.name,
+            aqi: aqiLabel,
+            uv: uvIndex,
             sunrise: new Date(currData.sys.sunrise * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             sunset: new Date(currData.sys.sunset * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             lastUpdate: new Date().toLocaleTimeString()
@@ -300,12 +404,21 @@ export const AppProvider = ({ children }) => {
         const foreData = await foreRes.json();
         if (foreData && foreData.list) {
           // Filter to get 1 forecast per day (around noon)
-          const daily = foreData.list.filter(f => f.dt_txt.includes("12:00:00")).map(f => ({
-            date: new Date(f.dt * 1000).toLocaleDateString([], { weekday: 'short' }),
-            temp: Math.round(f.main.temp),
-            condition: f.weather[0].main,
-            rainProb: `${Math.round((f.pop || 0) * 100)}%`
-          }));
+          const daily = foreData.list.filter(f => f.dt_txt.includes("12:00:00")).map(f => {
+            let prob = f.pop !== undefined ? Math.round(f.pop * 100) : (f.rain ? 40 : 0);
+            
+            // 🌥️ CLOUD SENSITIVITY BOOST: If pop is 0 but it's cloudy, show a low humidity chance (5-15%)
+            if (prob === 0 && f.weather?.[0]?.main === 'Clouds') {
+              prob = f.clouds?.all > 50 ? 15 : 5;
+            }
+
+            return {
+              date: new Date(f.dt * 1000).toLocaleDateString([], { weekday: 'short' }),
+              temp: Math.round(f.main.temp),
+              condition: f.weather[0].main,
+              rainProb: `${prob}%`
+            };
+          });
           setApiForecast(daily);
         }
 

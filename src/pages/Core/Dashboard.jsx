@@ -10,7 +10,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   Sprout, Droplets, CloudRain, Archive,
   MapPin, Activity, Power, ChevronRight,
-  ShieldCheck, RefreshCw
+  ShieldCheck, RefreshCw, Camera, WifiOff,
+  BellRing, Lightbulb
 } from 'lucide-react';
 
 // Context & Utils
@@ -56,19 +57,22 @@ const StatusBadge = ({ status }) => {
  * HealthOverview: Circular progress and system status dots
  */
 const HealthOverview = ({ score, systemHealth }) => {
-  const { devices } = useApp();
+  const { devices, sensorData } = useApp();
   const isOffline = score === null || score === 0;
   const healthColor = getHealthColor(score);
 
+  const visionOnline = devices?.vision_node?.status === 'ACTIVE' || devices?.vision_node?.status === 'PARTIAL';
   const activeNodesCount = Object.values(devices || {})
-    .filter(d => d?.device_id?.endsWith('_node') && d?.status === 'ACTIVE').length;
-  const totalNodesCount = 4; // Soil, Weather, Storage, Irrigation (Fixed Industrial Count)
+    .filter(d => d?.device_id?.endsWith('_node') && d?.status === 'ACTIVE').length
+    + (visionOnline ? 1 : 0);
+  const totalNodesCount = 5; // Soil, Weather, Irrigation, Storage, Vision
 
   const systems = [
-    { label: 'Soil', score: systemHealth?.soil, color: '#10B981' },
-    { label: 'Irrigation', score: systemHealth?.water, color: '#0EA5E9' },
-    { label: 'Weather', score: systemHealth?.weather, color: '#14B8A6' },
-    { label: 'Storage', score: systemHealth?.storage, color: '#8B5CF6' },
+    { label: 'Soil',       color: '#10B981', active: systemHealth?.soil      != null },
+    { label: 'Weather',    color: '#14B8A6', active: systemHealth?.weather   != null },
+    { label: 'Irrigation', color: '#0EA5E9', active: systemHealth?.water     != null },
+    { label: 'Storage',    color: '#8B5CF6', active: systemHealth?.storage   != null },
+    { label: 'Vision',     color: '#EC4899', active: visionOnline },
   ];
 
   return (
@@ -116,14 +120,41 @@ const HealthOverview = ({ score, systemHealth }) => {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
-        {systems.map((s, i) => (
-          <div key={i} style={{ 
-            background: '#F8FAFC', padding: '8px 12px', borderRadius: '14px', 
-            display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid rgba(0,0,0,0.03)' 
-          }}>
-            <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: s.score !== null ? s.color : '#CBD5E1' }} />
-            <span style={{ fontSize: '0.7rem', fontWeight: 800, color: COLORS.textMuted, textTransform: 'uppercase' }}>{s.label}</span>
+      {/* ── 5-Node Status Row ── */}
+      <div style={{
+        display: 'flex', gap: '8px', alignItems: 'stretch',
+      }}>
+        {systems.map((s) => (
+          <div
+            key={s.label}
+            style={{
+              flex: 1,
+              background: s.active ? `${s.color}10` : '#F8FAFC',
+              border: `1px solid ${s.active ? `${s.color}25` : 'rgba(0,0,0,0.04)'}`,
+              borderRadius: '14px',
+              padding: '8px 4px',
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', gap: '5px',
+              transition: 'all 0.3s ease',
+            }}
+          >
+            <motion.div
+              animate={s.active ? { opacity: [1, 0.4, 1] } : {}}
+              transition={{ duration: 2, repeat: Infinity }}
+              style={{
+                width: '7px', height: '7px', borderRadius: '50%',
+                background: s.active ? s.color : '#CBD5E1',
+                boxShadow: s.active ? `0 0 0 3px ${s.color}20` : 'none',
+              }}
+            />
+            <span style={{
+              fontSize: '0.55rem', fontWeight: 800,
+              color: s.active ? s.color : COLORS.textMuted,
+              textTransform: 'uppercase', letterSpacing: '0.04em',
+              textAlign: 'center', lineHeight: 1.2,
+            }}>
+              {s.label}
+            </span>
           </div>
         ))}
       </div>
@@ -180,6 +211,66 @@ const SensorCard = ({ title, value, icon: Icon, color, status, score, onClick, n
   );
 };
 
+// ─── CAM MINI CARD ──────────────────────────────────────────────────────────
+const CamMiniCard = ({ isOnline, onClick }) => (
+  <motion.div
+    whileTap={{ scale: 0.97 }}
+    onClick={onClick}
+    style={{
+      background: COLORS.cardBg, borderRadius: '28px',
+      padding: '1.1rem 1.25rem',
+      border: `1px solid ${isOnline ? 'rgba(236,72,153,0.15)' : COLORS.border}`,
+      boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
+      cursor: 'pointer', marginBottom: '1.8rem',
+      display: 'flex', alignItems: 'center', gap: '14px',
+    }}
+  >
+    {/* Dark cam preview box */}
+    <div style={{
+      width: '72px', height: '52px', borderRadius: '14px',
+      background: '#0F172A', flexShrink: 0,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      position: 'relative', overflow: 'hidden',
+    }}>
+      {isOnline ? (
+        <>
+          <motion.div
+            animate={{ opacity: [0.3, 1, 0.3] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            style={{
+              position: 'absolute', top: '6px', right: '6px',
+              width: '5px', height: '5px', borderRadius: '50%', background: '#EC4899',
+            }}
+          />
+          <Camera size={18} color="#EC4899" strokeWidth={2} />
+        </>
+      ) : (
+        <WifiOff size={16} color="#475569" strokeWidth={2} />
+      )}
+    </div>
+
+    {/* Label + status */}
+    <div style={{ flex: 1 }}>
+      <div style={{ fontSize: '0.65rem', fontWeight: 900, color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '3px' }}>
+        Vision Node
+      </div>
+      <div style={{ fontSize: '0.95rem', fontWeight: 800, color: COLORS.textMain }}>Field Camera</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '4px' }}>
+        <motion.div
+          animate={isOnline ? { opacity: [1, 0.4, 1] } : {}}
+          transition={{ duration: 2, repeat: Infinity }}
+          style={{ width: '5px', height: '5px', borderRadius: '50%', background: isOnline ? '#EC4899' : '#94A3B8' }}
+        />
+        <span style={{ fontSize: '0.62rem', fontWeight: 800, color: isOnline ? '#EC4899' : '#94A3B8' }}>
+          {isOnline ? 'CAM LIVE — Tap to view' : 'No Signal'}
+        </span>
+      </div>
+    </div>
+
+    <ChevronRight size={18} color={COLORS.textMuted} strokeWidth={2} />
+  </motion.div>
+);
+
 // ─── MAIN COMPONENT ────────────────────────────────────────────────────────
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -191,6 +282,8 @@ const Dashboard = () => {
 
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isSyncing, setIsSyncing] = useState(false);
+
+  const visionOnline = devices?.vision_node?.status === 'ACTIVE' || devices?.vision_node?.status === 'PARTIAL';
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -287,28 +380,58 @@ const Dashboard = () => {
         />
       </div>
 
-      <section style={{ background: COLORS.cardBg, borderRadius: '28px', padding: '1.5rem', border: `1px solid ${COLORS.border}`, boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+      {/* Vision Node Mini Card */}
+      <CamMiniCard
+        isOnline={visionOnline}
+        onClick={() => navigate('/camera')}
+      />
+
+      <section style={{ background: COLORS.cardBg, borderRadius: '28px', padding: '1.25rem 1.25rem 1.4rem', border: `1px solid ${COLORS.border}`, boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.1rem' }}>
           <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: COLORS.textMain, margin: 0 }}>Active Controls</h3>
           <Activity size={18} color={isPumpActive ? COLORS.primary : COLORS.textMuted} />
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
-            <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: isPumpActive ? '#ECFDF5' : '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Power size={20} color={isPumpActive ? COLORS.primary : COLORS.textMuted} />
-            </div>
-            <div>
-              <div style={{ fontSize: '0.95rem', fontWeight: 700, color: COLORS.textMain }}>Irrigation Pump</div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 500, color: isPumpActive ? COLORS.primary : COLORS.textMuted }}>{isPumpActive ? 'System Active' : 'Standby Mode'}</div>
-            </div>
-          </div>
-          <div
-            onClick={() => toggleActuator(ACTUATORS?.PUMP)}
-            style={{ width: '50px', height: '28px', background: isPumpActive ? COLORS.primary : '#E2E8F0', borderRadius: '20px', padding: '3px', cursor: 'pointer', transition: '0.3s' }}
-          >
-            <motion.div animate={{ x: isPumpActive ? 22 : 0 }} style={{ width: '22px', height: '22px', background: 'white', borderRadius: '50%', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />
-          </div>
+        {/* 3-column control grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+          {[
+            { key: ACTUATORS?.PUMP,   icon: Power,     label: 'Pump',   color: '#3B82F6', bg: '#EFF6FF' },
+            { key: ACTUATORS?.BUZZER, icon: BellRing,  label: 'Buzzer', color: '#EF4444', bg: '#FEF2F2' },
+            { key: ACTUATORS?.LIGHT,  icon: Lightbulb, label: 'Light',  color: '#EAB308', bg: '#FEFCE8' },
+          ].map(({ key, icon: Icon, label, color, bg }) => {
+            const isOn = actuators?.[key] ?? false;
+            return (
+              <motion.div
+                key={label}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => toggleActuator(key)}
+                style={{
+                  background: isOn ? color : '#F8FAFC',
+                  border: `1.5px solid ${isOn ? color : 'rgba(0,0,0,0.05)'}`,
+                  borderRadius: '20px', padding: '14px 8px',
+                  display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', gap: '8px',
+                  cursor: 'pointer',
+                  boxShadow: isOn ? `0 4px 16px ${color}30` : 'none',
+                  transition: 'all 0.25s ease',
+                }}
+              >
+                <div style={{
+                  width: '38px', height: '38px', borderRadius: '12px',
+                  background: isOn ? 'rgba(255,255,255,0.22)' : bg,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Icon size={18} color={isOn ? '#fff' : color} strokeWidth={2} />
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 800, color: isOn ? '#fff' : COLORS.textMain }}>{label}</div>
+                  <div style={{ fontSize: '0.5rem', fontWeight: 900, color: isOn ? 'rgba(255,255,255,0.7)' : COLORS.textMuted, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '2px' }}>
+                    {isOn ? '● ON' : '○ OFF'}
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       </section>
 

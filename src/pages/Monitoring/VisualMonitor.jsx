@@ -132,17 +132,16 @@ const VisualMonitor = () => {
     return () => clearInterval(interval);
   }, [buzzerOn]);
 
-  const deviceStatus = 'ONLINE'; // Assuming local connection
+  const { devices, sensorData } = useApp();
+  const deviceStatus = devices?.vision_node?.status || 'OFFLINE';
   
   const telemetry = {
-    fps: '24', latency: '45',
-    detection: detection
+    fps: deviceStatus === 'ACTIVE' ? '30' : '---', 
+    latency: devices?.vision_node?.metrics?.latency || '---',
+    detection: sensorData?.vision || detection
   };
 
-  const logs = [
-    { id: 1, type: 'Wild Boar Detected', zone: 'Sector B', time: '14:45:22', level: 'High', action: 'Buzzer Triggered' },
-    { id: 2, type: 'Bird Flock', zone: 'Sector A', time: '14:32:10', level: 'Medium', action: 'Flash Triggered' },
-  ];
+  const logs = []; // No mock history logs
 
   // ─── RENDER ───────────────────────────────────────────────────────────────
   return (
@@ -159,17 +158,29 @@ const VisualMonitor = () => {
           background: '#000', marginBottom: '1.5rem', boxShadow: '0 12px 40px rgba(0,0,0,0.15)' 
         }}
       >
-        <div style={{ height: '240px', position: 'relative' }}>
-          <img src={streamUrl} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: telemetry.detection.active ? 0.9 : 0.7 }} alt="Camera Feed" />
+        <div style={{ height: '240px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0F172A' }}>
+          {deviceStatus === 'ACTIVE' ? (
+            <img src={streamUrl} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: telemetry.detection.active ? 0.9 : 0.7 }} alt="Camera Feed" />
+          ) : (
+            <div style={{ textAlign: 'center', color: '#475569' }}>
+              <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'center' }}>
+                <EyeOff size={48} strokeWidth={1.5} />
+              </div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Signal Lost</div>
+              <div style={{ fontSize: '0.65rem', fontWeight: 600, opacity: 0.6 }}>Check hardware power & network</div>
+            </div>
+          )}
           
           {/* CAMERA OVERLAYS */}
           <div style={{ position: 'absolute', inset: 0, padding: '1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div style={{ display: 'flex', gap: '8px' }}>
-                <Badge color={COLORS.danger} pulse>LIVE</Badge>
-                <Badge color={deviceStatus === 'ONLINE' ? COLORS.primary : COLORS.muted}>
-                  {deviceStatus}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {deviceStatus === 'ACTIVE' && <Badge color={COLORS.danger} pulse>LIVE</Badge>}
+                <Badge color={deviceStatus === 'ACTIVE' ? COLORS.primary : COLORS.muted}>
+                  {deviceStatus === 'ACTIVE' ? 'ONLINE' : deviceStatus}
                 </Badge>
+              </div>
               </div>
             </div>
 
@@ -230,7 +241,9 @@ const VisualMonitor = () => {
               </div>
               <div style={{ background: 'white', padding: '10px', borderRadius: '14px', border: '1px solid rgba(0,0,0,0.02)' }}>
                 <div style={{ fontSize: '0.55rem', fontWeight: 800, color: COLORS.muted }}>TIMESTAMP</div>
-                <div style={{ fontSize: '0.75rem', fontWeight: 900, color: COLORS.text }}>14:52:05</div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 900, color: COLORS.text }}>
+                  {telemetry.detection.timestamp ? new Date(telemetry.detection.timestamp).toLocaleTimeString() : '---'}
+                </div>
               </div>
             </div>
           </motion.div>
@@ -251,6 +264,41 @@ const VisualMonitor = () => {
           icon={CaptureIcon} active={false} color={COLORS.secondary}
           onClick={captureImage} 
         />
+      </div>
+
+      {/* 4. ENVIRONMENTAL TELEMETRY (LDR & RAIN) */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+        <div style={{ 
+          background: 'white', borderRadius: RAD.inner, padding: '1.25rem',
+          border: `1px solid ${COLORS.border}`, boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
+          display: 'flex', alignItems: 'center', gap: '12px'
+        }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${COLORS.warning}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Lightbulb size={20} color={COLORS.warning} />
+          </div>
+          <div>
+            <div style={{ fontSize: '0.6rem', fontWeight: 800, color: COLORS.muted }}>LIGHT (LDR)</div>
+            <div style={{ fontSize: '1rem', fontWeight: 950, color: COLORS.text }}>
+              {sensorData?.weather?.lightIntensity ?? '---'} <span style={{ fontSize: '0.6rem', opacity: 0.5 }}>LUX</span>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ 
+          background: 'white', borderRadius: RAD.inner, padding: '1.25rem',
+          border: `1px solid ${COLORS.border}`, boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
+          display: 'flex', alignItems: 'center', gap: '12px'
+        }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${COLORS.secondary}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Wind size={20} color={COLORS.secondary} />
+          </div>
+          <div>
+            <div style={{ fontSize: '0.6rem', fontWeight: 800, color: COLORS.muted }}>RAIN LEVEL</div>
+            <div style={{ fontSize: '1rem', fontWeight: 950, color: COLORS.text }}>
+              {sensorData?.weather?.rainLevel ?? '---'} <span style={{ fontSize: '0.6rem', opacity: 0.5 }}>mm</span>
+            </div>
+          </div>
+        </div>
       </div>
 
 

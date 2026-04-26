@@ -75,7 +75,8 @@ export const processDeviceState = (nodeId, nodeType, rawData) => {
     soil: ['moisture', 'ph', 'npk', 'temperature'],
     weather: ['temperature', 'humidity', 'ldr', 'rain'],
     storage: ['temperature', 'humidity', 'mq135'],
-    water: ['flow', 'level', 'pressure']
+    water: ['level'],
+    vision: ['detection']
   };
 
   const sensorNames = sensorConfigs[nodeType] || [];

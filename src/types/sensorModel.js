@@ -1,43 +1,64 @@
 /**
  * AgriSense Pro v17.1.0 Data Models
  * Defines the initial state structures for sensors, actuators, and weather.
+ * Strictly hardware-synchronized (Zero Mock Data).
  */
 
 export const INITIAL_SENSOR_DATA = {
   soil: { 
-    moisture: null, ph: null, temp: null, humidity: null, 
-    npk: { n: null, p: null, k: null }, healthIndex: null 
+    moisture: null, 
+    ph: null, 
+    temp: null, 
+    npk: { n: null, p: null, k: null }, 
+    healthIndex: null 
   },
   storage: { 
-    temp: null, humidity: null, ethylene: null, mq135: null, freshnessScore: null 
+    temp: null, 
+    humidity: null, 
+    mq135: null, 
+    healthIndex: null 
   },
   weather: { 
-    temp: null, humidity: null, pressure: null, windSpeed: null, 
-    isRaining: false, lightIntensity: null, rainLevel: null 
+    temp: null, 
+    humidity: null, 
+    isRaining: false, 
+    lightIntensity: null, 
+    rainLevel: null 
   },
   water: { 
-    level: null, tankLevel: null, flowRate: null, totalUsage: null 
+    level: null, 
+    pumpActive: false, 
+    healthIndex: null
   },
-
-  market: { 
-    price: null, trend: 'stable', commodities: [] 
+  vision: {
+    active: false, 
+    type: '---', 
+    level: 'Normal', 
+    zone: '---', 
+    timestamp: null
   }
 };
 
 export const INITIAL_API_WEATHER = {
   temp: null, 
+  feelsLike: null,
   humidity: null, 
   pressure: null, 
   windSpeed: null, 
+  clouds: null,
+  uv: 'Low',
+  aqi: '---',
   sunrise: null, 
   sunset: null, 
   condition: 'Detecting...', 
-  city: 'Detecting...'
+  city: 'Detecting...',
+  lastUpdate: '---'
 };
 
 export const INITIAL_SYSTEM_HEALTH = { 
   soil: null, 
   water: null, 
   weather: null, 
-  storage: null 
+  storage: null,
+  vision: null
 };

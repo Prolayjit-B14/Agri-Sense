@@ -12,7 +12,7 @@ import {
   Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 import {
-  Sprout, CloudRain, Warehouse, AlertCircle
+  Sprout, CloudRain, Warehouse, AlertCircle, Download
 } from 'lucide-react';
 import { useApp } from '../../state/AppContext';
 import { useLocation } from 'react-router-dom';
@@ -27,17 +27,17 @@ const COLORS = {
 };
 
 // ─── COMPONENTS ───────────────────────────────────────────────────────────
-const AnalyticsCard = ({ title, status = 'good', isOffline, children, height = '180px' }) => {
+const AnalyticsCard = ({ title, status = 'good', isOffline, children, height = '240px' }) => {
   const statusColor = isOffline ? COLORS.neutral : COLORS[status] || COLORS.neutral;
 
   return (
     <div style={{
-      background: 'white', borderRadius: '18px', padding: '1rem',
+      background: 'white', borderRadius: '18px', padding: '0.65rem',
       border: `1px solid ${isOffline ? COLORS.border : `${statusColor}15`}`,
       boxShadow: '0 4px 15px rgba(0,0,0,0.02)',
       display: 'flex', flexDirection: 'column', height, position: 'relative', overflow: 'hidden'
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', zIndex: 5 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem', zIndex: 5 }}>
         <h3 style={{ fontSize: '0.65rem', fontWeight: 950, margin: 0, color: isOffline ? COLORS.neutral : COLORS.text, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</h3>
         {isOffline && <AlertCircle size={10} color={COLORS.neutral} />}
       </div>
@@ -56,33 +56,47 @@ const AnalyticsCard = ({ title, status = 'good', isOffline, children, height = '
   );
 };
 
+const TIME_RANGES = [
+  { id: 'realtime', label: 'Realtime', duration: 5 * 60 * 1000 },
+  { id: '1h', label: '1 Hr', duration: 60 * 60 * 1000 },
+  { id: '6h', label: '6 Hr', duration: 6 * 60 * 60 * 1000 },
+  { id: '1d', label: '1 Day', duration: 24 * 60 * 60 * 1000 },
+  { id: '1w', label: '1 Week', duration: 7 * 24 * 60 * 60 * 1000 },
+  { id: '1m', label: '1 Month', duration: 30 * 24 * 60 * 60 * 1000 },
+];
+
 const AnalyticsHub = () => {
   const { sensorData, devices, sensorHistory } = useApp();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState(location.state?.tab || 'soil');
+  const [timeRange, setTimeRange] = useState(TIME_RANGES[0]);
 
   // ─── PROCESS GLOBAL HISTORY INTO CATEGORIZED TRENDS ───
   const historyData = useMemo(() => {
+    const now = Date.now();
+    const startTime = now - timeRange.duration;
+    
+    const filteredHistory = sensorHistory.filter(entry => entry.timestamp >= startTime);
+
     return {
-      soil: sensorHistory.map(entry => ({
-        name: new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-        health: entry.soil?.healthIndex || 0, moisture: entry.soil?.moisture || 0,
-        n: entry.soil?.npk?.n || 0, p: entry.soil?.npk?.p || 0, k: entry.soil?.npk?.k || 0,
-        temp: entry.soil?.temp || 0, ph: entry.soil?.ph || 0
+      soil: filteredHistory.map(entry => ({
+        name: entry.timestamp,
+        health: entry.soil?.healthIndex, moisture: entry.soil?.moisture,
+        n: entry.soil?.npk?.n, p: entry.soil?.npk?.p, k: entry.soil?.npk?.k,
+        temp: entry.soil?.temp, ph: entry.soil?.ph
       })),
-      weather: sensorHistory.map(entry => ({
-        name: new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-        temp: entry.weather?.temp || 0, humidity: entry.weather?.humidity || 0,
-        ldr: entry.weather?.lightIntensity || 0, rain: entry.weather?.rainLevel || 0,
-        wind: entry.weather?.windSpeed || 0, pressure: entry.weather?.pressure || 0
+      weather: filteredHistory.map(entry => ({
+        name: entry.timestamp,
+        temp: entry.weather?.temp, humidity: entry.weather?.humidity,
+        lightIntensity: entry.weather?.lightIntensity, rainLevel: entry.weather?.rainLevel
       })),
-      storage: sensorHistory.map(entry => ({
-        name: new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-        temp: entry.storage?.temp || 0, humidity: entry.storage?.humidity || 0,
-        gas: entry.storage?.mq135 || 0, co2: entry.storage?.co2 || 0
+      storage: filteredHistory.map(entry => ({
+        name: entry.timestamp,
+        temp: entry.storage?.temp, humidity: entry.storage?.humidity,
+        mq135: entry.storage?.mq135
       }))
     };
-  }, [sensorHistory]);
+  }, [sensorHistory, timeRange]);
 
   const getIsOffline = (type) => {
     const node = devices[`${type}_node`];
@@ -95,73 +109,178 @@ const AnalyticsHub = () => {
     return deviceOffline;
   };
 
+  // 🧠 ANALYTICS ENGINE: Static-Grid Oscilloscope Processor
+  const now = Date.now();
+  const processedData = useMemo(() => {
+    const isRealtime = timeRange.id === 'realtime';
+    const processed = {};
+    Object.keys(historyData).forEach(tab => {
+      const data = historyData[tab] || [];
+      if (data.length === 0) {
+        processed[tab] = [];
+        return;
+      }
+
+      const mapped = data.map(entry => ({
+        ...entry,
+        plotTime: 300 - ((now - entry.name) / 1000)
+      }));
+
+      if (isRealtime) {
+        // 🚀 EDGE IMMERSION: Extend the line to the absolute start and end of the grid
+        const first = mapped[0];
+        const last = mapped[mapped.length - 1];
+        processed[tab] = [
+          { ...first, plotTime: 0 },
+          ...mapped,
+          { ...last, plotTime: 300 }
+        ];
+      } else {
+        processed[tab] = mapped;
+      }
+    });
+    return processed;
+  }, [historyData, timeRange.id, now]);
+
+  const xDomain = timeRange.id === 'realtime' ? [0, 300] : ['dataMin', 'dataMax'];
+  const xTicks = timeRange.id === 'realtime' ? [0, 60, 120, 180, 240, 300] : undefined;
+
   const renderGrid = (tabId) => {
     const charts = {
       soil: [
-        { title: "Health Index", type: "pie", data: [{ v: sensorData.soil?.healthIndex || 0 }, { v: 100 - (sensorData.soil?.healthIndex || 0) }] },
-        { title: "Health Trend", type: "area", key: "health", color: COLORS.soil[0] },
-        { title: "Moisture", type: "line", key: "moisture", color: COLORS.soil[1] },
-        { title: "NPK Balance", type: "bar_multi", keys: ['n', 'p', 'k'], colors: [COLORS.soil[0], COLORS.soil[1], COLORS.soil[2]] },
-        { title: "Nitrogen (N)", type: "line", key: "n", color: COLORS.soil[0] },
-        { title: "Phosphorus (P)", type: "line", key: "p", color: COLORS.soil[1] },
-        { title: "Potassium (K)", type: "line", key: "k", color: COLORS.soil[2] },
-        { title: "Soil Temp", type: "area", key: "temp", color: COLORS.soil[3] }
+        { title: "Soil Moisture", type: "line", key: "moisture", color: COLORS.soil[1], minSpread: 10 },
+        { title: "Soil pH", type: "line", key: "ph", color: COLORS.soil[4], minSpread: 1.5 },
+        { title: "Soil Temp", type: "line", key: "temp", color: COLORS.soil[3], minSpread: 5 },
+        { title: "Nitrogen (N)", type: "line", key: "n", color: COLORS.soil[0], minSpread: 10 },
+        { title: "Phosphorus (P)", type: "line", key: "p", color: COLORS.soil[1], minSpread: 10 },
+        { title: "Potassium (K)", type: "line", key: "k", color: COLORS.soil[2], minSpread: 10 },
+        { title: "NPK Balance", type: "line_multi", keys: ['n', 'p', 'k'], colors: [COLORS.soil[0], COLORS.soil[1], COLORS.soil[2]], minSpread: 20 }
       ],
       weather: [
-        { title: "Temperature", type: "area", key: "temp", color: COLORS.weather[0] },
-        { title: "Humidity", type: "line", key: "humidity", color: COLORS.weather[1] },
-        { title: "Luminosity", type: "bar", key: "ldr", color: COLORS.weather[2] },
-        { title: "Precipitation", type: "area", key: "rain", color: COLORS.weather[3] },
-        { title: "Wind Speed", type: "line", key: "wind", color: COLORS.weather[4] },
-        { title: "Atmos Pressure", type: "area", key: "pressure", color: COLORS.weather[5] },
-        { title: "Solar UV", type: "bar", key: "ldr", color: COLORS.weather[6] },
-        { title: "Cloud Density", type: "line", key: "humidity", color: COLORS.weather[7] }
+        { title: "Ambient Temp", type: "line", key: "temp", color: COLORS.weather[0], minSpread: 5 },
+        { title: "Humidity", type: "line", key: "humidity", color: COLORS.weather[1], minSpread: 10 },
+        { title: "Light (LDR)", type: "line", key: "lightIntensity", color: COLORS.weather[2], minSpread: 100 },
+        { title: "Rain Level", type: "line", key: "rainLevel", color: COLORS.weather[3], minSpread: 10 }
       ],
       storage: [
-        { title: "Vault Temp", type: "area", key: "temp", color: COLORS.storage[0] },
-        { title: "Air Quality", type: "line", key: "gas", color: COLORS.storage[1] },
-        { title: "Humidity", type: "area", key: "humidity", color: COLORS.storage[2] },
-        { title: "CO2 Level", type: "line", key: "co2", color: COLORS.storage[3] },
-        { title: "Ethylene", type: "bar", key: "gas", color: COLORS.storage[4] },
-        { title: "Thermal Stability", type: "line", key: "temp", color: COLORS.storage[5] },
-        { title: "Ventilation", type: "area", key: "humidity", color: COLORS.storage[6] },
-        { title: "Storage Integrity", type: "bar", key: "gas", color: COLORS.storage[7] }
+        { title: "Storage Temp", type: "line", key: "temp", color: COLORS.storage[0], minSpread: 5 },
+        { title: "Storage Humidity", type: "line", key: "humidity", color: COLORS.storage[1], minSpread: 10 },
+        { title: "MQ135 (Gas)", type: "line", key: "mq135", color: COLORS.storage[2], minSpread: 50 }
       ]
     }[tabId] || [];
 
     const isOffline = getIsOffline(tabId);
-    const tabData = historyData[tabId] || [];
+    const tabData = processedData[tabId] || [];
+    const isRealtime = timeRange.id === 'realtime';
+
+    // 🧠 HYBRID ENGINE: Calculated Grid Time for Symmetry + Real Tooltip Time for Accuracy
+    // 🧠 HARDWARE-LOCKED CROSSING ENGINE: Find the real timestamp of the data point crossing the grid line
+    const formatXLabel = (v) => {
+      if (!isRealtime) {
+        const d = new Date(v);
+        if (timeRange.duration <= 24 * 60 * 60 * 1000) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+        return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+      }
+      
+      if (!tabData || tabData.length === 0) return '';
+      
+      // Find the specific data point currently 'crossing' this vertical grid line
+      let closest = tabData[0];
+      let minDiff = Infinity;
+      for (let entry of tabData) {
+        const diff = Math.abs((entry.plotTime || 0) - v);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closest = entry;
+        }
+      }
+      
+      if (!closest || minDiff > 10) return ''; // Only show if data is reasonably close to the grid line
+      const d = new Date(closest.name);
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    };
+
+    const formatTooltip = (v, name) => {
+      // Tooltip always shows the REAL hardware timestamp of the specific data point
+      const ts = isRealtime ? name : v;
+      const d = new Date(ts);
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    };
 
     return (
       <div className="analytics-grid">
         {charts.map((c, i) => (
           <AnalyticsCard key={i} title={c.title} isOffline={isOffline}>
             <ResponsiveContainer width="100%" height="100%">
-              {c.type === 'pie' ? (
-                <PieChart>
-                  <Pie data={c.data} innerRadius="60%" outerRadius="80%" dataKey="v" isAnimationActive={false}>
-                    <Cell fill={COLORS.good} /><Cell fill="#F1F5F9" />
-                  </Pie>
-                </PieChart>
-              ) : c.type === 'area' ? (
-                <AreaChart data={tabData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                  <Area type="monotone" dataKey={c.key} stroke={c.color} fill={`${c.color}20`} strokeWidth={2} isAnimationActive={false} />
-                </AreaChart>
-              ) : c.type === 'line' ? (
-                <LineChart data={tabData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                  <Line type="monotone" dataKey={c.key} stroke={c.color} strokeWidth={2} dot={false} isAnimationActive={false} />
-                </LineChart>
-              ) : c.type === 'bar' ? (
-                <BarChart data={tabData}>
-                  <Bar dataKey={c.key} fill={c.color} radius={[2, 2, 0, 0]} isAnimationActive={false} />
-                </BarChart>
-              ) : (
-                <BarChart data={tabData}>
-                  {c.keys.map((k, idx) => <Bar key={k} dataKey={k} fill={c.colors[idx]} radius={[2, 2, 0, 0]} isAnimationActive={false} />)}
-                </BarChart>
-              )}
+              <LineChart data={tabData} margin={{ top: 15, right: 35, left: 10, bottom: 25 }}>
+                <CartesianGrid stroke="#E2E8F0" vertical={true} horizontal={true} strokeOpacity={0.8} />
+                <XAxis 
+                  dataKey={isRealtime ? "plotTime" : "name"} 
+                  type="number"
+                  domain={xDomain}
+                  ticks={xTicks}
+                  tickFormatter={formatXLabel}
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 9, fontWeight: 800, fill: COLORS.text, dy: 10 }} 
+                  interval={0}
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fontWeight: 900, fill: COLORS.text, dx: -5 }}
+                  tickFormatter={(v) => Math.round(v)}
+                  domain={['auto', 'auto']}
+                  width={40}
+                  nice={true}
+                  tickCount={6}
+                />
+                <Tooltip 
+                  labelFormatter={(v, items) => {
+                    const name = items?.[0]?.payload?.name;
+                    return formatTooltip(v, name);
+                  }}
+                  contentStyle={{ 
+                    borderRadius: '16px', border: 'none', 
+                    boxShadow: '0 10px 40px rgba(0,0,0,0.12)', 
+                    fontSize: '0.8rem', fontWeight: 900,
+                    padding: '12px',
+                    background: 'rgba(255,255,255,0.95)',
+                    backdropFilter: 'blur(10px)'
+                  }} 
+                  itemStyle={{ padding: '2px 0' }}
+                  cursor={{ stroke: COLORS.good, strokeWidth: 2 }}
+                />
+                {c.type === 'line_multi' && <Legend iconType="circle" wrapperStyle={{ fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', paddingTop: '10px' }} />}
+                
+                {c.type === 'line_multi' ? (
+                  c.keys.map((k, idx) => (
+                    <Line 
+                      key={k} 
+                      type="monotone" 
+                      dataKey={k} 
+                      stroke={c.colors[idx]} 
+                      strokeWidth={3} 
+                      dot={false}
+                      activeDot={{ r: 5, strokeWidth: 0 }}
+                      isAnimationActive={false}
+                      connectNulls={true}
+                      name={k.toUpperCase()}
+                    />
+                  ))
+                ) : (
+                  <Line 
+                    type="monotone" 
+                    dataKey={c.key} 
+                    stroke={c.color} 
+                    strokeWidth={3} 
+                    dot={false}
+                    activeDot={{ r: 5, strokeWidth: 0 }}
+                    isAnimationActive={false}
+                    connectNulls={true}
+                  />
+                )}
+              </LineChart>
             </ResponsiveContainer>
           </AnalyticsCard>
         ))}
@@ -189,12 +308,56 @@ const AnalyticsHub = () => {
         ))}
       </div>
 
+      {/* ⏱️ TIME RANGE SELECTOR */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingRight: '1.25rem', marginBottom: '1.25rem' }}>
+        <div style={{ display: 'flex', gap: '6px', overflowX: 'auto' }} className="no-scrollbar">
+          {TIME_RANGES.map(range => {
+            const isSelected = timeRange.id === range.id;
+            return (
+              <button
+                key={range.id}
+                onClick={() => setTimeRange(range)}
+                style={{
+                  whiteSpace: 'nowrap', padding: '6px 14px', borderRadius: '100px',
+                  border: `1.5px solid ${isSelected ? COLORS.good : '#E2E8F0'}`,
+                  background: isSelected ? `${COLORS.good}10` : 'transparent',
+                  color: isSelected ? COLORS.good : COLORS.subtext,
+                  fontSize: '0.65rem', fontWeight: 900, cursor: 'pointer',
+                  transition: '0.2s', outline: 'none'
+                }}
+              >
+                {range.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <button
+          onClick={() => {
+            const blob = new Blob([JSON.stringify(sensorHistory, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `AgriSense_History_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+          }}
+          style={{
+            width: '32px', height: '32px', borderRadius: '10px',
+            background: '#FFFFFF', border: `1.5px solid #E2E8F0`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+          }}
+        >
+          <Download size={14} color={COLORS.text} />
+        </button>
+      </div>
+
       <div style={{ flex: 1, paddingBottom: '1rem' }}>
         {renderGrid(activeTab)}
       </div>
 
       <style>{`
-        .analytics-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .analytics-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
       `}</style>
     </div>
   );
