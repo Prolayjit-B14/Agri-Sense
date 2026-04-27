@@ -1,10 +1,9 @@
 import React, { useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   CloudRain, Sun, Wind, Thermometer, Droplet,
-  Navigation, Activity, Gauge, SunMedium,
-  Sunrise, Sunset, LineChart, ChevronRight,
-  Umbrella, CloudSun, Clock, Minus, ArrowUp, ArrowDown
+  Navigation, Activity, Gauge, Eye,
+  Sunrise, Sunset, LineChart, Umbrella, CloudSun, Clock
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../state/AppContext';
@@ -38,9 +37,9 @@ const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, statusText 
   const isOffline = value === null || value === undefined;
   const safeStatus = (statusText || '').toLowerCase();
   
-  const isOptimal = safeStatus.includes('optimal') || safeStatus.includes('safe') || safeStatus.includes('stable') || safeStatus.includes('no rain') || safeStatus.includes('light');
+  const isOptimal = safeStatus.includes('optimal') || safeStatus.includes('safe') || safeStatus.includes('stable') || safeStatus.includes('no rain') || safeStatus.includes('light') || safeStatus.includes('normal');
   const isModerate = safeStatus.includes('moderate') || safeStatus.includes('high') || safeStatus.includes('low');
-  const isCritical = safeStatus.includes('critical') || safeStatus.includes('warning') || safeStatus.includes('heavy');
+  const isCritical = safeStatus.includes('critical') || safeStatus.includes('warning') || safeStatus.includes('heavy') || safeStatus.includes('storm');
   
   const stateColor = isOffline ? COLORS.offline : (isOptimal ? COLORS.primary : (isModerate ? COLORS.warning : (isCritical ? COLORS.critical : COLORS.offline)));
   const cardBg = isOffline ? '#F1F5F9' : (isOptimal ? '#F0FDF4' : (isModerate ? '#FFFBEB' : '#FEF2F2'));
@@ -185,7 +184,7 @@ const WeatherMonitoring = () => {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
         <DiagnosticCard label="Temp" value={stats.temp} unit="°C" min={15} max={35} icon={Thermometer} color={COLORS.primary} statusText={stats.temp === null ? 'Offline' : (stats.temp > 32 ? 'High' : (stats.temp < 18 ? 'Low' : 'Optimal'))} range="18-32 °C" />
         <DiagnosticCard label="Humidity" value={stats.humidity} unit="%" min={40} max={80} icon={Droplet} color={COLORS.secondary} statusText={stats.humidity === null ? 'Offline' : (stats.humidity > 75 ? 'High' : (stats.humidity < 45 ? 'Low' : 'Optimal'))} range="40-70 %" />
-        <DiagnosticCard label="Sunlight" value={stats.light} unit="lx" min={200} max={10000} icon={Sun} color={COLORS.warning} statusText={stats.light === null ? 'Offline' : (stats.light > 8000 ? 'High' : (stats.light < 500 ? 'Low' : 'Normal'))} range="1k-8k lx" />
+        <DiagnosticCard label="Sunlight" value={stats.light} unit="lx" min={200} max={10000} icon={Sun} color={COLORS.warning} statusText={stats.light === null ? 'Offline' : (stats.light > 8000 ? 'Extreme' : (stats.light < 500 ? 'Low' : 'Optimal'))} range="1k-8k lx" />
         <DiagnosticCard 
           label="Rain" 
           value={stats.rain} 
@@ -211,11 +210,11 @@ const WeatherMonitoring = () => {
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
            <RegionalMetric label="AQI" value={apiWeather?.aqi || '--'} icon={Activity} color="#10B981" />
-           <RegionalMetric label="Sky" value={apiWeather?.clouds ? `${apiWeather.clouds}%` : '--'} icon={CloudSun} color="#3B82F6" />
+           <RegionalMetric label="Clouds" value={apiWeather?.clouds ? `${apiWeather.clouds}%` : '--'} icon={CloudSun} color="#3B82F6" />
            <RegionalMetric label="Wind" value={apiWeather?.windSpeed || '--'} icon={Wind} color="#F59E0B" />
            <RegionalMetric label="Feels" value={`${apiWeather?.feelsLike || '--'}°`} icon={Thermometer} color="#EF4444" />
            <RegionalMetric label="Press" value={apiWeather?.pressure || '--'} icon={Gauge} color="#8B5CF6" />
-           <RegionalMetric label="UV" value={apiWeather?.uv || 'Low'} icon={SunMedium} color={COLORS.warning} />
+           <RegionalMetric label="Visib" value={apiWeather?.visibility || '--'} icon={Eye} color="#10B981" />
            <RegionalMetric label="Rise" value={apiWeather?.sunrise || '--'} icon={Sunrise} color={COLORS.primary} />
            <RegionalMetric label="Set" value={apiWeather?.sunset || '--'} icon={Sunset} color={COLORS.secondary} />
         </div>

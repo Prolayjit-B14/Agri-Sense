@@ -89,8 +89,9 @@ const SignalBars = ({ active }) => (
 // ─── SENSOR DOT ROW ───────────────────────────────────────────────────────────
 const SensorDotRow = ({ sensors }) => (
   <div style={{
-    display: 'flex', flexWrap: 'wrap', gap: '8px 10px',
-    alignItems: 'center', marginTop: '10px',
+    display: 'flex', flexWrap: 'wrap', gap: '4px 8px',
+    alignItems: 'center', marginTop: '6px',
+
   }}>
     {sensors.map(({ label, active }) => (
       <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -114,8 +115,9 @@ const NodeCard = ({ icon: Icon, label, color, isOnline, sensors, children }) => 
     style={{
       background: T.card,
       borderRadius: '18px',
-      padding: '13px 14px',
+      padding: '10px 12px',
       border: `1.5px solid ${isOnline ? `${color}22` : T.border}`,
+
       boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
       display: 'flex', flexDirection: 'column',
       cursor: 'default',
@@ -257,15 +259,16 @@ const VisionCard = ({ isOnline, detection }) => {
   );
 };
 
-// ─── STATUS TILE (read-only — no interaction) ────────────────────────────────
-const StatusTile = ({ icon: Icon, label, isOn, color }) => (
+// ─── STATUS TILE ─────────────────────────────────────────────────────────────
+const StatusTile = ({ icon: Icon, label, isOn, color, offText = 'OFF', hideStatus = false }) => (
   <div
     style={{
       background: isOn ? color : T.card,
       border: `1px solid ${isOn ? color : T.border}`,
       borderRadius: '14px',
-      padding: '10px 4px',
+      padding: '8px 4px',
       display: 'flex', flexDirection: 'column',
+
       alignItems: 'center', gap: '5px',
       flex: 1,
       boxShadow: isOn ? `0 4px 12px ${color}25` : '0 1px 4px rgba(0,0,0,0.03)',
@@ -286,30 +289,29 @@ const StatusTile = ({ icon: Icon, label, isOn, color }) => (
       <div style={{ fontSize: '0.55rem', fontWeight: 900, color: isOn ? '#fff' : T.text, textTransform: 'uppercase', letterSpacing: '0.02em' }}>
         {label}
       </div>
-      <div style={{
-        fontSize: '0.45rem', fontWeight: 900,
-        color: isOn ? 'rgba(255,255,255,0.8)' : T.grey,
-        textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '1px',
-      }}>
-        {isOn ? 'ON' : 'OFF'}
-      </div>
+      {!hideStatus && (
+        <div style={{
+          fontSize: '0.45rem', fontWeight: 900,
+          color: isOn ? 'rgba(255,255,255,0.8)' : T.grey,
+          textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '1px',
+        }}>
+          {isOn ? 'ON' : offText}
+        </div>
+      )}
     </div>
   </div>
 );
 
-// ─── CONTROL PANEL (status-only display) ─────────────────────────────────────
+// ─── CONTROL PANEL ───────────────────────────────────────────────────────────
 /**
- * Read-only status panel — shows live ON/OFF state only.
- * Actual toggling is done on each feature's dedicated screen:
- *   Buzzer / Light → VisualMonitor (/camera)
- *   Display        → ON when MQTT bridge is connected
- *   Pump           → IrrigationSystem (/irrigation)
+ * Interactive status panel — shows live ON/OFF state and toggles global actuators.
  */
-const ControlPanel = ({ actuators, mqttStatus }) => {
+const ControlPanel = ({ actuators, mqttStatus, sensorData }) => {
   const isBuzzerOn  = actuators?.[ACTUATORS.BUZZER]  ?? false;
   const isLightOn   = actuators?.[ACTUATORS.LIGHT]   ?? false;
   const isPumpOn    = actuators?.[ACTUATORS.PUMP]     ?? false;
-  const isDisplayOn = mqttStatus === 'connected';
+  const isDisplayOn = sensorData?.soil?.oledActive === 1 || sensorData?.soil?.oledActive === true;
+
 
   return (
     <div style={{
@@ -329,10 +331,11 @@ const ControlPanel = ({ actuators, mqttStatus }) => {
 
       {/* 4-Column Status Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
-        <StatusTile icon={BellRing}  label="Buzzer"  isOn={isBuzzerOn}  color="#EF4444"  />
-        <StatusTile icon={Lightbulb} label="Light"   isOn={isLightOn}   color={T.green}  />
-        <StatusTile icon={Zap}       label="Pump"    isOn={isPumpOn}    color={T.blue}   />
-        <StatusTile icon={Monitor}   label="Display" isOn={isDisplayOn} color={T.amber}  />
+        <StatusTile icon={BellRing}  label="Buzzer"  isOn={isBuzzerOn}  color="#EF4444" hideStatus />
+        <StatusTile icon={Lightbulb} label="Light"   isOn={isLightOn}   color={T.green} hideStatus />
+        <StatusTile icon={Zap}       label="Pump"    isOn={isPumpOn}    color={T.blue}  hideStatus />
+        <StatusTile icon={Monitor}   label="OLED"    isOn={isDisplayOn} color={T.amber} offText="OFFLINE" hideStatus />
+
       </div>
     </div>
   );
@@ -408,7 +411,8 @@ const DeviceManager = () => {
       />
 
       {/* ── PRIMARY NODE GRID ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+
 
         {/* Soil Node */}
         <NodeCard
@@ -440,10 +444,11 @@ const DeviceManager = () => {
         </div>
       </div>
 
-      {/* ── CONTROL PANEL (status display only) ── */}
+      {/* ── CONTROL PANEL ── */}
       <ControlPanel
         actuators={actuators}
         mqttStatus={mqttStatus}
+        sensorData={sensorData}
       />
     </div>
   );

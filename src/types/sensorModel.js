@@ -10,7 +10,8 @@ export const INITIAL_SENSOR_DATA = {
     ph: null, 
     temp: null, 
     npk: { n: null, p: null, k: null }, 
-    healthIndex: null 
+    healthIndex: null,
+    oledActive: null
   },
   storage: { 
     temp: null, 
@@ -46,12 +47,12 @@ export const INITIAL_API_WEATHER = {
   pressure: null, 
   windSpeed: null, 
   clouds: null,
-  uv: 'Low',
+  uv: null,
   aqi: '---',
   sunrise: null, 
   sunset: null, 
-  condition: 'Detecting...', 
-  city: 'Detecting...',
+  condition: '---', 
+  city: '---',
   lastUpdate: '---'
 };
 

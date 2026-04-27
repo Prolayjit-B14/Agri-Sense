@@ -2,8 +2,8 @@ import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Waves, Activity, Thermometer, Zap, 
-  ChevronRight, ArrowUp, ArrowDown, Minus,
-  AlertCircle, Clock
+  ArrowUp, ArrowDown, Minus,
+  Clock
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../state/AppContext';
@@ -37,7 +37,7 @@ const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, statusText 
   const isOffline = value === null || value === undefined;
   const safeStatus = (statusText || '').toLowerCase();
   
-  const isOptimal = safeStatus.includes('optimal') || safeStatus.includes('sufficient') || safeStatus.includes('healthy') || safeStatus.includes('safe');
+  const isOptimal = safeStatus.includes('optimal') || safeStatus.includes('sufficient') || safeStatus.includes('healthy') || safeStatus.includes('safe') || safeStatus.includes('stable');
   const isModerate = safeStatus.includes('moderate');
   const isHighLow = safeStatus.includes('high') || safeStatus.includes('low') || safeStatus.includes('acidic') || safeStatus.includes('alkaline') || safeStatus.includes('hot') || safeStatus.includes('cold');
   
@@ -70,7 +70,7 @@ const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, statusText 
         background: cardBg, borderRadius: '28px', padding: '1.25rem 1rem',
         border: `1.5px solid ${isOffline ? '#E2E8F0' : COLORS.border}`,
         boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
-        position: 'relative', height: '185px',
+        position: 'relative', minHeight: '185px',
         display: 'flex', flexDirection: 'column',
         justifyContent: 'space-between', overflow: 'hidden'
       }}

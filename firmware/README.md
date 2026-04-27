@@ -9,6 +9,7 @@
 
 | Folder | Board | Purpose |
 |--------|-------|---------|
+| `Production/` | ESP32 DevKit v1 | **MASTER NODE (v21):** Reads pH, Moisture, Air T/H, LDR, Rain. Unified real-time telemetry. |
 | `01_SoilWeatherNode/` | ESP32 DevKit v1 | Reads Moisture, DHT22, LDR, Rain — publishes unified sensor payload |
 | `02_CameraNode/` | ESP32-CAM (AI-Thinker) | Serves MJPEG stream, handles light & buzzer via HTTP |
 | `03_RelayControlNode/` | ESP32 DevKit v1 | Receives MQTT commands → triggers Pump, Valve, Buzzer, Light, Sprayer relays |

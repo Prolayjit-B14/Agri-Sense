@@ -148,6 +148,15 @@ export const AppProvider = ({ children }) => {
   const toggleActuator = (key) => {
     const newState = !actuators[key];
     setActuators(prev => ({ ...prev, [key]: newState }));
+    
+    // Global ESP-CAM HTTP toggles
+    const CAM_IP = 'http://192.168.4.2';
+    if (key === ACTUATORS.LIGHT) {
+      fetch(`${CAM_IP}/light?state=${newState ? 'on' : 'off'}`).catch(() => {});
+    } else if (key === ACTUATORS.BUZZER) {
+      fetch(`${CAM_IP}/buzzer?state=${newState ? 'on' : 'off'}`).catch(() => {});
+    }
+
     if (!MASTER_CONFIG.USE_MOCK_DATA) {
       const commands = MASTER_CONFIG.ACTUATOR_COMMANDS[key];
       if (commands) mqttService.publishCommand({ action: newState ? commands.ON : commands.OFF, actuator: key.toLowerCase().replace(' ', '_'), status: newState ? "ON" : "OFF" });
@@ -284,6 +293,54 @@ export const AppProvider = ({ children }) => {
     return () => clearInterval(interval);
   }, []);
 
+  // 🐕 WATCHDOG ENGINE: Monitor device timeouts and clear data when offline
+  useEffect(() => {
+    const watchdog = setInterval(() => {
+      const now = Date.now();
+      
+      setDevices(prevDevs => {
+        let changed = false;
+        const nextDevs = { ...prevDevs };
+        const offlineNodes = [];
+
+        Object.keys(nextDevs).forEach(id => {
+          if (nextDevs[id].status !== 'OFFLINE') {
+             // 5 seconds offline threshold
+             if (!nextDevs[id].lastUpdate || (now - nextDevs[id].lastUpdate > 5000)) {
+               nextDevs[id] = { ...nextDevs[id], status: 'OFFLINE' };
+               offlineNodes.push(nextDevs[id].node_type);
+               changed = true;
+             }
+          }
+        });
+
+        if (changed) {
+          const overview = calculateSystemOverview(nextDevs);
+          setSystemOverview(overview);
+          
+          if (overview.overall_status === 'OFFLINE') {
+            setConnectivityStatus('Offline');
+          }
+          
+          // Clear the actual sensor data so dashboard shows --- and chart gets a gap
+          setSensorData(prevData => {
+             const newData = { ...prevData };
+             if (offlineNodes.includes('soil')) newData.soil = INITIAL_SENSOR_DATA.soil;
+             if (offlineNodes.includes('weather')) newData.weather = INITIAL_SENSOR_DATA.weather;
+             if (offlineNodes.includes('storage')) newData.storage = INITIAL_SENSOR_DATA.storage;
+             if (offlineNodes.includes('water') || offlineNodes.includes('irrigation')) newData.water = INITIAL_SENSOR_DATA.water;
+             if (offlineNodes.includes('vision')) newData.vision = INITIAL_SENSOR_DATA.vision;
+             return newData;
+          });
+        }
+        
+        return changed ? nextDevs : prevDevs;
+      });
+    }, 2000); // Check every 2 seconds
+
+    return () => clearInterval(watchdog);
+  }, []);
+
   const sensorDataRef = useRef(sensorData);
   useEffect(() => { sensorDataRef.current = sensorData; }, [sensorData]);
 
@@ -368,49 +425,101 @@ export const AppProvider = ({ children }) => {
     return () => clearTimeout(bootTimer);
   }, []);
 
+  // ⚡ INSTANT CONNECTIVITY SYNC
+  useEffect(() => {
+    if (mqttStatus === 'disconnected' || mqttStatus === 'error') {
+      setConnectivityStatus('Offline');
+    } else if (mqttStatus === 'connected') {
+      setConnectivityStatus('Online');
+    }
+  }, [mqttStatus]);
+
   // 5. Weather Satellite & Forecast Link
   useEffect(() => {
     const fetchWeather = async () => {
       try {
-        if (!MASTER_CONFIG.OPENWEATHER_API_KEY) throw new Error("No API Key");
         const key = MASTER_CONFIG.OPENWEATHER_API_KEY;
-        const city = MASTER_CONFIG.WEATHER_CITY;
+        if (!key || key.includes("VITE_")) {
+          console.warn("AgriSense Weather: No valid OpenWeather API key found.");
+          throw new Error("Missing API Key");
+        }
+        
+        let lat, lon;
+        let cityQuery = MASTER_CONFIG.WEATHER_CITY || "Kolkata";
 
-        // Fetch Current Weather
-        const currRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${key}`);
-        const currData = await currRes.json();
+        // ─── 1. RESOLVE LOCATION (GPS -> PROFILE -> CONFIG) ───
+        try {
+          const fetchPos = () => new Promise((resolve, reject) => {
+            const options = { timeout: 6000, enableHighAccuracy: false };
+            import('@capacitor/geolocation').then(({ Geolocation }) => {
+              Geolocation.getCurrentPosition(options).then(resolve).catch(() => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, options);
+              });
+            }).catch(() => {
+              navigator.geolocation.getCurrentPosition(resolve, reject, options);
+            });
+          });
+
+          const pos = await fetchPos();
+          lat = pos.coords.latitude;
+          lon = pos.coords.longitude;
+        } catch (gpsErr) {
+          // GPS Failed, check profile for "Lat, Lon • City" pattern
+          if (user?.location && user.location.includes('•')) {
+            const parts = user.location.split('•');
+            const coords = parts[0].split(',');
+            if (coords.length === 2) {
+              lat = parseFloat(coords[0].replace(/[^\d.-]/g, ''));
+              lon = parseFloat(coords[1].replace(/[^\d.-]/g, ''));
+            }
+            if (parts[1]) cityQuery = parts[1].trim();
+          } else if (user?.location) {
+            cityQuery = user.location;
+          }
+        }
+
+        // ─── 2. FETCH CURRENT WEATHER ───
+        const isCoordsValid = lat != null && lon != null && !isNaN(lat) && !isNaN(lon);
+        const baseUrl = "https://api.openweathermap.org/data/2.5";
+        const locationParams = isCoordsValid ? `lat=${lat}&lon=${lon}` : `q=${encodeURIComponent(cityQuery)}`;
+        
+        const weatherUrl = `${baseUrl}/weather?${locationParams}&units=metric&appid=${key}`;
+        const weatherRes = await fetch(weatherUrl);
+        
+        if (!weatherRes.ok) throw new Error(`Weather API Error: ${weatherRes.status}`);
+        const currData = await weatherRes.json();
         
         if (currData && currData.main) {
-          const { lat, lon } = currData.coord;
+          const { lat: fLat, lon: fLon } = currData.coord;
           
-          // Fetch Air Pollution (AQI)
-          let aqiLabel = '---';
-          let uvIndex = 'Low';
-          try {
-            const [aqiRes, uvRes] = await Promise.all([
-              fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${key}`),
-              fetch(`https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${key}`)
-            ]);
+          // Fetch AQI & UV in parallel
+          const [aqiRes, uvRes] = await Promise.all([
+            fetch(`${baseUrl}/air_pollution?lat=${fLat}&lon=${fLon}&appid=${key}`),
+            fetch(`${baseUrl}/uvi?lat=${fLat}&lon=${fLon}&appid=${key}`)
+          ]).catch(() => [null, null]);
+
+          let aqiLabel = '---', uvIndex = 'Low';
+          
+          if (aqiRes?.ok) {
             const aqiData = await aqiRes.json();
+            const aqiVal = aqiData?.list?.[0]?.main?.aqi;
+            aqiLabel = { 1: 'Good', 2: 'Fair', 3: 'Moderate', 4: 'Poor', 5: 'Critical' }[aqiVal] || '---';
+          }
+          
+          if (uvRes?.ok) {
             const uvData = await uvRes.json();
-            
-            const aqiValue = aqiData?.list?.[0]?.main?.aqi;
-            const aqiMap = { 1: 'Good', 2: 'Fair', 3: 'Moderate', 4: 'Poor', 5: 'Critical' };
-            aqiLabel = aqiMap[aqiValue] || '---';
-            
             const uvVal = uvData?.value;
-            uvIndex = uvVal !== undefined ? (uvVal < 3 ? 'Low' : (uvVal < 6 ? 'Mod' : (uvVal < 8 ? 'High' : 'Extreme'))) : 'Low';
-          } catch (err) {
-            console.warn("AQI/UV Fetch Failed:", err);
+            uvIndex = uvVal < 3 ? 'Low' : (uvVal < 6 ? 'Mod' : (uvVal < 8 ? 'High' : 'Extreme'));
           }
 
           setApiWeather({
             temp: currData.main.temp,
-            feelsLike: currData.main.feels_like,
+            feelsLike: Math.round(currData.main.feels_like),
             humidity: currData.main.humidity,
             pressure: currData.main.pressure,
-            windSpeed: currData.wind?.speed,
+            windSpeed: `${Math.round(currData.wind?.speed * 3.6)} km/h`,
             clouds: currData.clouds?.all,
+            visibility: currData.visibility ? `${(currData.visibility / 1000).toFixed(1)} km` : '---',
             condition: currData.weather?.[0]?.main,
             icon: currData.weather?.[0]?.icon,
             city: currData.name,
@@ -418,52 +527,49 @@ export const AppProvider = ({ children }) => {
             uv: uvIndex,
             sunrise: new Date(currData.sys.sunrise * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             sunset: new Date(currData.sys.sunset * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            lastUpdate: new Date().toLocaleTimeString()
+            lastUpdate: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           });
         }
 
-        // Fetch 5-Day Forecast
-        const foreRes = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${key}`);
-        const foreData = await foreRes.json();
-        if (foreData && foreData.list) {
-          // Filter to get 1 forecast per day (around noon)
-          const daily = foreData.list.filter(f => f.dt_txt.includes("12:00:00")).map(f => {
-            let prob = f.pop !== undefined ? Math.round(f.pop * 100) : (f.rain ? 40 : 0);
-            
-            // 🌥️ CLOUD SENSITIVITY BOOST: If pop is 0 but it's cloudy, show a low humidity chance (5-15%)
-            if (prob === 0 && f.weather?.[0]?.main === 'Clouds') {
-              prob = f.clouds?.all > 50 ? 15 : 5;
-            }
-
-            return {
-              date: new Date(f.dt * 1000).toLocaleDateString([], { weekday: 'short' }),
-              temp: Math.round(f.main.temp),
-              condition: f.weather[0].main,
-              rainProb: `${prob}%`
-            };
-          });
-          setApiForecast(daily);
+        // ─── 3. FETCH 5-DAY FORECAST ───
+        const forecastUrl = `${baseUrl}/forecast?${locationParams}&units=metric&appid=${key}`;
+        const foreRes = await fetch(forecastUrl);
+        if (foreRes.ok) {
+          const foreData = await foreRes.json();
+          if (foreData?.list) {
+            // Group by day and take the noon forecast
+            const daily = foreData.list
+              .filter(f => f.dt_txt.includes("12:00:00"))
+              .map(f => ({
+                date: new Date(f.dt * 1000).toLocaleDateString([], { weekday: 'short' }),
+                temp: Math.round(f.main.temp),
+                condition: f.weather[0].main,
+                rainProb: f.pop != null ? `${Math.round(f.pop * 100)}%` : (f.rain ? '40%' : '0%')
+              }));
+            setApiForecast(daily);
+          }
         }
 
-      } catch (e) {
-        console.warn("Weather Satellite Failed - Hardware Backup Active", e);
-        if (sensorData?.weather?.temp) {
+      } catch (err) {
+        console.error("AgriSense Weather Sync Failed:", err.message);
+        // Fallback to Hardware sensors if available
+        if (sensorData?.weather?.temp != null) {
           setApiWeather(prev => ({
             ...prev,
             temp: sensorData.weather.temp,
             humidity: sensorData.weather.humidity,
-            condition: 'Hardware Stream',
-            city: 'Field A',
-            lastUpdate: 'Live'
+            condition: 'Hardware Link',
+            city: 'Field A (Live)',
+            lastUpdate: 'Now'
           }));
         }
       }
     };
 
     fetchWeather();
-    const timer = setInterval(fetchWeather, 600000); 
-    return () => clearInterval(timer);
-  }, [sensorData?.weather?.temp]);
+    const weatherTimer = setInterval(fetchWeather, 600000); // 10 mins
+    return () => clearInterval(weatherTimer);
+  }, [user?.location, sensorData?.weather?.temp]);
 
   return (
     <AppContext.Provider value={{
@@ -472,7 +578,7 @@ export const AppProvider = ({ children }) => {
       actuators, toggleActuator, isSidebarOpen, setIsSidebarOpen, ACTUATORS,
       farmHealthScore, systemHealth, connectivityStatus, cloudSyncStatus, profileMeta, updateProfileMeta,
       isDataLoading, lastGlobalUpdate, mqttStatus, syncData, syncDeviceId,
-      devices, systemOverview
+      devices, systemOverview, apiWeather, apiForecast
     }}>
       {children}
     </AppContext.Provider>

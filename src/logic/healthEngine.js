@@ -170,7 +170,7 @@ export const calculateNodeHealth = (nodeType, data) => {
       const w = data;
       const tScore = getParamScore(w.temp, 15, 38, 10); // General ambient temp
       const hScore = getParamScore(w.humidity, 30, 80, 20); // General humidity range
-      const lScore = getParamScore(w.lightIntensity, 100, 1000, 200); // Standard daylight
+      const lScore = getParamScore(w.lightIntensity, 1000, 8000, 2000); // Realistic outdoor daylight range (1k-8k lux)
       const rScore = getParamScore(w.rainLevel, 0, 30, 20); // Stable rain range
 
       if (tScore !== null) { scores.push(tScore); weights.push(0.30); }
@@ -194,10 +194,12 @@ export const calculateNodeHealth = (nodeType, data) => {
     case 'water': {
       const ir = data;
       const lScore = getParamScore(ir.level, 20, 100, 60); // Broader level range
-      const pScore = ir.pumpActive !== undefined ? (ir.pumpActive ? 100 : 90) : null; 
+      if (lScore === null) break; // If primary telemetry is missing, don't score
 
-      if (lScore !== null) { scores.push(lScore); weights.push(0.70); }
-      if (pScore !== null) { scores.push(pScore); weights.push(0.30); }
+      const pScore = ir.pumpActive ? 100 : 90; 
+
+      scores.push(lScore); weights.push(0.70);
+      scores.push(pScore); weights.push(0.30);
       break;
     }
     default: return null;

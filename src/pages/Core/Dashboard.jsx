@@ -339,7 +339,7 @@ const Dashboard = () => {
 
         <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '6px', color: COLORS.textMuted, fontSize: '0.85rem', fontWeight: 600 }}>
           <MapPin size={15} color={COLORS.primary} />
-          <span>{user?.location || 'Set farm location'}</span>
+          <span>{user?.location?.includes('•') ? user.location.split('•')[1].trim() : (user?.location || 'Set farm location')}</span>
         </div>
       </section>
 
@@ -425,9 +425,6 @@ const Dashboard = () => {
                 </div>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '0.7rem', fontWeight: 800, color: isOn ? '#fff' : COLORS.textMain }}>{label}</div>
-                  <div style={{ fontSize: '0.5rem', fontWeight: 900, color: isOn ? 'rgba(255,255,255,0.7)' : COLORS.textMuted, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '2px' }}>
-                    {isOn ? '● ON' : '○ OFF'}
-                  </div>
                 </div>
               </motion.div>
             );

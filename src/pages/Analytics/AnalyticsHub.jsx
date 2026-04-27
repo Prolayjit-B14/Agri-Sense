@@ -5,14 +5,14 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
-  LineChart, Line, BarChart, Bar, AreaChart, Area,
-  PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Legend, ComposedChart
+  LineChart, Line, AreaChart, Area,
+  XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, ComposedChart
 } from 'recharts';
 import {
-  Sprout, CloudRain, Warehouse, AlertCircle, Download
+  Sprout, CloudRain, Warehouse, Download
 } from 'lucide-react';
 import { useApp } from '../../state/AppContext';
 import { useLocation } from 'react-router-dom';

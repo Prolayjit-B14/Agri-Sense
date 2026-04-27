@@ -39,7 +39,7 @@ export const MASTER_CONFIG = {
   DEFAULT_PROFILE_PHOTO: "https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&q=80&w=100",
   
   // 🗺️ MAP & WEATHER (Optional External APIs)
-  OPENWEATHER_API_KEY: import.meta.env.VITE_OPENWEATHER_API_KEY, 
+  OPENWEATHER_API_KEY: import.meta.env.VITE_WEATHER_API_KEY || "YOUR_OPENWEATHER_API_KEY", 
   WEATHER_CITY: "Kalyani",
   
   MAP_LAT: 22.975,

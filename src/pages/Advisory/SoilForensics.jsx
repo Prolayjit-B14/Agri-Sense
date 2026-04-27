@@ -89,7 +89,22 @@ const StepIndicator = ({ currentStep }) => (
 );
 
 const SoilForensics = () => {
-  const { sensorData } = useApp();
+  const { sensorData, devices, syncData } = useApp();
+  
+  const isSoilNodeActive = useMemo(() => {
+    const node = devices?.['soil_node'];
+    const s = sensorData?.soil;
+    return (
+      node?.status === 'ACTIVE' && 
+      s?.moisture !== null && 
+      s?.ph !== null && 
+      s?.npk?.n !== null && 
+      s?.npk?.p !== null && 
+      s?.npk?.k !== null
+    );
+  }, [devices, sensorData]);
+
+
   const [currentStep, setCurrentStep] = useState(1);
   const [boundaryPoints, setBoundaryPoints] = useState([]);
   const [gpsAccuracy, setGpsAccuracy] = useState(5.0);
@@ -197,27 +212,39 @@ const SoilForensics = () => {
     let timer;
     if (isCollecting && activeSampleIndex !== null && collectProgress < 100) {
       timer = setTimeout(() => {
-        if (!sensorData.soil || sensorData.soil.moisture === '---') return;
+        if (!sensorData.soil || sensorData.soil.moisture === null) return;
         const now = new Date();
         const newVal = {
-          moisture: sensorData.soil.moisture !== null ? parseFloat(sensorData.soil.moisture).toFixed(1) : '---',
-          ph: sensorData.soil.ph !== null ? parseFloat(sensorData.soil.ph).toFixed(1) : '---',
-          n: sensorData.soil.npk?.n !== null ? parseInt(sensorData.soil.npk.n) : '---',
-          p: sensorData.soil.npk?.p !== null ? parseInt(sensorData.soil.npk.p) : '---',
-          k: sensorData.soil.npk?.k !== null ? parseInt(sensorData.soil.npk.k) : '---',
+          moisture: sensorData.soil.moisture !== null ? parseFloat(sensorData.soil.moisture).toFixed(1) : null,
+          ph: sensorData.soil.ph !== null ? parseFloat(sensorData.soil.ph).toFixed(1) : null,
+          n: sensorData.soil.npk?.n !== null ? parseInt(sensorData.soil.npk.n) : null,
+          p: sensorData.soil.npk?.p !== null ? parseInt(sensorData.soil.npk.p) : null,
+          k: sensorData.soil.npk?.k !== null ? parseInt(sensorData.soil.npk.k) : null,
           date: now.toLocaleDateString(), 
           time: now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
           gps: `${mapCenter.lat.toFixed(6)}, ${mapCenter.lng.toFixed(6)}`
         };
+        if (newVal.moisture === null || newVal.ph === null || newVal.n === null) return;
         setCurrentReadings(prev => [...prev, newVal]); setCollectProgress(prev => prev + 33.4);
+
       }, 1500);
     } else if (isCollecting && collectProgress >= 100) {
+      const validReadings = currentReadings.filter(r => r.moisture !== null && r.ph !== null && r.n !== null);
+      if (validReadings.length === 0) {
+        setIsCollecting(false); setActiveSampleIndex(null); setCurrentReadings([]);
+        return;
+      }
       const finalMean = {
-        moisture: (currentReadings.reduce((a, b) => a + parseFloat(b.moisture), 0) / currentReadings.length).toFixed(1),
-        ph: (currentReadings.reduce((a, b) => a + parseFloat(b.ph), 0) / currentReadings.length).toFixed(1),
-        npk: { n: Math.round(currentReadings.reduce((a, b) => a + b.n, 0) / currentReadings.length), p: Math.round(currentReadings.reduce((a, b) => a + b.p, 0) / currentReadings.length), k: Math.round(currentReadings.reduce((a, b) => a + b.k, 0) / currentReadings.length) },
-        date: currentReadings[0]?.date, time: currentReadings[0]?.time, gps: currentReadings[0]?.gps
+        moisture: (validReadings.reduce((a, b) => a + parseFloat(b.moisture), 0) / validReadings.length).toFixed(1),
+        ph: (validReadings.reduce((a, b) => a + parseFloat(b.ph), 0) / validReadings.length).toFixed(1),
+        npk: { 
+          n: Math.round(validReadings.reduce((a, b) => a + b.n, 0) / validReadings.length), 
+          p: Math.round(validReadings.reduce((a, b) => a + b.p, 0) / validReadings.length), 
+          k: Math.round(validReadings.reduce((a, b) => a + b.k, 0) / validReadings.length) 
+        },
+        date: validReadings[0]?.date, time: validReadings[0]?.time, gps: validReadings[0]?.gps
       };
+
       setSamples(prev => prev.map((s, i) => i === activeSampleIndex ? { ...s, readings: finalMean, status: 'completed' } : s));
       setIsCollecting(false); setActiveSampleIndex(null); setCurrentReadings([]);
     }
@@ -305,7 +332,29 @@ const SoilForensics = () => {
       <div style={{ padding: '1.25rem' }}>
         <AnimatePresence mode="wait">
           {currentStep === 1 && (
-            <motion.div key="st1" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+            <motion.div key="st1" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} style={{ position: 'relative' }}>
+              {!isSoilNodeActive && (
+                <div style={{ 
+                  position: 'absolute', inset: '-10px', zIndex: 1000, 
+                  background: 'rgba(248, 250, 252, 0.92)', backdropFilter: 'blur(12px)', 
+                  borderRadius: RAD.card, display: 'flex', flexDirection: 'column', 
+                  alignItems: 'center', justifyContent: 'center', textAlign: 'center', 
+                  padding: '2rem', border: `2px dashed ${COLORS.border}`
+                }}>
+                  <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem', boxShadow: '0 10px 20px rgba(239, 68, 68, 0.1)' }}>
+                    <Activity size={40} color={COLORS.danger} />
+                  </div>
+                  <h2 style={{ fontSize: '1.4rem', fontWeight: 950, color: COLORS.textMain, marginBottom: '0.5rem' }}>No Sensor Active</h2>
+                  <p style={{ fontSize: '0.85rem', color: COLORS.textMuted, fontWeight: 700, maxWidth: '280px', lineHeight: 1.6, marginBottom: '2rem' }}>
+                    All Soil Node sensors (N, P, K, pH, Moisture) must be active for a forensic audit. Please connect your hardware to proceed.
+                  </p>
+                  <div style={{ display: 'flex', gap: '12px', width: '100%', maxWidth: '320px' }}>
+                    <button onClick={() => window.history.back()} style={{ flex: 1, height: '54px', borderRadius: RAD.btn, border: `1px solid ${COLORS.border}`, background: 'white', color: COLORS.textMain, fontWeight: 900, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Go Back</button>
+                    <button onClick={() => syncData()} style={{ flex: 1, height: '54px', borderRadius: RAD.btn, border: 'none', background: COLORS.primary, color: 'white', fontWeight: 900, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', boxShadow: `0 8px 20px ${COLORS.primary}30` }}>Retry Sync</button>
+                  </div>
+                </div>
+              )}
+
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.25rem', alignItems: 'center' }}>
                 <div>
                   <h2 style={{ fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain, margin: 0 }}>Field Mapping</h2>

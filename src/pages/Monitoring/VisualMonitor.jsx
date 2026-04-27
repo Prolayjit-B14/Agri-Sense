@@ -6,16 +6,14 @@
  * LOGIC: Polling-based hardware state synchronization.
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Camera, Radio, Activity, Bell, ChevronRight, Eye, 
-  EyeOff, Video, Volume2, VolumeX, Zap, Wind, 
-  Clock, Wifi, Cpu, ShieldAlert, Thermometer, Battery,
-  RefreshCw, Maximize2, AlertTriangle, Lightbulb, Camera as CaptureIcon,
-  Smartphone, MapPin, Info
+  EyeOff, Bell, Lightbulb, Camera as CaptureIcon,
+  Maximize2, AlertTriangle, ShieldAlert
 } from 'lucide-react';
 import { useApp } from '../../state/AppContext';
+import { ACTUATORS } from '../../logic/healthEngine';
 
 // ─── DESIGN TOKENS ─────────────────────────────────────────────────────────
 const COLORS = {
@@ -49,26 +47,32 @@ const Badge = ({ children, color, pulse = false }) => (
   </div>
 );
 
-const ControlButton = ({ icon: Icon, active, onClick, color = COLORS.secondary }) => (
-  <motion.button 
+const ControlButton = ({ icon: Icon, label, active, onClick, color = COLORS.secondary, offText = "OFF", isAction = false }) => (
+  <motion.div 
     whileTap={{ scale: 0.95 }}
     onClick={onClick}
     style={{ 
       background: active ? color : COLORS.card, 
-      border: `1px solid ${active ? color : 'rgba(0,0,0,0.05)'}`,
-      borderRadius: RAD.inner, padding: '16px', display: 'flex', flexDirection: 'column', 
-      alignItems: 'center', justifyContent: 'center', flex: 1, cursor: 'pointer',
-      boxShadow: active ? `0 8px 20px ${color}30` : '0 4px 12px rgba(0,0,0,0.02)'
+      border: `1px solid ${active ? color : COLORS.border}`,
+      borderRadius: '14px', padding: '10px 4px', display: 'flex', flexDirection: 'column', 
+      alignItems: 'center', gap: '5px', flex: 1, cursor: 'pointer',
+      boxShadow: active ? `0 4px 12px ${color}25` : '0 1px 4px rgba(0,0,0,0.03)',
+      userSelect: 'none',
     }}
   >
     <div style={{ 
-      width: '44px', height: '44px', borderRadius: '12px', 
+      width: '30px', height: '30px', borderRadius: '10px', 
       background: active ? 'rgba(255,255,255,0.2)' : `${color}10`,
       display: 'flex', alignItems: 'center', justifyContent: 'center'
     }}>
-      <Icon size={24} color={active ? 'white' : color} />
+      <Icon size={14} color={active ? 'white' : color} strokeWidth={2.5} />
     </div>
-  </motion.button>
+    <div style={{ textAlign: 'center' }}>
+      <div style={{ fontSize: '0.55rem', fontWeight: 900, color: active ? '#fff' : COLORS.text, textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+        {label}
+      </div>
+    </div>
+  </motion.div>
 );
 
 // ─── MAIN COMPONENT ────────────────────────────────────────────────────────
@@ -78,26 +82,28 @@ const VisualMonitor = () => {
   const CAM_IP = 'http://192.168.4.2';
   const streamUrl = `${CAM_IP}/stream`;
   
+  const { devices, sensorData, actuators, toggleActuator } = useApp();
+
   // ─── ESP-CAM HARDWARE TOGGLES ───
-  const [flashOn, setFlashOn] = useState(false);
-  const [buzzerOn, setBuzzerOn] = useState(false);
+  const flashOn = actuators[ACTUATORS.LIGHT];
+  const buzzerOn = actuators[ACTUATORS.BUZZER];
 
-  const toggleFlash = async () => {
-    const newState = !flashOn;
-    setFlashOn(newState);
-    try { await fetch(`${CAM_IP}/light?state=${newState ? 'on' : 'off'}`); } catch (e) { console.log('Cam offline'); }
-  };
-
-  const toggleBuzzer = async () => {
-    const newState = !buzzerOn;
-    setBuzzerOn(newState);
-    try { await fetch(`${CAM_IP}/buzzer?state=${newState ? 'on' : 'off'}`); } catch (e) { console.log('Cam offline'); }
-  };
+  const toggleFlash = useCallback(() => toggleActuator(ACTUATORS.LIGHT), [toggleActuator]);
+  const toggleBuzzer = useCallback(() => toggleActuator(ACTUATORS.BUZZER), [toggleActuator]);
+  
+  const [capturedImg, setCapturedImg] = useState(null);
+  const [isCapturing, setIsCapturing] = useState(false);
 
   const captureImage = async () => {
     try {
-      window.open(`${CAM_IP}/capture`, '_blank');
-    } catch (e) { console.log('Cam offline'); }
+      setIsCapturing(true);
+      const timestamp = Date.now();
+      setCapturedImg(`${CAM_IP}/capture?_cb=${timestamp}`);
+      setTimeout(() => setIsCapturing(false), 1000);
+    } catch (e) { 
+      setIsCapturing(false);
+      console.log('Cam offline'); 
+    }
   };
 
   // ─── SIMULATED AI DETECTION ENGINE ───
@@ -130,9 +136,8 @@ const VisualMonitor = () => {
 
     const interval = setInterval(fetchDetection, 3000);
     return () => clearInterval(interval);
-  }, [buzzerOn]);
+  }, [buzzerOn, toggleBuzzer]);
 
-  const { devices, sensorData } = useApp();
   const deviceStatus = devices?.vision_node?.status || 'OFFLINE';
   
   const telemetry = {
@@ -175,11 +180,9 @@ const VisualMonitor = () => {
           <div style={{ position: 'absolute', inset: 0, padding: '1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div style={{ display: 'flex', gap: '8px' }}>
-              <div style={{ display: 'flex', gap: '8px' }}>
                 <Badge color={deviceStatus === 'ACTIVE' ? COLORS.primary : COLORS.muted}>
                   {deviceStatus === 'ACTIVE' ? 'ONLINE' : deviceStatus}
                 </Badge>
-              </div>
               </div>
             </div>
 
@@ -250,55 +253,22 @@ const VisualMonitor = () => {
       </AnimatePresence>
 
       {/* 3. CAMERA HARDWARE CONTROL PANEL */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', marginBottom: '1.5rem' }}>
         <ControlButton 
-          icon={Volume2} active={buzzerOn} color={COLORS.danger}
+          icon={Bell} label="Buzzer" active={buzzerOn} color={COLORS.danger}
           onClick={toggleBuzzer} 
         />
         <ControlButton 
-          icon={Zap} active={flashOn} color={COLORS.warning}
+          icon={Lightbulb} label="Light" active={flashOn} color={COLORS.primary}
           onClick={toggleFlash} 
         />
         <ControlButton 
-          icon={CaptureIcon} active={false} color={COLORS.secondary}
-          onClick={captureImage} 
+          icon={CaptureIcon} label="Capture" active={isCapturing} color={COLORS.secondary}
+          onClick={captureImage} isAction={true}
         />
       </div>
 
-      {/* 4. ENVIRONMENTAL TELEMETRY (LDR & RAIN) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-        <div style={{ 
-          background: 'white', borderRadius: RAD.inner, padding: '1.25rem',
-          border: `1px solid ${COLORS.border}`, boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
-          display: 'flex', alignItems: 'center', gap: '12px'
-        }}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${COLORS.warning}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Lightbulb size={20} color={COLORS.warning} />
-          </div>
-          <div>
-            <div style={{ fontSize: '0.6rem', fontWeight: 800, color: COLORS.muted }}>LIGHT (LDR)</div>
-            <div style={{ fontSize: '1rem', fontWeight: 950, color: COLORS.text }}>
-              {sensorData?.weather?.lightIntensity ?? '---'} <span style={{ fontSize: '0.6rem', opacity: 0.5 }}>LUX</span>
-            </div>
-          </div>
-        </div>
-
-        <div style={{ 
-          background: 'white', borderRadius: RAD.inner, padding: '1.25rem',
-          border: `1px solid ${COLORS.border}`, boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
-          display: 'flex', alignItems: 'center', gap: '12px'
-        }}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${COLORS.secondary}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Wind size={20} color={COLORS.secondary} />
-          </div>
-          <div>
-            <div style={{ fontSize: '0.6rem', fontWeight: 800, color: COLORS.muted }}>RAIN LEVEL</div>
-            <div style={{ fontSize: '1rem', fontWeight: 950, color: COLORS.text }}>
-              {sensorData?.weather?.rainLevel ?? '---'} <span style={{ fontSize: '0.6rem', opacity: 0.5 }}>mm</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* ENVIRONMENTAL TELEMETRY REMOVED PER USER REQUEST */}
 
 
       {/* ALERT OVERLAY SYSTEM (Simulated) */}
@@ -319,6 +289,35 @@ const VisualMonitor = () => {
               <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>{telemetry.detection.type} in {telemetry.detection.zone}!</div>
             </div>
             <motion.button whileTap={{ scale: 0.9 }} style={{ border: 'none', background: 'rgba(255,255,255,0.2)', padding: '6px 12px', borderRadius: '8px', color: 'white', fontSize: '0.65rem', fontWeight: 950 }}>VIEW</motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* CAPTURED IMAGE FULLSCREEN MODAL */}
+      <AnimatePresence>
+        {capturedImg && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ 
+              position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.95)', zIndex: 9999, 
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
+              padding: '20px', backdropFilter: 'blur(10px)' 
+            }}
+            onClick={() => setCapturedImg(null)}
+          >
+            <motion.img 
+              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+              src={capturedImg} 
+              style={{ width: '100%', maxWidth: '500px', borderRadius: '24px', boxShadow: '0 20px 60px rgba(0,0,0,0.5)', border: '2px solid rgba(255,255,255,0.1)' }} 
+              alt="Hardware Capture" 
+            />
+            <div style={{ 
+              marginTop: '30px', color: 'white', fontWeight: 900, 
+              letterSpacing: '0.15em', fontSize: '0.75rem', background: 'rgba(255,255,255,0.1)',
+              padding: '10px 20px', borderRadius: '30px'
+            }}>
+              TAP ANYWHERE TO CLOSE
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

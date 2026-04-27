@@ -64,7 +64,9 @@ export const processMqttMessage = (topic, data, prev) => {
         newState.soil.npk.p = getVal(sData.npk, ['p', 'P'], prev.soil.npk.p);
         newState.soil.npk.k = getVal(sData.npk, ['k', 'K'], prev.soil.npk.k);
       }
+      newState.soil.oledActive = getVal(sData, ['oled', 'display'], prev.soil.oledActive);
       newState.soil.healthIndex = calculateNodeHealth('soil', newState.soil);
+
     }
     if (data.weather) {
       const wData = data.weather;
@@ -106,6 +108,7 @@ export const processMqttMessage = (topic, data, prev) => {
         newState.soil.npk.p = getVal(data.npk, ['p'], prev.soil.npk.p);
         newState.soil.npk.k = getVal(data.npk, ['k'], prev.soil.npk.k);
       }
+      newState.soil.oledActive = getVal(data, ['oled', 'display'], prev.soil.oledActive);
     } else {
       // If it's a raw number on the /soil topic, we only update moisture as a safe default
       newState.soil.moisture = getVal(data, [], prev.soil.moisture);

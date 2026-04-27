@@ -126,19 +126,26 @@ const Profile = () => {
   const handleGPSDetect = async () => {
     setIsLocating(true);
     try {
-      const { Geolocation } = await import('@capacitor/geolocation');
-      const permissions = await Geolocation.checkPermissions();
-      if (permissions.location !== 'granted') {
-        const req = await Geolocation.requestPermissions();
-        if (req.location !== 'granted') {
-          alert("Location permission denied");
-          setIsLocating(false);
-          return;
-        }
-      }
+      let latitude, longitude;
 
-      const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
-      const { latitude, longitude } = position.coords;
+      try {
+        const { Geolocation } = await import('@capacitor/geolocation');
+        const permissions = await Geolocation.checkPermissions();
+        if (permissions.location !== 'granted') {
+          const req = await Geolocation.requestPermissions();
+          if (req.location !== 'granted') throw new Error("Permission Denied");
+        }
+        const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+        latitude = position.coords.latitude;
+        longitude = position.coords.longitude;
+      } catch (capErr) {
+        // Fallback to standard web navigator
+        const pos = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000 });
+        });
+        latitude = pos.coords.latitude;
+        longitude = pos.coords.longitude;
+      }
       
       // Perform Reverse Geocoding to get actual city/village name
       let placeName = "Unknown Area";
@@ -168,7 +175,7 @@ const Profile = () => {
       }));
     } catch (err) {
       console.error(err);
-      alert("Unable to retrieve location from device GPS.");
+      alert("Unable to retrieve location from device GPS. Please check location settings.");
     } finally {
       setIsLocating(false);
     }

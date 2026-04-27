@@ -5,9 +5,9 @@
  */
 
 const THRESHOLDS = {
-  STALE: 30000, // 30 seconds
-  OFFLINE: 60000, // 60 seconds
-  ERROR: 60000,
+  STALE: 3000, // 3 seconds
+  OFFLINE: 5000, // 5 seconds
+  ERROR: 5000,
   LATENCY_CRITICAL: 100, // 100ms
   RSSI_WEAK: -80, // -80 dBm
   PACKET_LOSS_MAX: 2, // 2%
