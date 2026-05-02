@@ -48,8 +48,7 @@ const Sidebar = () => {
     {
       title: 'ACCOUNT',
       links: [
-        { name: 'Profile',             path: '/profile',                icon: User,          color: '#8b5cf6' },
-        { name: 'Settings',            path: '/settings',               icon: SettingsIcon,  color: '#94a3b8' },
+        { name: 'My Account',          path: '/account',                icon: User,          color: '#8b5cf6' },
       ]
     }
   ];
@@ -106,8 +105,8 @@ const Sidebar = () => {
         {/* ── NAVIGATION ── */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '10px 0 20px' }} className="no-scrollbar">
           {sidebarGroups.map((group, gi) => (
-            <div key={gi} style={{ marginBottom: '24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '0 20px', marginBottom: '12px' }}>
+            <div key={gi} style={{ marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '0 20px', marginBottom: '8px' }}>
                 <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.05em' }}>{group.title}</span>
                 <div style={{ flex: 1, height: '1px', background: '#f1f5f9' }} />
               </div>
@@ -122,7 +121,7 @@ const Sidebar = () => {
                       onClick={close}
                       style={{
                         display: 'flex', alignItems: 'center', gap: '12px',
-                        padding: '12px 20px',
+                        padding: '8px 20px',
                         textDecoration: 'none',
                         background: isActive ? `${link.color}12` : 'transparent',
                         borderLeft: isActive ? `4px solid ${link.color}` : '4px solid transparent',
@@ -130,14 +129,14 @@ const Sidebar = () => {
                       }}
                     >
                       <div style={{ 
-                        width: '40px', height: '40px', borderRadius: '12px', 
+                        width: '36px', height: '36px', borderRadius: '10px', 
                         background: isActive ? 'transparent' : `${link.color}08`,
                         display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 
                       }}>
-                        <NavIcon size={22} color={isActive ? link.color : `${link.color}bb`} strokeWidth={isActive ? 2.5 : 2} />
+                        <NavIcon size={20} color={isActive ? link.color : `${link.color}bb`} strokeWidth={isActive ? 2.5 : 2} />
                       </div>
                       <span style={{ 
-                        fontSize: '1.1rem', 
+                        fontSize: '1.05rem', 
                         fontWeight: 800, 
                         color: isActive ? '#1f2937' : '#4b5563' 
                       }}>

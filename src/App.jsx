@@ -23,8 +23,7 @@ import Sidebar from './ui/Sidebar';
 // Pages - Organized Structure
 import Login from './pages/Auth/Login';
 import Splash from './pages/Auth/Splash';
-import Profile from './pages/Auth/Profile';
-import Settings from './pages/Auth/Settings';
+import Account from './pages/Auth/Account';
 import AdminDashboard from './pages/Auth/AdminDashboard';
 
 
@@ -108,8 +107,9 @@ const MainLayout = ({ children }) => {
     '/device-area':            'Device Network',
     '/camera':                 'Field Vision',
     '/alerts':                 'Alert Center',
-    '/profile':                'My Profile',
-    '/settings':               'System Settings',
+    '/profile':                'My Account',
+    '/settings':               'My Account',
+    '/account':                'My Account',
     '/reports':                'Farm Reports',
     '/precision-soil-testing': 'Soil Forensics',
     '/crop-advisor':           'AI Field Advisor',
@@ -223,8 +223,9 @@ const AppRoutes = () => {
       <Route path="/device-area" element={<MainLayout><DeviceManager /></MainLayout>} />
       <Route path="/alerts" element={<MainLayout><AlertCenter /></MainLayout>} />
       <Route path="/reports" element={<MainLayout><Reports /></MainLayout>} />
-      <Route path="/profile" element={<MainLayout><Profile /></MainLayout>} />
-      <Route path="/settings" element={<MainLayout><Settings /></MainLayout>} />
+      <Route path="/profile" element={<Navigate to="/account" />} />
+      <Route path="/settings" element={<Navigate to="/account" />} />
+      <Route path="/account" element={<MainLayout><Account /></MainLayout>} />
       <Route path="/weather" element={<MainLayout><WeatherMonitor /></MainLayout>} />
       <Route path="/precision-soil-testing" element={<MainLayout><SoilForensics /></MainLayout>} />
       <Route path="/crop-advisor" element={<MainLayout><FarmAdvisor /></MainLayout>} />

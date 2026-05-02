@@ -267,8 +267,11 @@ export const AppProvider = ({ children }) => {
   const updateBranding = async (newInfo) => {
     const updated = { ...farmInfo, ...newInfo };
     setFarmInfo(updated);
-    if (user?.email) {
-      await setDoc(doc(db, "farmers", user.email), { farmInfo: updated }, { merge: true });
+    localStorage.setItem('agrisense_branding', JSON.stringify(updated));
+    if (user?.email && !user?.isGuest) {
+      try {
+        await setDoc(doc(db, "farmers", user.email), { farmInfo: updated }, { merge: true });
+      } catch (e) { console.warn("Firestore Branding Sync Failed", e); }
     }
   };
 
@@ -348,24 +351,23 @@ export const AppProvider = ({ children }) => {
   };
 
   const updateUser = async (data) => {
-    if (!user?.email) return false;
+    if (!user) return false;
     try {
-      const userRef = doc(db, "farmers", user.email);
-      await setDoc(userRef, data, { merge: true });
-      
-      const isEmailChange = data.email && data.email !== user?.email;
-      const updatedUser = { 
-        ...user, 
-        ...data,
-        isGuest: isEmailChange ? false : (user?.isGuest || false)
-      };
-      
+      // 1. Update Local State Immediately for Snappy UI
+      const updatedUser = { ...user, ...data };
       setUser(updatedUser);
       localStorage.setItem('agrisense_user', JSON.stringify(updatedUser));
+
+      // 2. Attempt Firestore Sync only for Registered Users
+      if (user.email && !user.isGuest) {
+        const userRef = doc(db, "farmers", user.email);
+        await setDoc(userRef, data, { merge: true });
+      }
+      
       return true;
     } catch (err) {
-      console.error("Update Failed:", err);
-      return false;
+      console.error("Cloud Sync Failed:", err);
+      return true; // Still return true because local state was updated
     }
   };
 

@@ -93,7 +93,7 @@ const TopBar = ({ title }) => {
         
         <motion.div 
           whileTap={{ scale: 0.95 }}
-          onClick={() => navigate('/profile')}
+          onClick={() => navigate('/account')}
           style={{ cursor: 'pointer', padding: '8px', background: '#f8fafc', borderRadius: '12px' }}
         >
           <User size={20} color="#64748b" strokeWidth={2} />

@@ -277,7 +277,7 @@ const Dashboard = () => {
   const {
     sensorData, farmHealthScore, systemHealth,
     toggleActuator, actuators, ACTUATORS,
-    user, devices, farmInfo, syncData
+    user, devices, farmInfo, syncData, currentGPS
   } = useApp();
 
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -339,7 +339,7 @@ const Dashboard = () => {
 
         <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '6px', color: COLORS.textMuted, fontSize: '0.85rem', fontWeight: 600 }}>
           <MapPin size={15} color={COLORS.primary} />
-          <span>{user?.location?.includes('•') ? user.location.split('•')[1].trim() : (user?.location || 'Set farm location')}</span>
+          <span>{currentGPS?.city || (user?.location?.includes(',') ? 'Field Zone A' : user?.location) || 'Set farm location'}</span>
         </div>
       </section>
 
