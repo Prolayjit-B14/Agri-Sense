@@ -10,7 +10,7 @@ import { useApp } from '../../state/AppContext';
 // ─── DESIGN TOKENS (UNIFIED) ───────────────────────────────────────────────
 
 const COLORS = {
-  primary: '#0EA5E9',
+  primary: '#3B82F6',
   secondary: '#10B981',
   warning: '#F59E0B',
   critical: '#EF4444',
@@ -23,7 +23,7 @@ const COLORS = {
 };
 
 const GRADIENTS = {
-  optimal: 'linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%)',
+  optimal: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
   moderate: 'linear-gradient(135deg, #FFD54F 0%, #FBC02D 100%)',
   low: 'linear-gradient(135deg, #EF5350 0%, #D32F2F 100%)',
   critical: 'linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)',

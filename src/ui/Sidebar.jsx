@@ -23,10 +23,10 @@ const Sidebar = () => {
     {
       title: 'FIELD',
       links: [
-        { name: 'Soil Monitoring',     path: '/soil-monitoring',        icon: Leaf,          color: '#22c55e' },
-        { name: 'Weather Station',     path: '/weather',                icon: CloudRain,     color: '#3b82f6' },
-        { name: 'Storage Hub',         path: '/storage-hub',            icon: Archive,       color: '#f59e0b' },
-        { name: 'Irrigation Control',  path: '/irrigation',             icon: Droplets,      color: '#06b6d4' },
+        { name: 'Soil Monitoring',     path: '/soil-monitoring',        icon: Sprout,        color: '#10B981' },
+        { name: 'Weather Station',     path: '/weather',                icon: CloudRain,     color: '#F97316' },
+        { name: 'Storage Hub',         path: '/storage-hub',            icon: Archive,       color: '#8B5CF6' },
+        { name: 'Irrigation Control',  path: '/irrigation',             icon: Droplets,      color: '#3B82F6' },
       ]
     },
     {
@@ -41,7 +41,7 @@ const Sidebar = () => {
       title: 'SYSTEM',
       links: [
         { name: 'Device Management',   path: '/device-area',            icon: Network,       color: '#64748b' },
-        { name: 'Camera Feed',         path: '/camera',                 icon: Camera,        color: '#14b8a6' },
+        { name: 'Camera Feed',         path: '/camera',                 icon: Camera,        color: '#A855F7' },
         { name: 'Alerts',              path: '/alerts',                 icon: Bell,          color: '#eab308' },
         { name: 'My Account',          path: '/account',                icon: User,          color: '#8b5cf6' },
       ]

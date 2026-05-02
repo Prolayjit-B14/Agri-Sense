@@ -7,7 +7,7 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Sprout, CloudRain, Droplets, HardDrive,
+  Sprout, CloudRain, Droplets, Archive,
   Camera, Wifi, WifiOff, BellRing, Lightbulb,
   Monitor, Zap, Signal, Thermometer, FlaskConical,
   Wind, Sun, Waves, Flame, RefreshCw, ExternalLink,
@@ -261,7 +261,7 @@ const VisionCard = ({ isOnline, detection }) => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${T.accent}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Camera size={20} color={T.accent} />
+            <Camera size={20} color="#A855F7" />
           </div>
           <span style={{ fontSize: '0.9rem', fontWeight: 800, color: T.text }}>Vision Node</span>
         </div>
@@ -340,11 +340,11 @@ const VisionCard = ({ isOnline, detection }) => {
 // ─── NODE POWER PANEL ────────────────────────────────────────────────────────
 const NodePowerPanel = ({ nodePower, toggleNodePower, devices }) => {
   const nodes = [
-    { id: 'soil',    nodeId: 'soil_node',    label: 'Soil',    icon: Sprout,    color: T.primary },
-    { id: 'weather', nodeId: 'weather_node', label: 'Weather', icon: CloudRain, color: T.secondary },
-    { id: 'water',   nodeId: 'water_node',   label: 'Irrig',   icon: Droplets,  color: T.secondary },
-    { id: 'storage', nodeId: 'storage_node', label: 'Storage', icon: HardDrive, color: T.accent },
-    { id: 'vision',  nodeId: 'vision_node',  label: 'Vision',  icon: Camera,    color: T.accent },
+    { id: 'soil',    nodeId: 'soil_node',    label: 'Soil',    icon: Sprout,    color: '#10B981' },
+    { id: 'weather', nodeId: 'weather_node', label: 'Weather', icon: CloudRain, color: '#F97316' },
+    { id: 'water',   nodeId: 'water_node',   label: 'Irrig',   icon: Droplets,  color: '#3B82F6' },
+    { id: 'storage', nodeId: 'storage_node', label: 'Storage', icon: Archive,   color: '#8B5CF6' },
+    { id: 'vision',  nodeId: 'vision_node',  label: 'Vision',  icon: Camera,    color: '#A855F7' },
   ];
 
   return (
@@ -415,10 +415,10 @@ const NodePowerPanel = ({ nodePower, toggleNodePower, devices }) => {
 // ─── CONTROL PANEL ───────────────────────────────────────────────────────────
 const ControlPanel = ({ actuators, toggleActuator, sensorData }) => {
   const controls = [
-    { id: ACTUATORS.BUZZER, label: 'Buzzer', icon: BellRing, color: T.danger },
-    { id: ACTUATORS.LIGHT, label: 'Light', icon: Lightbulb, color: T.primary },
-    { id: ACTUATORS.PUMP, label: 'Pump', icon: Droplets, color: T.secondary },
-    { id: 'oled', label: 'OLED', icon: Monitor, color: T.warning, isDisplay: true },
+    { id: ACTUATORS.BUZZER, label: 'Buzzer', icon: BellRing, color: '#EF4444' },
+    { id: ACTUATORS.LIGHT, label: 'Light', icon: Lightbulb, color: '#F59E0B' },
+    { id: ACTUATORS.PUMP, label: 'Pump', icon: Droplets, color: '#3B82F6' },
+    { id: 'oled', label: 'OLED', icon: Monitor, color: '#0EA5E9', isDisplay: true },
   ];
 
   return (
@@ -494,8 +494,8 @@ const ControlPanel = ({ actuators, toggleActuator, sensorData }) => {
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 const DeviceManager = () => {
   const { 
-    sensorData, actuators, toggleActuator, mqttStatus, devices,
-    nodePower, toggleNodePower
+    sensorData = {}, actuators = {}, toggleActuator, mqttStatus, devices = {},
+    nodePower = {}, toggleNodePower 
   } = useApp();
 
   const soilOnline    = devices['soil_node']?.status    === 'ACTIVE' && nodePower.soil;
@@ -513,27 +513,27 @@ const DeviceManager = () => {
   const f = (val) => (val != null && !isNaN(val) ? Number(val).toFixed(1) : '---');
 
   const soilSensors = [
-    { label: 'Mois', value: sd.moisture ? `${f(sd.moisture)}%` : '---', icon: Droplets, iconColor: T.secondary },
-    { label: 'pH',   value: sd.ph ? f(sd.ph) : '---', icon: FlaskConical, iconColor: T.accent },
-    { label: 'Temp', value: sd.temp ? `${f(sd.temp)}°C` : '---', icon: Thermometer, iconColor: T.danger },
-    { label: 'NPK',  value: sd.npk?.n ? `${f(sd.npk.n)}` : '---', icon: Sprout, iconColor: T.primary },
+    { label: 'Mois', value: (sd && sd.moisture) ? `${f(sd.moisture)}%` : '---', icon: Droplets, iconColor: T.secondary },
+    { label: 'pH',   value: (sd && sd.ph) ? f(sd.ph) : '---', icon: FlaskConical, iconColor: T.accent },
+    { label: 'Temp', value: (sd && sd.temp) ? `${f(sd.temp)}°C` : '---', icon: Thermometer, iconColor: T.danger },
+    { label: 'NPK',  value: (sd && sd.npk && sd.npk.n) ? `${f(sd.npk.n)}` : '---', icon: Sprout, iconColor: T.primary },
   ];
 
   const weatherSensors = [
-    { label: 'Temp',  value: wd.temp ? `${f(wd.temp)}°C` : '---', icon: Thermometer, iconColor: T.danger },
-    { label: 'Hum',   value: wd.humidity ? `${f(wd.humidity)}%` : '---', icon: Droplets, iconColor: T.secondary },
-    { label: 'Rain',  value: wd.rainLevel ? `${f(wd.rainLevel)} mm` : '---', icon: CloudRain, iconColor: T.secondary },
-    { label: 'Light', value: wd.lightIntensity ? `${f(wd.lightIntensity)} lx` : '---', icon: Sun, iconColor: T.warning },
+    { label: 'Temp',  value: (wd && wd.temp) ? `${f(wd.temp)}°C` : '---', icon: Thermometer, iconColor: T.danger },
+    { label: 'Hum',   value: (wd && wd.humidity) ? `${f(wd.humidity)}%` : '---', icon: Droplets, iconColor: T.secondary },
+    { label: 'Rain',  value: (wd && wd.rainLevel) ? `${f(wd.rainLevel)} mm` : '---', icon: CloudRain, iconColor: T.secondary },
+    { label: 'Light', value: (wd && wd.lightIntensity) ? `${f(wd.lightIntensity)} lx` : '---', icon: Sun, iconColor: T.warning },
   ];
 
   const irrigSensors = [
-    { label: 'Lvl', value: id.level ? `${f(id.level)}%` : '---', icon: Waves, iconColor: T.secondary },
+    { label: 'Lvl', value: (id && id.level) ? `${f(id.level)}%` : '---', icon: Waves, iconColor: T.secondary },
   ];
 
   const storageSensors = [
-    { label: 'Temp', value: st.temp ? `${f(st.temp)}°C` : '---', icon: Thermometer, iconColor: T.danger },
-    { label: 'Hum',  value: st.humidity ? `${f(st.humidity)}%` : '---', icon: Droplets, iconColor: T.secondary },
-    { label: 'Gas',  value: st.mq135 ? `${f(st.mq135)} ppm` : '---', icon: Flame, iconColor: T.warning },
+    { label: 'Temp', value: (st && st.temp) ? `${f(st.temp)}°C` : '---', icon: Thermometer, iconColor: T.danger },
+    { label: 'Hum',  value: (st && st.humidity) ? `${f(st.humidity)}%` : '---', icon: Droplets, iconColor: T.secondary },
+    { label: 'Gas',  value: (st && st.mq135) ? `${f(st.mq135)} ppm` : '---', icon: Flame, iconColor: T.warning },
   ];
 
   const activeCount = [soilOnline, weatherOnline, waterOnline, storageOnline, visionOnline].filter(Boolean).length;
@@ -558,10 +558,10 @@ const DeviceManager = () => {
       <NodePowerPanel nodePower={nodePower} toggleNodePower={toggleNodePower} devices={devices} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginTop: '4px' }}>
-        <NodeCard icon={Sprout} label="Soil Node" color={T.primary} isOnline={soilOnline} sensors={soilSensors} />
-        <NodeCard icon={CloudRain} label="Weather Node" color={T.secondary} isOnline={weatherOnline} sensors={weatherSensors} />
-        <NodeCard icon={Droplets} label="Irrigation Node" color={T.secondary} isOnline={waterOnline} sensors={irrigSensors} />
-        <NodeCard icon={HardDrive} label="Storage Node" color={T.accent} isOnline={storageOnline} sensors={storageSensors} />
+        <NodeCard icon={Sprout} label="Soil Node" color="#10B981" isOnline={soilOnline} sensors={soilSensors} />
+        <NodeCard icon={CloudRain} label="Weather Node" color="#F97316" isOnline={weatherOnline} sensors={weatherSensors} />
+        <NodeCard icon={Droplets} label="Irrigation Node" color="#3B82F6" isOnline={waterOnline} sensors={irrigSensors} />
+        <NodeCard icon={Archive} label="Storage Node" color="#8B5CF6" isOnline={storageOnline} sensors={storageSensors} />
         <VisionCard isOnline={visionOnline} detection={sensorData?.vision} />
       </div>
 

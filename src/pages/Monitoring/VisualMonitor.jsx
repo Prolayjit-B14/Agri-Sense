@@ -17,7 +17,7 @@ import { ACTUATORS } from '../../logic/healthEngine';
 
 // ─── DESIGN TOKENS ─────────────────────────────────────────────────────────
 const COLORS = {
-  primary: '#10B981',    // Success / Safe
+  primary: '#A855F7',    // Success / Safe / Vision Standard
   secondary: '#3B82F6',  // Control / Info
   warning: '#F59E0B',    // Medium Alert
   danger: '#EF4444',     // High Alert / Live

@@ -12,7 +12,7 @@ import {
   Tooltip, ResponsiveContainer, ComposedChart
 } from 'recharts';
 import {
-  Sprout, CloudRain, Warehouse, Download
+  Sprout, CloudRain, Archive, Download
 } from 'lucide-react';
 import { useApp } from '../../state/AppContext';
 import { useLocation } from 'react-router-dom';
@@ -192,7 +192,7 @@ const Pinpoint = (props) => {
 };
 
 const AnalyticsHub = () => {
-  const { sensorData, devices, sensorHistory, fetchHistory } = useApp();
+  const { sensorData, devices, sensorHistory, fetchHistory, farmInfo } = useApp();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState(location.state?.tab || 'soil');
   const [timeRange, setTimeRange] = useState(TIME_RANGES[0]);
@@ -615,13 +615,13 @@ const AnalyticsHub = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
         <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }} className="no-scrollbar">
           {[
-            { id: 'soil', label: 'Soil', icon: Sprout },
-            { id: 'weather', label: 'Weather', icon: CloudRain },
-            { id: 'storage', label: 'Storage', icon: Warehouse }
+            { id: 'soil', label: 'Soil', icon: Sprout, color: '#10B981' },
+            { id: 'weather', label: 'Weather', icon: CloudRain, color: '#F97316' },
+            { id: 'storage', label: 'Storage', icon: Archive, color: '#8B5CF6' }
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
               padding: '8px 16px', borderRadius: '12px', border: 'none',
-              background: activeTab === tab.id ? COLORS.good : 'white',
+              background: activeTab === tab.id ? tab.color : 'white',
               color: activeTab === tab.id ? 'white' : COLORS.text,
               display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer',
               boxShadow: '0 2px 8px rgba(0,0,0,0.02)', transition: '0.3s',

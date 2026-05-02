@@ -12,7 +12,7 @@ import useTrendEngine from '../../hooks/useTrendEngine';
 // ─── DESIGN SYSTEM ─────────────────────────────────────────────────────────
 
 const COLORS = {
-  primary: '#059669',
+  primary: '#10B981',
   warning: '#D97706',
   critical: '#DC2626',
   offline: '#94A3B8',
@@ -261,7 +261,7 @@ const SoilMonitoring = () => {
       {/* ─── GRID ─── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
         <DiagnosticCard label="Moisture" value={stats.moisture} min={30} max={60} icon={Waves} color="#0EA5E9" statusText={stats.moisture === null ? 'Offline' : (stats.moisture > 65 ? 'High' : (stats.moisture < 30 ? 'Low' : (stats.moisture >= 60 || stats.moisture < 40 ? 'Moderate' : 'Optimal')))} range="30-60 %" trendInfo={trend.moisture} />
-        <DiagnosticCard label="Soil pH" value={stats.ph} min={6.0} max={7.5} icon={Activity} color="#8B5CF6" statusText={stats.ph === null ? 'Offline' : (stats.ph > 7.8 ? 'High' : (stats.ph < 5.8 ? 'Low' : (stats.ph >= 7.3 || stats.ph < 6.2 ? 'Moderate' : 'Optimal')))} range="6.0-7.5" trendInfo={trend.ph} />
+        <DiagnosticCard label="Soil pH" value={stats.ph} min={6.0} max={7.5} icon={Activity} color="#10B981" statusText={stats.ph === null ? 'Offline' : (stats.ph > 7.8 ? 'High' : (stats.ph < 5.8 ? 'Low' : (stats.ph >= 7.3 || stats.ph < 6.2 ? 'Moderate' : 'Optimal')))} range="6.0-7.5" trendInfo={trend.ph} />
         <DiagnosticCard label="Nitrogen" value={stats.n} min={40} max={60} icon={Zap} color="#10B981" statusText={stats.n === null ? 'Offline' : (stats.n > 65 ? 'High' : (stats.n < 35 ? 'Low' : (stats.n >= 55 || stats.n < 45 ? 'Moderate' : 'Healthy')))} range="40-60 mg" trendInfo={trend.npk} />
         <DiagnosticCard label="Phosphorus" value={stats.p} min={20} max={40} icon={Zap} color="#F59E0B" statusText={stats.p === null ? 'Offline' : (stats.p > 45 ? 'High' : (stats.p < 15 ? 'Low' : (stats.p >= 35 || stats.p < 25 ? 'Moderate' : 'Optimal')))} range="20-40 mg" trendInfo={trend.npk} />
         <DiagnosticCard label="Potassium" value={stats.k} min={35} max={55} icon={Zap} color="#3B82F6" statusText={stats.k === null ? 'Offline' : (stats.k > 60 ? 'High' : (stats.k < 30 ? 'Low' : (stats.k >= 50 || stats.k < 40 ? 'Moderate' : 'Stable')))} range="35-55 mg" trendInfo={trend.npk} />
