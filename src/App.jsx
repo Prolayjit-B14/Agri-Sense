@@ -54,11 +54,11 @@ const BottomNav = () => {
   const location = useLocation();
 
   const tabs = [
-    { id: 'Home', path: '/dashboard', icon: LayoutGrid },
-    { id: 'Soil Test', path: '/precision-soil-testing', icon: FlaskConical },
-    { id: 'Advisor', path: '/crop-advisor', icon: Sparkles },
-    { id: 'Analytics', path: '/analytics', icon: LineChart },
-    { id: 'Devices', path: '/device-area', icon: Cpu },
+    { id: 'Home', path: '/dashboard', icon: LayoutGrid, color: '#22c55e' },
+    { id: 'Soil Test', path: '/precision-soil-testing', icon: FlaskConical, color: '#a855f7' },
+    { id: 'Advisor', path: '/crop-advisor', icon: Sparkles, color: '#f59e0b' },
+    { id: 'Analytics', path: '/analytics', icon: LineChart, color: '#3b82f6' },
+    { id: 'Devices', path: '/device-area', icon: Cpu, color: '#06b6d4' },
   ];
 
   return (
@@ -77,11 +77,11 @@ const BottomNav = () => {
             onClick={() => navigate(item.path)}
             style={{
               background: 'transparent', border: 'none', display: 'flex', flexDirection: 'column',
-              alignItems: 'center', gap: '2px', color: isActive ? '#10B981' : '#94A3B8',
+              alignItems: 'center', gap: '2px', color: isActive ? item.color : '#94A3B8',
               padding: '4px 0', flex: 1, cursor: 'pointer', transition: '0.3s',
             }}
           >
-            <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+            <Icon size={20} strokeWidth={isActive ? 2.5 : 2} color={isActive ? item.color : '#94A3B8'} />
             <span style={{ fontSize: '0.55rem', fontWeight: isActive ? 950 : 700, textTransform: 'uppercase' }}>{item.id}</span>
           </motion.button>
         );
