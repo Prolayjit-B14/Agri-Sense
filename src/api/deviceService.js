@@ -5,10 +5,10 @@
  */
 
 const THRESHOLDS = {
-  STALE: 3000, // 3 seconds
-  OFFLINE: 5000, // 5 seconds
-  ERROR: 5000,
-  LATENCY_CRITICAL: 100, // 100ms
+  STALE: 5000, // 5 seconds
+  OFFLINE: 10000, // 10 seconds
+  ERROR: 10000,
+  LATENCY_CRITICAL: 200, // 200ms
   RSSI_WEAK: -80, // -80 dBm
   PACKET_LOSS_MAX: 2, // 2%
 };

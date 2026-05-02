@@ -133,7 +133,7 @@ const Account = () => {
   };
 
   return (
-    <div style={{ padding: '16px', background: COLORS.bg, minHeight: '100dvh', paddingBottom: '40px', position: 'relative' }}>
+    <div style={{ padding: '12px', background: COLORS.bg, paddingBottom: '0px', position: 'relative' }}>
       
       {/* CUSTOM TOAST NOTIFICATION */}
       <motion.div
@@ -154,13 +154,13 @@ const Account = () => {
         <span>{toast?.message}</span>
       </motion.div>
       <div style={{ 
-        background: 'white', borderRadius: '24px', padding: '24px', 
-        display: 'flex', alignItems: 'center', gap: '20px',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.02)', marginBottom: '20px',
+        background: 'white', borderRadius: '20px', padding: '16px', 
+        display: 'flex', alignItems: 'center', gap: '16px',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.02)', marginBottom: '12px',
         border: `1px solid ${COLORS.border}`
       }}>
         <div style={{ position: 'relative', cursor: 'pointer' }} onClick={handleImageUpload}>
-          <div style={{ position: 'relative', width: '80px', height: '80px' }}>
+          <div style={{ position: 'relative', width: '64px', height: '64px' }}>
             <img 
               src={formData.photo} 
               style={{ 
@@ -190,7 +190,7 @@ const Account = () => {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
           }}>
-            <Camera size={12} />
+            <Camera size={10} />
           </div>
         </div>
         <div>
@@ -214,13 +214,13 @@ const Account = () => {
       </div>
 
         {/* 2. PERSONAL INFORMATION */}
-        <div style={{ background: 'white', borderRadius: '24px', overflow: 'hidden', border: `1px solid ${COLORS.border}`, marginBottom: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.01)' }}>
-          <div style={{ padding: '20px 20px 8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <User size={18} color={COLORS.primary} strokeWidth={2} />
-            <h3 style={{ fontSize: '0.85rem', fontWeight: 800, color: COLORS.text, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Personal Information</h3>
+        <div style={{ background: 'white', borderRadius: '20px', overflow: 'hidden', border: `1px solid ${COLORS.border}`, marginBottom: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.01)' }}>
+          <div style={{ padding: '14px 16px 4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <User size={16} color={COLORS.primary} strokeWidth={2} />
+            <h3 style={{ fontSize: '0.75rem', fontWeight: 800, color: COLORS.text, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Personal Information</h3>
           </div>
           
-          <div style={{ padding: '14px 20px', borderBottom: `1px solid ${COLORS.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+          <div style={{ padding: '10px 16px', borderBottom: `1px solid ${COLORS.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
             <p style={{ fontSize: '0.8rem', fontWeight: 600, color: COLORS.text, margin: 0, flex: 1 }}>Full Name</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1.5, justifyContent: 'flex-end' }}>
               <input 
@@ -233,7 +233,7 @@ const Account = () => {
             </div>
           </div>
           
-          <div style={{ padding: '14px 20px', borderBottom: `1px solid ${COLORS.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+          <div style={{ padding: '10px 16px', borderBottom: `1px solid ${COLORS.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
             <p style={{ fontSize: '0.8rem', fontWeight: 600, color: COLORS.text, margin: 0, flex: 1 }}>Email Address</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1.5, justifyContent: 'flex-end' }}>
               <input 
@@ -246,7 +246,7 @@ const Account = () => {
             </div>
           </div>
 
-          <div style={{ padding: '14px 20px', borderBottom: `1px solid ${COLORS.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+          <div style={{ padding: '10px 16px', borderBottom: `1px solid ${COLORS.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
             <p style={{ fontSize: '0.8rem', fontWeight: 600, color: COLORS.text, margin: 0, flex: 1 }}>Mobile Network</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1.5, justifyContent: 'flex-end' }}>
               <input 
@@ -261,7 +261,7 @@ const Account = () => {
 
           <div 
             onClick={handleFetchLocation}
-            style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', cursor: 'pointer' }}
+            style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', cursor: 'pointer' }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
               <p style={{ fontSize: '0.8rem', fontWeight: 600, color: COLORS.text, margin: 0 }}>Field Location</p>
@@ -275,12 +275,12 @@ const Account = () => {
         </div>
 
         {/* 3. DEVICE & SYSTEM */}
-        <div style={{ background: 'white', borderRadius: '24px', padding: '20px', border: `1px solid ${COLORS.border}`, marginBottom: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.01)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-            <Cpu size={18} color={COLORS.primary} strokeWidth={2} />
-            <h3 style={{ fontSize: '0.85rem', fontWeight: 800, color: COLORS.text, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Device & System</h3>
+        <div style={{ background: 'white', borderRadius: '20px', padding: '14px 16px', border: `1px solid ${COLORS.border}`, marginBottom: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.01)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+            <Cpu size={16} color={COLORS.primary} strokeWidth={2} />
+            <h3 style={{ fontSize: '0.75rem', fontWeight: 800, color: COLORS.text, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Device & System</h3>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '4px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
               <p style={{ fontSize: '0.8rem', fontWeight: 600, color: COLORS.text, margin: 0, flex: 1 }}>Project Codename</p>
               <input 
@@ -305,56 +305,56 @@ const Account = () => {
           </p>
         </div>
 
-      {/* 4. ABOUT APP */}
-      <div style={{ 
-        background: 'white', borderRadius: '24px', padding: '24px', border: `1px solid ${COLORS.border}`,
-        boxShadow: '0 4px 20px rgba(0,0,0,0.01)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: `${COLORS.primary}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Code size={20} color={COLORS.primary} />
-            </div>
-            <div>
-              <p style={{ fontSize: '0.6rem', fontWeight: 800, color: COLORS.subtext, margin: 0 }}>Platform Architect</p>
-              <p style={{ fontSize: '0.85rem', fontWeight: 900, color: COLORS.text, margin: 0 }}>Prolayjit Biswas</p>
-            </div>
-          </div>
-          <div style={{ width: '1px', height: '30px', background: COLORS.border, margin: '0 20px' }} />
-          <div style={{ flex: 1 }}>
-            <p style={{ fontSize: '0.6rem', fontWeight: 800, color: COLORS.subtext, margin: 0 }}>Engine Version</p>
-            <p style={{ fontSize: '0.85rem', fontWeight: 900, color: COLORS.primary, margin: 0 }}>v17.1.0</p>
-          </div>
-        </div>
-      </div>
-
-      {/* 5. GLOBAL ACTIONS */}
-      <div style={{ marginTop: '24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+      {/* 4. GLOBAL ACTIONS */}
+      <div style={{ marginTop: '4px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+        <motion.button
+          whileTap={{ scale: 0.98 }}
+          onClick={() => { logout(); navigate('/login'); }}
+          style={{ 
+            height: '48px', borderRadius: '14px', background: 'white', 
+            color: COLORS.danger, border: `1px solid ${COLORS.danger}30`, 
+            fontWeight: 950, fontSize: '0.85rem', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
+          }}
+        >
+          <LogOut size={16} /> SIGN OUT
+        </motion.button>
         <motion.button
           whileTap={{ scale: 0.98 }}
           onClick={handleSaveChanges}
           disabled={isSaving}
           style={{ 
-            height: '56px', borderRadius: '16px', background: COLORS.primary, 
-            color: 'white', border: 'none', fontWeight: 950, fontSize: '0.9rem', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+            height: '48px', borderRadius: '14px', background: COLORS.primary, 
+            color: 'white', border: 'none', fontWeight: 950, fontSize: '0.85rem', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
           }}
         >
-          <Save size={18} /> SAVE CHANGES
+          <Save size={16} /> SAVE CHANGES
         </motion.button>
-        <motion.button
-          whileTap={{ scale: 0.98 }}
-          onClick={() => { logout(); navigate('/login'); }}
-          style={{ 
-            height: '56px', borderRadius: '16px', background: 'white', 
-            color: COLORS.danger, border: `1px solid ${COLORS.danger}30`, 
-            fontWeight: 950, fontSize: '0.9rem', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
-          }}
-        >
-          <LogOut size={18} /> SIGN OUT
-        </motion.button>
-    </div>
+      </div>
+
+      {/* 5. ABOUT APP (BOTTOM) */}
+      <div style={{ 
+        background: 'white', borderRadius: '20px', padding: '16px', border: `1px solid ${COLORS.border}`,
+        boxShadow: '0 4px 20px rgba(0,0,0,0.01)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: `${COLORS.primary}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Code size={18} color={COLORS.primary} />
+            </div>
+            <div>
+              <p style={{ fontSize: '0.55rem', fontWeight: 800, color: COLORS.subtext, margin: 0 }}>Platform Architect</p>
+              <p style={{ fontSize: '0.8rem', fontWeight: 900, color: COLORS.text, margin: 0 }}>Prolayjit Biswas</p>
+            </div>
+          </div>
+          <div style={{ width: '1px', height: '24px', background: COLORS.border, margin: '0 12px' }} />
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: '0.55rem', fontWeight: 800, color: COLORS.subtext, margin: 0 }}>Engine Version</p>
+            <p style={{ fontSize: '0.8rem', fontWeight: 900, color: COLORS.primary, margin: 0 }}>v17.1.0</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

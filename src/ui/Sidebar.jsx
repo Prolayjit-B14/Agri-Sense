@@ -43,11 +43,6 @@ const Sidebar = () => {
         { name: 'Device Management',   path: '/device-area',            icon: Network,       color: '#64748b' },
         { name: 'Camera Feed',         path: '/camera',                 icon: Camera,        color: '#14b8a6' },
         { name: 'Alerts',              path: '/alerts',                 icon: Bell,          color: '#eab308' },
-      ]
-    },
-    {
-      title: 'ACCOUNT',
-      links: [
         { name: 'My Account',          path: '/account',                icon: User,          color: '#8b5cf6' },
       ]
     }
@@ -70,44 +65,41 @@ const Sidebar = () => {
         animate={{ x: isSidebarOpen ? 0 : '-100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
         style={{
-          position: 'fixed', top: 0, left: 0, bottom: 0, width: '270px', zIndex: 10002,
+          position: 'fixed', top: 0, left: 0, bottom: 0, width: '250px', zIndex: 10002,
           background: '#FFFFFF',
           display: 'flex', flexDirection: 'column',
           boxShadow: isSidebarOpen ? '20px 0 50px rgba(0,0,0,0.05)' : 'none',
+          overflow: 'hidden'
         }}
       >
         {/* ── HEADER: USER PROFILE ── */}
-        <div style={{ padding: '24px 20px 16px', display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
+        <div style={{ padding: '20px 18px 12px', display: 'flex', alignItems: 'center', gap: '10px', position: 'relative' }}>
           <div style={{ 
-            width: '44px', height: '44px', borderRadius: '50%', background: '#f0fdf4', 
+            width: '40px', height: '40px', borderRadius: '50%', background: '#f0fdf4', 
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '1.2rem', fontWeight: 700, color: '#166534', flexShrink: 0
+            fontSize: '1.1rem', fontWeight: 700, color: '#166534', flexShrink: 0
           }}>
             {clientName.charAt(0)}
           </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '1rem', fontWeight: 800, color: '#1f2937', lineHeight: 1.2 }}>{clientName}</div>
-            <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>{farmName}</div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginRight: '8px' }}>
-            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: isLive ? '#22c55e' : '#94a3b8' }} />
-            <span style={{ fontSize: '0.65rem', fontWeight: 700, color: isLive ? '#22c55e' : '#64748b' }}>Live</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#1f2937', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{clientName}</div>
+            <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{farmName}</div>
           </div>
           <motion.button 
             whileTap={{ scale: 0.9 }} 
             onClick={close}
             style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer', color: '#94a3b8' }}
           >
-            <ChevronLeft size={20} />
+            <ChevronLeft size={18} />
           </motion.button>
         </div>
 
         {/* ── NAVIGATION ── */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '10px 0 20px' }} className="no-scrollbar">
+        <div style={{ flex: 1, overflowY: 'hidden', padding: '5px 0 10px' }}>
           {sidebarGroups.map((group, gi) => (
-            <div key={gi} style={{ marginBottom: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '0 20px', marginBottom: '8px' }}>
-                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.05em' }}>{group.title}</span>
+            <div key={gi} style={{ marginBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 18px', marginBottom: '4px' }}>
+                <span style={{ fontSize: '0.6rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.05em' }}>{group.title}</span>
                 <div style={{ flex: 1, height: '1px', background: '#f1f5f9' }} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -120,23 +112,23 @@ const Sidebar = () => {
                       to={link.path} 
                       onClick={close}
                       style={{
-                        display: 'flex', alignItems: 'center', gap: '12px',
-                        padding: '8px 20px',
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        padding: '6px 18px',
                         textDecoration: 'none',
-                        background: isActive ? `${link.color}12` : 'transparent',
-                        borderLeft: isActive ? `4px solid ${link.color}` : '4px solid transparent',
+                        background: isActive ? `${link.color}10` : 'transparent',
+                        borderLeft: isActive ? `3px solid ${link.color}` : '3px solid transparent',
                         transition: 'all 0.2s'
                       }}
                     >
                       <div style={{ 
-                        width: '36px', height: '36px', borderRadius: '10px', 
+                        width: '32px', height: '32px', borderRadius: '8px', 
                         background: isActive ? 'transparent' : `${link.color}08`,
                         display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 
                       }}>
-                        <NavIcon size={20} color={isActive ? link.color : `${link.color}bb`} strokeWidth={isActive ? 2.5 : 2} />
+                        <NavIcon size={18} color={isActive ? link.color : `${link.color}bb`} strokeWidth={isActive ? 2.5 : 2} />
                       </div>
                       <span style={{ 
-                        fontSize: '1.05rem', 
+                        fontSize: '1.1rem', 
                         fontWeight: 800, 
                         color: isActive ? '#1f2937' : '#4b5563' 
                       }}>
@@ -151,14 +143,14 @@ const Sidebar = () => {
         </div>
 
         {/* ── FOOTER ── */}
-        <div style={{ padding: '20px 24px', borderTop: '1px solid #f8fafc' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-            <Leaf size={20} color="#22c55e" fill="#22c55e" fillOpacity={0.1} />
-            <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#10B981', letterSpacing: '0.02em' }}>
+        <div style={{ padding: '12px 18px', borderTop: '1px solid #f8fafc' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+            <Leaf size={18} color="#22c55e" fill="#22c55e" fillOpacity={0.1} />
+            <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#10B981', letterSpacing: '0.02em' }}>
               AGRISENSE <span style={{ color: '#1f2937' }}>PRO</span>
             </div>
           </div>
-          <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 600, marginLeft: '30px' }}>
+          <div style={{ fontSize: '0.6rem', color: '#94a3b8', fontWeight: 600, marginLeft: '26px' }}>
             v17.1.0
           </div>
         </div>

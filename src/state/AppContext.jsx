@@ -534,8 +534,8 @@ export const AppProvider = ({ children }) => {
 
         Object.keys(nextDevs).forEach(id => {
           if (nextDevs[id].status !== 'OFFLINE') {
-             // 5 seconds offline threshold
-             if (!nextDevs[id].lastUpdate || (now - nextDevs[id].lastUpdate > 5000)) {
+             // 10 seconds offline threshold (Industrial Standard)
+             if (!nextDevs[id].lastUpdate || (now - nextDevs[id].lastUpdate > 10000)) {
                nextDevs[id] = { ...nextDevs[id], status: 'OFFLINE' };
                offlineNodes.push(nextDevs[id].node_type);
                changed = true;
@@ -659,24 +659,27 @@ export const AppProvider = ({ children }) => {
               }).catch(e => console.error("Telemetry Sync Error:", e));
             }
 
-            // 🛰️ DEVICE STATUS SYNC (Unified Node Wake-Up)
+            // 🛰️ DEVICE STATUS SYNC (Precision Node Wake-Up)
             setDevices(prevDevs => {
-              const parts = topic.split('/');
-              const topicType = parts[parts.length - 1];
+              const topicLower = topic.toLowerCase();
               const nextDevs = { ...prevDevs };
               const timestamp = Date.now();
 
-              // If it's a unified sensors payload, wake up ALL nodes
-              if (topicType === 'sensors' || data.soil || data.weather) {
-                ['soil_node', 'weather_node', 'storage_node', 'water_node'].forEach(id => {
-                  if (nextDevs[id]) nextDevs[id] = { ...nextDevs[id], status: 'ACTIVE', lastUpdate: timestamp };
-                });
-              } else {
-                // Handle discrete node topics (camera/vision/cam -> vision_node)
-                let id = `${topicType}_node`;
-                if (['camera', 'vision', 'cam'].includes(topicType)) id = 'vision_node';
-                if (nextDevs[id]) nextDevs[id] = { ...nextDevs[id], status: 'ACTIVE', lastUpdate: timestamp };
-              }
+              // Node Detection (Check Topic Keywords OR Data Presence)
+              if (topicLower.includes('soil') || data.soil) 
+                nextDevs['soil_node'] = { ...nextDevs['soil_node'], status: 'ACTIVE', lastUpdate: timestamp };
+              
+              if (topicLower.includes('weather') || data.weather) 
+                nextDevs['weather_node'] = { ...nextDevs['weather_node'], status: 'ACTIVE', lastUpdate: timestamp };
+              
+              if (topicLower.includes('storage') || data.storage) 
+                nextDevs['storage_node'] = { ...nextDevs['storage_node'], status: 'ACTIVE', lastUpdate: timestamp };
+              
+              if (topicLower.includes('water') || topicLower.includes('irrigation') || data.water) 
+                nextDevs['water_node'] = { ...nextDevs['water_node'], status: 'ACTIVE', lastUpdate: timestamp };
+              
+              if (topicLower.includes('vision') || topicLower.includes('camera') || topicLower.includes('cam') || data.vision) 
+                nextDevs['vision_node'] = { ...nextDevs['vision_node'], status: 'ACTIVE', lastUpdate: timestamp };
 
               setSystemOverview(calculateSystemOverview(nextDevs));
               return nextDevs;
@@ -692,8 +695,11 @@ export const AppProvider = ({ children }) => {
         (status) => setMqttStatus(status)
       );
     }, 1500);
-    return () => clearTimeout(bootTimer);
-  }, []);
+    return () => {
+      clearTimeout(bootTimer);
+      mqttService.disconnect();
+    };
+  }, [farmInfo?.projectName, farmInfo?.name]);
 
   // ⚡ INSTANT CONNECTIVITY SYNC
   useEffect(() => {
@@ -837,7 +843,7 @@ export const AppProvider = ({ children }) => {
     };
 
     fetchWeather();
-    const weatherTimer = setInterval(fetchWeather, 600000); // 10 mins
+    const weatherTimer = setInterval(fetchWeather, 5000); // 5 sec (Requested)
     return () => clearInterval(weatherTimer);
   }, [user?.location, sensorData?.weather?.temp]);
 

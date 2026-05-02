@@ -78,8 +78,8 @@ const SignalBars = ({ active }) => (
           width: '3.5px',
           height: `${h}px`,
           borderRadius: '1.5px',
-          background: active ? T.primary : T.muted,
-          opacity: active ? 1 : (i === 0 ? 0.4 : 0.2),
+          background: active ? T.primary : T.danger,
+          opacity: active ? 1 : (i === 0 ? 0.6 : 0.4),
           transition: 'all 0.3s ease',
         }}
       />
@@ -94,7 +94,7 @@ const NodeCard = ({ icon: Icon, label, color, isOnline, sensors, actuators, togg
     style={{
       background: T.card,
       borderRadius: '24px',
-      padding: '12px',
+      padding: '16px',
       boxShadow: T.shadow,
       display: 'flex',
       flexDirection: 'column',
@@ -120,23 +120,6 @@ const NodeCard = ({ icon: Icon, label, color, isOnline, sensors, actuators, togg
       </div>
       
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <div style={{
-          padding: '4px 8px',
-          borderRadius: '8px',
-          background: isOnline ? `${T.primary}15` : `${T.danger}15`,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '4px'
-        }}>
-          <span style={{ 
-            fontSize: '0.6rem', 
-            fontWeight: 900, 
-            color: isOnline ? T.primary : T.danger,
-            letterSpacing: '0.04em'
-          }}>
-            {isOnline ? 'LIVE' : 'OFFLINE'}
-          </span>
-        </div>
         <SignalBars active={isOnline} />
       </div>
     </div>
@@ -144,25 +127,25 @@ const NodeCard = ({ icon: Icon, label, color, isOnline, sensors, actuators, togg
     {sensors && (
       <div style={{ 
         display: 'flex', 
-        alignItems: 'flex-start',
-        gap: '4px',
-        marginTop: '6px'
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '2px',
+        marginTop: '8px'
       }}>
         {sensors.map((s, i) => (
           <div key={i} style={{ 
             display: 'flex', 
             flexDirection: 'column', 
+            alignItems: 'center',
             gap: '2px', 
             flex: 1, 
-            minWidth: 0,
-            borderLeft: i > 0 ? `1px solid ${T.border}` : 'none',
-            paddingLeft: i > 0 ? '4px' : '0'
+            minWidth: 0
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-              <s.icon size={10} color={s.iconColor || T.secondary} strokeWidth={3} />
-              <span style={{ fontSize: '0.48rem', color: T.sub, fontWeight: 800, whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '0.02em' }}>{s.label}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '2px', justifyContent: 'center' }}>
+              <s.icon size={8} color={s.iconColor || T.secondary} strokeWidth={3} />
+              <span style={{ fontSize: '0.45rem', color: T.sub, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.01em', whiteSpace: 'nowrap' }}>{s.label}</span>
             </div>
-            <span style={{ fontSize: '0.72rem', color: T.text, fontWeight: 950, whiteSpace: 'nowrap' }}>{s.value || '---'}</span>
+            <span style={{ fontSize: '0.7rem', color: T.text, fontWeight: 950, textAlign: 'center', whiteSpace: 'nowrap' }}>{s.value || '---'}</span>
           </div>
         ))}
       </div>
@@ -182,7 +165,7 @@ const NetworkHealthCard = ({ activeCount, totalCount, mqttStatus }) => {
     <div style={{
       background: 'white',
       borderRadius: '24px',
-      padding: '20px',
+      padding: '16px',
       position: 'relative',
       overflow: 'hidden',
       boxShadow: T.shadow,
@@ -283,9 +266,6 @@ const VisionCard = ({ isOnline, detection }) => {
           <span style={{ fontSize: '0.9rem', fontWeight: 800, color: T.text }}>Vision Node</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ padding: '4px 8px', borderRadius: '8px', background: isOnline ? `${T.primary}15` : `${T.danger}15` }}>
-            <span style={{ fontSize: '0.6rem', fontWeight: 900, color: isOnline ? T.primary : T.danger }}>{isOnline ? 'LIVE' : 'OFFLINE'}</span>
-          </div>
           <SignalBars active={isOnline} />
         </div>
       </div>
@@ -323,7 +303,7 @@ const VisionCard = ({ isOnline, detection }) => {
           flex: 1, 
           background: isOnline ? '#F8FAFC' : `${T.danger}05`, 
           borderRadius: '16px', 
-          padding: '12px',
+          padding: '12px 8px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -353,23 +333,6 @@ const VisionCard = ({ isOnline, detection }) => {
         </div>
       </div>
       
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-        <span style={{ fontSize: '0.65rem', fontWeight: 700, color: T.sub, marginRight: '4px' }}>Detect</span>
-        {sensors.map((s, i) => (
-          <div key={i} style={{ 
-            padding: '4px 10px', 
-            borderRadius: '20px', 
-            background: s.active ? `${T.accent}15` : `${T.bg}`,
-            border: `1px solid ${s.active ? `${T.accent}25` : T.border}`,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px'
-          }}>
-             <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: s.active ? T.accent : T.muted }} />
-             <span style={{ fontSize: '0.6rem', fontWeight: 800, color: s.active ? T.accent : T.muted }}>{s.label}</span>
-          </div>
-        ))}
-      </div>
     </div>
   );
 };
@@ -385,22 +348,27 @@ const NodePowerPanel = ({ nodePower, toggleNodePower, devices }) => {
   ];
 
   return (
-    <div style={{ marginTop: '16px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-        <div style={{ width: '36px', height: '36px', borderRadius: '12px', background: `${T.secondary}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Settings2 size={18} color={T.secondary} />
+    <div style={{ 
+      marginTop: '8px',
+      background: 'white',
+      padding: '16px',
+      borderRadius: '24px',
+      boxShadow: T.shadow,
+      border: `1px solid ${T.border}`,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '14px'
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: `${T.secondary}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Settings2 size={16} color={T.secondary} />
         </div>
-        <span style={{ fontSize: '1rem', fontWeight: 950, color: T.text }}>Node Network Power</span>
+        <span style={{ fontSize: '0.9rem', fontWeight: 950, color: T.text }}>Node Network Power</span>
       </div>
 
       <div style={{ 
         display: 'flex',
-        gap: '8px',
-        background: 'white',
-        padding: '12px',
-        borderRadius: '20px',
-        boxShadow: T.shadow,
-        border: `1px solid ${T.border}`
+        gap: '6px'
       }}>
         {nodes.map((n) => {
           const isHardwareActive = devices[n.nodeId]?.status === 'ACTIVE';
@@ -454,13 +422,7 @@ const ControlPanel = ({ actuators, toggleActuator, sensorData }) => {
   ];
 
   return (
-    <div style={{ marginTop: '10px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-        <div style={{ width: '36px', height: '36px', borderRadius: '12px', background: `${T.primary}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Zap size={18} color={T.primary} fill={T.primary} />
-        </div>
-        <span style={{ fontSize: '1rem', fontWeight: 950, color: T.text }}>Control Panel</span>
-      </div>
+    <div style={{ marginTop: '12px' }}>
 
       <div style={{ 
         display: 'grid', 
@@ -580,11 +542,10 @@ const DeviceManager = () => {
     <div style={{
       padding: '16px',
       background: T.bg,
-      minHeight: '100%',
       display: 'flex',
       flexDirection: 'column',
-      gap: '16px',
-      paddingBottom: '80px',
+      gap: '12px',
+      paddingBottom: '0px',
       fontFamily: "'Outfit', sans-serif"
     }}>
       
@@ -594,15 +555,15 @@ const DeviceManager = () => {
         mqttStatus={mqttStatus}
       />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+      <NodePowerPanel nodePower={nodePower} toggleNodePower={toggleNodePower} devices={devices} />
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginTop: '4px' }}>
         <NodeCard icon={Sprout} label="Soil Node" color={T.primary} isOnline={soilOnline} sensors={soilSensors} />
         <NodeCard icon={CloudRain} label="Weather Node" color={T.secondary} isOnline={weatherOnline} sensors={weatherSensors} />
         <NodeCard icon={Droplets} label="Irrigation Node" color={T.secondary} isOnline={waterOnline} sensors={irrigSensors} />
         <NodeCard icon={HardDrive} label="Storage Node" color={T.accent} isOnline={storageOnline} sensors={storageSensors} />
         <VisionCard isOnline={visionOnline} detection={sensorData?.vision} />
       </div>
-
-      <NodePowerPanel nodePower={nodePower} toggleNodePower={toggleNodePower} devices={devices} />
 
       <ControlPanel 
         actuators={actuators} 
