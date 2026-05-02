@@ -113,7 +113,7 @@ const WeatherMonitoring = () => {
   const { sensorData, apiWeather, apiForecast, systemHealth, lastGlobalUpdate, devices } = useApp();
 
   const weather = sensorData?.weather || {};
-  const weatherScore = systemHealth.weather || 0;
+  const weatherScore = systemHealth.weather;
   
   const stats = useMemo(() => {
     const safeNum = (val, dec = 1) => (val !== null && val !== undefined && !isNaN(val)) ? Number(val).toFixed(dec) : null;
@@ -125,10 +125,10 @@ const WeatherMonitoring = () => {
     };
   }, [weather]);
 
-  const isOnline = devices?.['weather_node']?.status === 'ACTIVE' || stats.temp !== null;
+  const isOnline = (devices?.['weather_node']?.status === 'ACTIVE' && weatherScore !== null);
 
   const heroConfig = useMemo(() => {
-    if (!isOnline) return { label: 'DEVICE OFFLINE', status: 'Offline', gradient: GRADIENTS.offline, iconColor: COLORS.offline, message: 'Check node power and connectivity.', bg: '#F1F5F9', border: '#E2E8F0' };
+    if (!isOnline || weatherScore === null) return { label: 'DEVICE OFFLINE', status: 'Offline', gradient: GRADIENTS.offline, iconColor: COLORS.offline, message: 'Check node power and connectivity.', bg: '#F1F5F9', border: '#E2E8F0' };
     
     if (weatherScore >= 75) return { label: 'CLIMATE STABILITY', status: 'Optimal', gradient: GRADIENTS.optimal, iconColor: COLORS.primary, message: 'Current conditions support peak crop respiration.', bg: '#F0FDF4', border: 'rgba(20, 184, 166, 0.1)' };
     if (weatherScore >= 45) return { label: 'CLIMATE STABILITY', status: 'Moderate', gradient: GRADIENTS.moderate, iconColor: COLORS.warning, message: 'Sub-optimal climate detected. Monitor heat stress.', bg: '#FFFBEB', border: 'rgba(245, 158, 11, 0.1)' };
@@ -155,10 +155,7 @@ const WeatherMonitoring = () => {
             <motion.div animate={isOnline ? { opacity: [0.4, 1, 0.4] } : { opacity: 0.5 }} transition={{ duration: 2, repeat: Infinity }} style={{ width: '8px', height: '8px', borderRadius: '50%', background: heroConfig.iconColor }} />
             <span style={{ fontSize: '0.65rem', fontWeight: 800, color: heroConfig.iconColor, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{isOnline ? 'Climate Node Active' : 'Device Offline'}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', opacity: 0.5 }}>
-            <Clock size={12} color={COLORS.subtext} />
-            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: COLORS.subtext }}>SYNC: {lastGlobalUpdate || 'JUST NOW'}</span>
-          </div>
+
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>

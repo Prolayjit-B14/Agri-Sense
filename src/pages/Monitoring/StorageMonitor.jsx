@@ -102,13 +102,16 @@ const StorageMonitoring = () => {
   const { sensorData, systemHealth, lastGlobalUpdate } = useApp();
 
   const storage = sensorData?.storage || {};
-  const storageScore = systemHealth.storage || 0;
+  const storageScore = systemHealth.storage;
   
-  const stats = useMemo(() => ({
-    temp: storage.temp !== null ? Number(storage.temp).toFixed(1) : null,
-    hum: storage.humidity !== null ? Number(storage.humidity).toFixed(0) : null,
-    gas: storage.mq135 !== null ? Number(storage.mq135).toFixed(0) : null,
-  }), [storage]);
+  const stats = useMemo(() => {
+    const safeNum = (val, dec = 1) => (val !== null && val !== undefined && !isNaN(val)) ? Number(val).toFixed(dec) : null;
+    return {
+      temp: safeNum(storage.temp),
+      hum: safeNum(storage.humidity, 0),
+      gas: safeNum(storage.mq135, 0),
+    };
+  }, [storage]);
 
   const isOnline = stats.temp !== null || stats.hum !== null;
 
@@ -140,16 +143,13 @@ const StorageMonitoring = () => {
             <motion.div animate={isOnline ? { opacity: [0.4, 1, 0.4] } : { opacity: 0.5 }} transition={{ duration: 2, repeat: Infinity }} style={{ width: '8px', height: '8px', borderRadius: '50%', background: heroConfig.iconColor }} />
             <span style={{ fontSize: '0.65rem', fontWeight: 800, color: heroConfig.iconColor, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{isOnline ? 'Facility Active' : 'Facility Offline'}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', opacity: 0.5 }}>
-            <Clock size={12} color={COLORS.subtext} />
-            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: COLORS.subtext }}>SYNC: {lastGlobalUpdate || 'JUST NOW'}</span>
-          </div>
+
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
           <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 800, color: COLORS.subtext, textTransform: 'uppercase', letterSpacing: '0.15em', opacity: 0.6 }}>{heroConfig.label}</p>
           <motion.h1 key={storageScore} style={{ margin: 0, fontSize: '5.5rem', fontWeight: 800, color: COLORS.text, letterSpacing: '-0.04em', lineHeight: 1 }}>
-            {isOnline ? storageScore : '--'}<span style={{ fontSize: '1.5rem', opacity: 0.3, marginLeft: '4px' }}>%</span>
+            {(!isOnline || storageScore === null) ? '--' : storageScore}<span style={{ fontSize: '1.5rem', opacity: 0.3, marginLeft: '4px' }}>%</span>
           </motion.h1>
           <motion.div 
             animate={heroConfig.status === 'Critical' ? { scale: [1, 1.05, 1], boxShadow: [`0 4px 15px ${COLORS.critical}30`, `0 4px 25px ${COLORS.critical}50`, `0 4px 15px ${COLORS.critical}30`] } : {}}

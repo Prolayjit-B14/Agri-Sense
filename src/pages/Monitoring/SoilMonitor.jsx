@@ -146,7 +146,7 @@ const SoilMonitoring = () => {
   const trend = useTrendEngine(sensorHistory); 
 
   const soil = sensorData?.soil || {};
-  const healthScore = systemHealth.soil || 0;
+  const healthScore = systemHealth.soil;
   
   const stats = useMemo(() => {
     const n = soil.npk || {};
@@ -216,12 +216,7 @@ const SoilMonitoring = () => {
               {isOnline ? 'Soil Node Active' : 'Device Offline'}
             </span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', opacity: 0.5 }}>
-            <Clock size={12} color={COLORS.subtext} />
-            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: COLORS.subtext, textTransform: 'uppercase' }}>
-              SYNC: {lastGlobalUpdate || 'JUST NOW'}
-            </span>
-          </div>
+
         </div>
 
         {/* CENTER SECTION */}
@@ -238,7 +233,7 @@ const SoilMonitoring = () => {
               textShadow: isOnline && !isDataIncomplete ? `0 10px 40px ${heroConfig.iconColor}20` : 'none'
             }}
           >
-            {(!isOnline || isDataIncomplete) ? '--' : healthScore}<span style={{ fontSize: '1.5rem', opacity: 0.3, marginLeft: '4px' }}>%</span>
+            {(!isOnline || isDataIncomplete || healthScore === null) ? '--' : healthScore}<span style={{ fontSize: '1.5rem', opacity: 0.3, marginLeft: '4px' }}>%</span>
           </motion.h1>
 
           <motion.div 

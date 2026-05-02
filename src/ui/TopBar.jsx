@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useApp } from '../state/AppContext';
 import { 
-  Bell, Menu, User
+  Bell, Menu, User, MapPin, ChevronDown
 } from 'lucide-react';
 
 const AgriSenseLogo = () => (
@@ -73,7 +73,8 @@ const TopBar = ({ title }) => {
       </div>
 
       {/* 🔔 RIGHT SIDE: ACTIONS & PROFILE */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+
         <motion.div 
           whileTap={{ scale: 0.95 }}
           onClick={() => navigate('/alerts')}

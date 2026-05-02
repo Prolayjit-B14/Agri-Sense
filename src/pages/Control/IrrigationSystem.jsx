@@ -105,10 +105,10 @@ const IrrigationControl = () => {
 
   const water = sensorData?.water || {};
   const isPumpActive = actuators ? actuators[ACTUATORS?.PUMP] : false;
-  const healthScore = systemHealth.water || 0;
-
+  const healthScore = systemHealth.water;
   const stats = useMemo(() => {
-    const level = water.level !== null ? parseFloat(water.level) : null;
+    const safeNum = (val) => (val !== null && val !== undefined && !isNaN(parseFloat(val))) ? parseFloat(val) : null;
+    const level = safeNum(water.level);
     const liters = level !== null ? Math.round((level / 100) * TANK_CAPACITY) : null;
     return { level, liters };
   }, [water]);
@@ -116,7 +116,7 @@ const IrrigationControl = () => {
   const isOnline = stats.level !== null;
 
   const heroConfig = useMemo(() => {
-    if (!isOnline) return { label: 'TANK OFFLINE', status: 'Offline', gradient: GRADIENTS.offline, iconColor: COLORS.offline, message: 'Check water level sensor connectivity.', bg: '#F1F5F9', border: '#E2E8F0' };
+    if (!isOnline || healthScore === null) return { label: 'TANK OFFLINE', status: 'Offline', gradient: GRADIENTS.offline, iconColor: COLORS.offline, message: 'Check water level sensor connectivity.', bg: '#F1F5F9', border: '#E2E8F0' };
     
     if (healthScore >= 75) return { label: 'WATER RESERVE', status: 'Optimal', gradient: GRADIENTS.optimal, iconColor: COLORS.primary, message: 'Adequate supply for scheduled irrigation.', bg: '#F0F9FF', border: 'rgba(14, 165, 233, 0.1)' };
     if (healthScore >= 35) return { label: 'WATER RESERVE', status: 'Moderate', gradient: GRADIENTS.moderate, iconColor: COLORS.warning, message: 'Reserves are decreasing. Monitor consumption.', bg: '#FFFBEB', border: 'rgba(245, 158, 11, 0.1)' };
@@ -143,16 +143,13 @@ const IrrigationControl = () => {
             <motion.div animate={isOnline ? { opacity: [0.4, 1, 0.4] } : { opacity: 0.5 }} transition={{ duration: 2, repeat: Infinity }} style={{ width: '8px', height: '8px', borderRadius: '50%', background: heroConfig.iconColor }} />
             <span style={{ fontSize: '0.65rem', fontWeight: 800, color: heroConfig.iconColor, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{isOnline ? 'Tank Active' : 'Tank Offline'}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', opacity: 0.5 }}>
-            <Clock size={12} color={COLORS.subtext} />
-            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: COLORS.subtext }}>SYNC: {lastGlobalUpdate || 'JUST NOW'}</span>
-          </div>
+
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
           <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 800, color: COLORS.subtext, textTransform: 'uppercase', letterSpacing: '0.15em', opacity: 0.6 }}>{heroConfig.label}</p>
           <motion.h1 key={healthScore} style={{ margin: 0, fontSize: '5.5rem', fontWeight: 800, color: COLORS.text, letterSpacing: '-0.04em', lineHeight: 1 }}>
-            {isOnline ? healthScore : '--'}<span style={{ fontSize: '1.5rem', opacity: 0.3, marginLeft: '4px' }}>%</span>
+            {(!isOnline || healthScore === null) ? '--' : healthScore}<span style={{ fontSize: '1.5rem', opacity: 0.3, marginLeft: '4px' }}>%</span>
           </motion.h1>
           <motion.div 
             animate={heroConfig.status === 'Critical' ? { scale: [1, 1.05, 1], boxShadow: [`0 4px 15px ${COLORS.critical}30`, `0 4px 25px ${COLORS.critical}50`, `0 4px 15px ${COLORS.critical}30`] } : {}}

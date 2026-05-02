@@ -78,7 +78,7 @@ const BottomNav = () => {
             style={{
               background: 'transparent', border: 'none', display: 'flex', flexDirection: 'column',
               alignItems: 'center', gap: '2px', color: isActive ? '#10B981' : '#94A3B8',
-              padding: '4px 0', flex: 1, cursor: 'pointer', transition: '0.3s'
+              padding: '4px 0', flex: 1, cursor: 'pointer', transition: '0.3s',
             }}
           >
             <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />

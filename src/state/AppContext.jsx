@@ -3,7 +3,7 @@
  * Organized Industrial State Engine for AgriSense Ecosystem.
  */
 
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useMemo } from 'react';
 
 // API & Infrastructure
 import mqttService from '../api/mqttService';
@@ -142,6 +142,18 @@ export const AppProvider = ({ children }) => {
     [ACTUATORS.DISPLAY]: false,
     [ACTUATORS.LIGHT]:   false,
   });
+
+  const [nodePower, setNodePower] = useState({
+    soil: true,
+    weather: true,
+    water: true,
+    storage: true,
+    vision: true
+  });
+
+  const toggleNodePower = (id) => {
+    setNodePower(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const [farmInfo, setFarmInfo] = useState(() => {
     try {
@@ -827,15 +839,45 @@ export const AppProvider = ({ children }) => {
     return () => clearInterval(weatherTimer);
   }, [user?.location, sensorData?.weather?.temp]);
 
+  const maskedSensorData = useMemo(() => ({
+    ...sensorData,
+    soil:    nodePower.soil    ? sensorData.soil    : {},
+    weather: nodePower.weather ? sensorData.weather : {},
+    water:   nodePower.water   ? sensorData.water   : {},
+    storage: nodePower.storage ? sensorData.storage : {},
+    vision:  nodePower.vision  ? sensorData.vision  : {},
+  }), [sensorData, nodePower]);
+
+  const maskedSystemHealth = useMemo(() => ({
+    ...systemHealth,
+    soil:    nodePower.soil    ? systemHealth.soil    : null,
+    weather: nodePower.weather ? systemHealth.weather : null,
+    water:   nodePower.water   ? systemHealth.water   : null,
+    storage: nodePower.storage ? systemHealth.storage : null,
+    vision:  nodePower.vision  ? systemHealth.vision  : null,
+  }), [systemHealth, nodePower]);
+
+  const maskedSensorHistory = useMemo(() => (
+    sensorHistory.map(snapshot => ({
+      ...snapshot,
+      soil:    nodePower.soil    ? snapshot.soil    : {},
+      weather: nodePower.weather ? snapshot.weather : {},
+      water:   nodePower.water   ? snapshot.water   : {},
+      storage: nodePower.storage ? snapshot.storage : {},
+    }))
+  ), [sensorHistory, nodePower]);
+
   return (
     <AppContext.Provider value={{
       user, login, guestLogin, register, fetchHistory, logout, updateUser, farmInfo, updateBranding,
       getAllFarmers,
-      isDarkMode, toggleTheme, sensorData, apiWeather, apiForecast, recommendations, sensorHistory,
+      isDarkMode, toggleTheme, sensorData: maskedSensorData, apiWeather, apiForecast, recommendations, 
+      sensorHistory: maskedSensorHistory,
       actuators, toggleActuator, isSidebarOpen, setIsSidebarOpen, ACTUATORS,
-      farmHealthScore, systemHealth, connectivityStatus, cloudSyncStatus, profileMeta, updateProfileMeta,
+      farmHealthScore, systemHealth: maskedSystemHealth, connectivityStatus, cloudSyncStatus, profileMeta, updateProfileMeta,
       isDataLoading, lastGlobalUpdate, mqttStatus, syncData, syncDeviceId,
-      devices, systemOverview, currentGPS
+      devices, systemOverview, currentGPS,
+      nodePower, toggleNodePower
     }}>
       {children}
     </AppContext.Provider>
