@@ -268,20 +268,6 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const updateUser = async (newUserData) => {
-    const isEmailChange = newUserData.email && newUserData.email !== user?.email;
-    const updated = { 
-      ...user, 
-      ...newUserData, 
-      isGuest: isEmailChange ? false : (user?.isGuest || false) 
-    };
-    
-    setUser(updated);
-    localStorage.setItem('agrisense_user', JSON.stringify(updated));
-    if (updated.email) {
-      await setDoc(doc(db, "farmers", updated.email), updated, { merge: true });
-    }
-  };
 
   const login = async (email, password) => {
     try {
@@ -350,12 +336,18 @@ export const AppProvider = ({ children }) => {
   };
 
   const updateUser = async (data) => {
-
     if (!user?.email) return false;
     try {
       const userRef = doc(db, "farmers", user.email);
       await setDoc(userRef, data, { merge: true });
-      const updatedUser = { ...user, ...data };
+      
+      const isEmailChange = data.email && data.email !== user?.email;
+      const updatedUser = { 
+        ...user, 
+        ...data,
+        isGuest: isEmailChange ? false : (user?.isGuest || false)
+      };
+      
       setUser(updatedUser);
       localStorage.setItem('agrisense_user', JSON.stringify(updatedUser));
       return true;
@@ -364,6 +356,7 @@ export const AppProvider = ({ children }) => {
       return false;
     }
   };
+
 
   const getAllFarmers = async () => {
     try {
