@@ -358,15 +358,19 @@ const FarmAdvisor = () => {
     const fertReason = canFertilize ? (fertReasons.length > 0 ? fertReasons.join(" • ") : (fertEntry?.weather || "Standard biological dose")) : "OFFLINE - CONNECT NPK SENSORS";
 
     // ─── 🍃 COMPOST ENGINE ──────────────────────────────────────────────────
-    const canCompost = isAvailableLoc(cur.moisture) && isAvailableLoc(cur.ph);
-    let compost = canCompost ? meta.bC : 0;
+    const canCompost = isAvailableLoc(cur.moisture) && isAvailableLoc(cur.ph) && isAvailableLoc(cur.npk?.n);
+    const nVal = parseFloat(cur.npk?.n || 0);
+    const mVal = parseFloat(cur.moisture || 0);
+    
+    let compost = canCompost ? (meta.bC + (nVal < 50 ? 3.5 : 0) + (mVal < 25 ? 1.5 : 0)) : 0;
     const cReasons = [];
     if (canCompost) {
-      if (parseFloat(cur.moisture) < (profile.moisture?.min || 20)) { compost += 2; cReasons.push("Low moisture"); }
-      if (String(meta.soil).includes("Sandy")) { compost += 2; cReasons.push("Sandy soil"); }
-      if (isAvailableLoc(cur.npk?.n) && parseFloat(cur.npk?.n) < (profile.n?.min || 50)) { compost += 1; cReasons.push("N-Deficiency"); }
+      if (mVal < 25) cReasons.push("Low moisture");
+      if (String(meta.soil).includes("Sandy")) cReasons.push("Sandy soil");
+      if (nVal < 50) cReasons.push("N-Deficiency");
     }
-    const compostReason = canCompost ? (cReasons.length > 0 ? cReasons.join(" + ") : (fertEntry?.soil || "Ideal field balance")) : "OFFLINE - CONNECT SOIL SENSORS";
+    const compostReason = canCompost ? (cReasons.length > 0 ? cReasons.join(" + ") : "Ideal field balance") : "OFFLINE - CONNECT SOIL SENSORS";
+    const compostQtyLabel = compost > 0 ? `${compost.toFixed(1)} tons/acre` : '0 tons/acre (Balanced)';
 
     // ─── 🛡️ PEST ENGINE (OFFLINE AWARE) ──────────────────────────────────────
     const canAnalyzePest = isAvailableLoc(cur.temp) || isAvailableLoc(cur.hum) || isAvailableLoc(cur.moisture);
@@ -558,7 +562,7 @@ const FarmAdvisor = () => {
       },
       compost: {
         isValid: canCompost,
-        perAcre: meta.compost?.qty || `${compost} tons/acre`,
+        perAcre: compostQtyLabel,
         product: meta.compost?.type || 'Organic Manure',
         reason: canCompost ? (meta.compost?.logic || compostReason) : "OFFLINE - CONNECT SOIL SENSORS",
         stage: meta.compost?.stage || 'Basal'
@@ -584,7 +588,9 @@ const FarmAdvisor = () => {
     padding: '1.5rem',
     marginBottom: '1.25rem',
     border: '1px solid rgba(255, 255, 255, 0.8)',
-    boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)'
+    boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
+    position: 'relative',
+    overflow: 'hidden'
   };
 
   const sectionHeader = { margin: '0 0 1.25rem 0', fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain, display: 'flex', alignItems: 'center', gap: '10px' };
@@ -597,9 +603,11 @@ const FarmAdvisor = () => {
         <motion.div 
           initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
           style={{ 
-            background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '24px', padding: '1rem',
+            background: 'linear-gradient(165deg, #10B98105 0%, #FFFFFF 50%, #FBFDFF 100%)', borderRadius: '24px', padding: '1rem',
             boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)', border: '1px solid rgba(255, 255, 255, 0.8)',
-            opacity: heroOpacity
+            opacity: heroOpacity,
+            position: 'relative',
+            overflow: 'hidden'
           }}
         >
           {/* 1. HEADER SECTION: CROP SELECTOR */}
@@ -757,10 +765,10 @@ const FarmAdvisor = () => {
         {activeTab === 'sensor' ? (
           <>
             {/* 📋 SMART MATCH TABLE ENGINE */}
-            <div style={cardStyle}>
+            <div style={{ ...cardStyle, padding: '1.5rem 0.5rem', background: `linear-gradient(165deg, ${COLORS.primary}08 0%, #FFFFFF 100%)` }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                <div style={{ padding: '0 8px' }}>
-                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: COLORS.textMain, display: 'flex', alignItems: 'center', gap: '10px', textAlign: 'left' }}>
+                <div style={{ padding: '0 2px' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 950, color: COLORS.textMain, display: 'flex', alignItems: 'center', gap: '10px', textAlign: 'left' }}>
                     <Activity size={20} color={COLORS.primary} />
                     Field Data Compare Table
                   </h3>
@@ -768,14 +776,17 @@ const FarmAdvisor = () => {
               </div>
 
               <div style={{ 
-                display: 'grid', gridTemplateColumns: '1.6fr 0.8fr 0.8fr 1fr', gap: '12px', 
-                padding: '0 4px 10px 4px', borderBottom: `2px solid ${COLORS.background}`, marginBottom: '8px' 
+                display: 'grid', gridTemplateColumns: '1.8fr 1fr 1fr', gap: '8px', 
+                padding: '10px 6px', 
+                background: `linear-gradient(90deg, ${COLORS.primary}08 0%, transparent 100%)`,
+                borderRadius: '12px',
+                marginBottom: '12px' 
               }}>
-                 {['Factor', 'Field', 'Optimal', 'Status'].map((h, i) => (
+                 {['Factor', 'Field', 'Optimal'].map((h, i) => (
                    <span key={i} style={{ 
-                     fontSize: '0.75rem', fontWeight: 900, color: COLORS.textMuted, textTransform: 'uppercase',
+                     fontSize: '0.9rem', fontWeight: 950, color: COLORS.textMuted, textTransform: 'uppercase',
                      textAlign: 'left',
-                     paddingLeft: i === 0 ? '36px' : 0
+                     paddingLeft: i === 0 ? '30px' : 0
                    }}>{h}</span>
                  ))}
               </div>
@@ -784,48 +795,46 @@ const FarmAdvisor = () => {
                 <div 
                   key={s.id}
                   style={{ 
-                    display: 'grid', gridTemplateColumns: '1.6fr 0.8fr 0.8fr 1fr', gap: '12px', 
+                    display: 'grid', gridTemplateColumns: '1.8fr 1fr 1.2fr', gap: '12px', 
                     padding: '12px 4px', minHeight: '52px', borderBottom: `1px solid ${COLORS.background}`, 
                     alignItems: 'center' 
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
-                    <div style={{ minWidth: '28px', height: '28px', borderRadius: '8px', background: `${s.color}10`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      {React.createElement(s.icon, { size: 14, color: s.color })}
+                    <div style={{ minWidth: '22px', height: '22px', borderRadius: '5px', background: `${s.color}10`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      {React.createElement(s.icon, { size: 11, color: s.color })}
                     </div>
-                    <span style={{ fontSize: '0.7rem', fontWeight: 850, color: COLORS.textMain, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.id}</span>
+                    <span style={{ fontSize: '0.95rem', fontWeight: 950, color: COLORS.textMain, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.id}</span>
                   </div>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: s.type === 'missing' ? COLORS.textMuted : COLORS.textMain, textAlign: 'left' }}>
+                  <span style={{ 
+                    fontSize: '1.15rem', fontWeight: 950, 
+                    color: s.type === 'good' ? COLORS.primary : (s.type === 'missing' ? COLORS.textMuted : (s.isHigh ? COLORS.warning : COLORS.danger)),
+                    textAlign: 'left' 
+                  }}>
                     {s.type === 'missing' ? '---' : `${Math.round(parseFloat(s.val) || 0)}${s.unit}`}
                   </span>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: COLORS.textMuted, textAlign: 'left' }}>
+                  <span style={{ fontSize: '1rem', fontWeight: 800, color: COLORS.textMuted, textAlign: 'left' }}>
                     {(typeof s.rMin !== 'undefined' && s.rMin !== null) ? `${Math.round(s.rMin)}-${Math.round(s.rMax)}` : '---'}
                   </span>
-                  <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
-                    <div style={{ 
-                      padding: '4px 8px', borderRadius: '6px', 
-                      background: s.type === 'good' ? `${COLORS.primary}15` : (s.type === 'missing' ? '#F1F5F9' : (s.isHigh ? `${COLORS.warning}15` : `${COLORS.danger}15`)),
-                      color: s.type === 'good' ? COLORS.primary : (s.type === 'missing' ? COLORS.textMuted : (s.isHigh ? COLORS.warning : COLORS.danger)),
-                      fontSize: '0.55rem', fontWeight: 900, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px',
-                      whiteSpace: 'nowrap'
-                    }}>
-                      {s.type === 'good' ? <CheckCircle2 size={10} /> : (s.type === 'missing' ? <RefreshCw size={10} /> : <AlertCircle size={10} />)}
-                      {s.type === 'good' ? 'Opt' : (s.type === 'missing' ? 'Off' : (s.isHigh ? 'High' : 'Low'))}
-                    </div>
-                  </div>
                 </div>
               ))}
             </div>
 
             {/* 🧪 FERTILIZER ENGINE */}
-            <div style={cardStyle}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${COLORS.secondary}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Calculator size={20} color={COLORS.secondary} />
-                </div>
-                <div>
+            <div style={{ ...cardStyle, background: `linear-gradient(165deg, ${COLORS.secondary}08 0%, #FFFFFF 100%)` }}>
+              <div style={{ 
+                position: 'absolute', top: 0, left: 0, right: 0, height: '100%', 
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%)', 
+                pointerEvents: 'none' 
+              }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${COLORS.secondary}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Calculator size={20} color={COLORS.secondary} />
+                  </div>
                   <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain }}>Fertilizer Engine</h3>
                 </div>
+                {/* Status badge removed for cleaner header */}
               </div>
 
               {!brain.fertilizer.isValid ? (
@@ -878,15 +887,21 @@ const FarmAdvisor = () => {
             </div>
 
             {/* 🌿 COMPOST ENGINE */}
-            <div style={cardStyle}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${COLORS.primary}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Leaf size={20} color={COLORS.primary} />
-                </div>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain }}>Compost Engine</h3>
-                </div>
-              </div>
+            <div style={{ ...cardStyle, background: `linear-gradient(165deg, ${COLORS.primary}08 0%, #FFFFFF 100%)` }}>
+              <div style={{ 
+                position: 'absolute', top: 0, left: 0, right: 0, height: '100%', 
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%)', 
+                pointerEvents: 'none' 
+              }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${COLORS.primary}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Leaf size={20} color={COLORS.primary} />
+                      </div>
+                      <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain }}>Compost Engine</h3>
+                    </div>
+                {/* Status badge removed for cleaner header */}
+                  </div>
 
               {!brain.compost.isValid ? (
                 <div style={{ padding: '30px 20px', textAlign: 'center', background: '#FFFFFF', borderRadius: '20px', border: `1px dashed ${COLORS.border}` }}>
@@ -895,15 +910,10 @@ const FarmAdvisor = () => {
                 </div>
               ) : (
                 <>
-                  {/* BALANCE STATUS CARD */}
-                  <div style={{ background: '#FFFFFF', padding: '16px 20px', borderRadius: '24px', textAlign: 'center', marginBottom: '0.75rem', border: '1px solid rgba(0,0,0,0.02)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '1.6rem', fontWeight: 950, color: COLORS.textMain, lineHeight: 1 }}>{brain.compost.perAcre}</span>
-                      <span style={{ fontSize: '1.6rem', fontWeight: 950, color: '#E2E8F0' }}>•</span>
-                      <span style={{ fontSize: '0.9rem', fontWeight: 900, color: brain.compost.perAcre.startsWith('0') ? COLORS.primary : COLORS.warning }}>
-                        {brain.compost.perAcre.startsWith('0') ? 'Balanced Soil' : 'Adjustment Needed'}
-                      </span>
-                    </div>
+                  {/* BALANCE STATUS DISPLAY */}
+                  <div style={{ padding: '8px 20px', textAlign: 'left', marginBottom: '1.25rem' }}>
+                    <div style={{ fontSize: '0.6rem', fontWeight: 900, color: COLORS.textMuted, textTransform: 'uppercase', marginBottom: '4px' }}>Requirement:</div>
+                    <span style={{ fontSize: '1.8rem', fontWeight: 950, color: COLORS.textMain, lineHeight: 1 }}>{brain.compost.perAcre}</span>
                   </div>
 
                   {/* COMPACT FOOTER */}
@@ -922,7 +932,12 @@ const FarmAdvisor = () => {
             </div>
 
             {/* 🛡️ PEST ENGINE */}
-            <div style={cardStyle}>
+            <div style={{ ...cardStyle, background: `linear-gradient(165deg, ${COLORS.danger}08 0%, #FFFFFF 100%)` }}>
+              <div style={{ 
+                position: 'absolute', top: 0, left: 0, right: 0, height: '100%', 
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%)', 
+                pointerEvents: 'none' 
+              }} />
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem' }}>
                 <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${COLORS.danger}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Bug size={20} color={COLORS.danger} />
@@ -932,71 +947,55 @@ const FarmAdvisor = () => {
                 </div>
               </div>
 
-              {brain.pests.detected.map((p, i) => (
-                <div key={i} style={{ 
-                  padding: '20px', borderRadius: '24px', 
-                  background: p.isActive ? `${COLORS.danger}05` : '#FFFFFF', 
-                  border: p.isActive ? `1px solid ${COLORS.danger}20` : '1px solid rgba(0,0,0,0.02)'
-                }}>
-                  {/* TOP LINE: ICON + PEST | STATUS */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <Bug size={20} color={p.isActive ? COLORS.danger : COLORS.textMuted} />
-                      <span style={{ fontSize: '1rem', fontWeight: 950, color: COLORS.textMain }}>{p.n}</span>
-                    </div>
-                    <span style={{ 
-                      fontSize: '0.65rem', fontWeight: 950, padding: '6px 12px', borderRadius: '100px', 
-                      background: p.isActive ? COLORS.danger : '#E2E8F0', 
-                      color: p.isActive ? 'white' : COLORS.textMuted,
-                      letterSpacing: '0.05em'
-                    }}>
-                      {p.s}
-                    </span>
-                  </div>
-                  
-                  {/* SINGLE-LINE INTELLIGENCE SENTENCE */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: COLORS.textMuted, fontSize: '0.72rem', fontWeight: 750, marginBottom: '16px' }}>
-                    <span style={{ color: p.isActive ? COLORS.textMain : COLORS.textMuted }}>{p.intel}</span>
-                  </div>
-
-                  {/* ACTIONABLE LINE */}
-                  <div style={{ padding: '12px', borderRadius: '16px', background: p.isActive ? `${COLORS.danger}12` : '#F1F5F9', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                     <AlertCircle size={14} color={p.isActive ? COLORS.danger : COLORS.primary} />
-                     <span style={{ fontSize: '0.75rem', fontWeight: 900, color: p.isActive ? COLORS.danger : COLORS.textMain }}>
-                       {p.action}
-                     </span>
-                  </div>
+              {brain.isOffline ? (
+                <div style={{ padding: '30px 20px', textAlign: 'center', background: '#FFFFFF', borderRadius: '20px', border: `1px dashed ${COLORS.border}` }}>
+                  <RefreshCw size={24} color={COLORS.textMuted} style={{ marginBottom: '10px', opacity: 0.5 }} />
+                  <div style={{ fontSize: '0.8rem', fontWeight: 800, color: COLORS.textMuted }}>THREAT SENSORS OFFLINE</div>
                 </div>
-              ))}
+              ) : (
+                brain.pests.detected.map((p, i) => (
+                  <div key={i} style={{ padding: '4px 8px' }}>
+                    <div style={{ marginBottom: '8px' }}>
+                       <span style={{ fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain }}>{p.n}</span>
+                    </div>
+                    <div style={{ fontSize: '0.72rem', fontWeight: 750, color: p.isActive ? COLORS.textMain : COLORS.textMuted }}>
+                      {p.intel}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </>
         ) : (
           /* 🌾 CROP SUITABILITY CHECK TABLE - INDUSTRIAL REDESIGN */
-          <div style={cardStyle}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', padding: '0 8px' }}>
-              <h3 style={{ ...sectionHeader, gap: '10px', marginBottom: 0 }}>
+          <div style={{ ...cardStyle, padding: '1.5rem 0.5rem', background: `linear-gradient(165deg, ${COLORS.secondary}08 0%, #FFFFFF 100%)` }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', padding: '0 4px' }}>
+              <h3 style={{ ...sectionHeader, fontSize: '1.3rem', fontWeight: 950, gap: '10px', marginBottom: 0 }}>
                 {getCropIcon(CROP_SPECS[selectedCrop]?.type, selectedCrop) && React.createElement(getCropIcon(CROP_SPECS[selectedCrop]?.type, selectedCrop).icon, { size: 20, color: COLORS.secondary })}
                 Crop Suitability Analysis Table
               </h3>
             </div>
             
             <div style={{ 
-              display: 'grid', gridTemplateColumns: '1.6fr 1fr 1.8fr', gap: '24px', 
-              padding: '0 4px 10px 4px', borderBottom: `1.5px solid #F1F5F9`, marginBottom: '2px' 
+              display: 'grid', gridTemplateColumns: '1.5fr 1fr 2fr', gap: '12px', 
+              padding: '10px 6px', 
+              background: `linear-gradient(90deg, ${COLORS.secondary}08 0%, transparent 100%)`,
+              borderRadius: '12px',
+              marginBottom: '12px' 
             }}>
               {['Factor', 'Ideal', 'Industrial Insights'].map((h, i) => (
                 <span key={i} style={{ 
-                  fontSize: '0.75rem', fontWeight: 900, color: '#94A3B8', textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
+                  fontSize: '0.9rem', fontWeight: 950, color: '#94A3B8', textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
                   textAlign: 'left',
-                  paddingLeft: i === 0 ? '36px' : 0
+                  paddingLeft: i === 0 ? '30px' : 0
                 }}>{h}</span>
               ))}
             </div>
 
             {brain.suitabilityTable.map((row, idx) => (
               <div key={row.id} style={{ 
-                display: 'grid', gridTemplateColumns: '1.6fr 1fr 1.8fr', gap: '24px', 
+                display: 'grid', gridTemplateColumns: '1.5fr 1fr 2fr', gap: '12px', 
                 padding: '14px 4px', 
                 minHeight: '60px',
                 borderBottom: idx === brain.suitabilityTable.length - 1 ? 'none' : `1px solid rgba(241, 245, 249, 0.8)`, 
@@ -1004,17 +1003,17 @@ const FarmAdvisor = () => {
               }}>
                 {/* Column 1: Factor */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ minWidth: '28px', height: '28px', borderRadius: '8px', background: `${row.color}10`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    {React.createElement(row.icon, { size: 14, color: row.color })}
+                  <div style={{ minWidth: '22px', height: '22px', borderRadius: '5px', background: `${row.color}10`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    {React.createElement(row.icon, { size: 11, color: row.color })}
                   </div>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: COLORS.textMain, lineHeight: 1.5 }}>{row.label || row.id}</span>
+                  <span style={{ fontSize: '1.1rem', fontWeight: 900, color: COLORS.textMain, lineHeight: 1.4 }}>{row.label || row.id}</span>
                 </div>
 
                 {/* Column 2: Target Spec */}
                 <div style={{ textAlign: 'left' }}>
                   <span style={{ 
-                    fontSize: '0.85rem', fontWeight: 700, color: COLORS.textMain, 
-                    lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: '4', WebkitBoxOrient: 'vertical', 
+                    fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain, 
+                    lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: '4', WebkitBoxOrient: 'vertical', 
                     overflow: 'hidden'
                   }}>
                     {row.ideal}
@@ -1024,7 +1023,7 @@ const FarmAdvisor = () => {
                 {/* Column 3: Insights */}
                 <div style={{ textAlign: 'left' }}>
                   <span style={{ 
-                    fontSize: '0.85rem', color: COLORS.textMain, fontWeight: 600, lineHeight: 1.5,
+                    fontSize: '1rem', color: COLORS.textMain, fontWeight: 800, lineHeight: 1.3,
                     display: '-webkit-box', WebkitLineClamp: '4', WebkitBoxOrient: 'vertical', 
                     overflow: 'hidden'
                   }}>
