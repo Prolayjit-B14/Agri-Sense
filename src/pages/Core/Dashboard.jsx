@@ -67,7 +67,7 @@ const HealthOverview = ({ score, systemHealth }) => {
 
   const visionOnline = devices?.vision_node?.status === 'ACTIVE' || devices?.vision_node?.status === 'PARTIAL';
   const activeNodesCount = Object.values(devices || {})
-    .filter(d => d?.device_id?.endsWith('_node') && d?.status === 'ACTIVE').length
+    .filter(d => d && d.device_id && d.device_id.endsWith('_node') && d.status === 'ACTIVE').length
     + (visionOnline ? 1 : 0);
   const totalNodesCount = 5;
 
@@ -210,12 +210,12 @@ const InsightsCard = ({ sensorData, sensorHistory }) => {
     const currM = sensorData.soil?.moisture;
     const pastM = sensorHistory[0]?.soil?.moisture;
     if (currM != null) {
-      const diff = pastM != null ? (currM - pastM) : 0;
-      let text = `Soil Moisture: ${currM.toFixed(0)}%`;
+      const diff = (pastM != null) ? (currM - pastM) : 0;
+      let text = `Soil Moisture: ${Number(currM).toFixed(0)}%`;
       if (Math.abs(diff) >= 1) {
         text = diff < 0 ? `Moisture decreased by ${Math.abs(diff).toFixed(0)}%` : `Moisture increased by ${diff.toFixed(0)}%`;
       } else {
-        text = `Soil Moisture: Stable at ${currM.toFixed(0)}%`;
+        text = `Soil Moisture: Stable at ${Number(currM).toFixed(0)}%`;
       }
       list.push({
         text,
@@ -434,11 +434,17 @@ const ControlsCard = ({ actuators, toggleActuator, ACTUATORS }) => {
 // ─── MAIN COMPONENT ────────────────────────────────────────────────────────
 const Dashboard = () => {
   const navigate = useNavigate();
+  const context = useApp();
+  
+  // 🛡️ CRITICAL SAFETY GATE: Prevent crash if context is missing or loading
+  if (!context) return null;
+
   const {
-    sensorData, farmHealthScore, systemHealth,
-    toggleActuator, actuators, ACTUATORS,
-    user, devices, farmInfo, syncData, currentGPS, sensorHistory
-  } = useApp();
+    sensorData = {}, farmHealthScore = null, systemHealth = {},
+    toggleActuator = () => {}, actuators = {}, ACTUATORS = {},
+    user = {}, devices = {}, farmInfo = {}, syncData = () => {}, 
+    currentGPS = {}, sensorHistory = []
+  } = context;
 
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isSyncing, setIsSyncing] = useState(false);
@@ -505,8 +511,6 @@ const Dashboard = () => {
 
       <HealthOverview score={farmHealthScore} systemHealth={systemHealth} />
 
-      <InsightsCard sensorData={sensorData} sensorHistory={sensorHistory} />
-
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', marginBottom: '1.2rem' }}>
         <SensorCard
           title="Soil Health" nodeType="soil"
@@ -550,6 +554,8 @@ const Dashboard = () => {
         toggleActuator={toggleActuator}
         ACTUATORS={ACTUATORS}
       />
+
+      <InsightsCard sensorData={sensorData} sensorHistory={sensorHistory} />
 
       <footer style={{ textAlign: 'center', marginTop: '1.5rem', paddingBottom: '10px' }}>
         <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#CBD5E1', textTransform: 'uppercase', letterSpacing: '0.08em' }}>

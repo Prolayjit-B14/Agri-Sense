@@ -48,6 +48,15 @@ const RAD = {
   btn: '14px'
 };
 
+const DESIGN = {
+  container: '1.25rem',
+  cardPad: '1.25rem 1rem',
+  cardMargin: '1.25rem',
+  gap: '12px',
+  innerPad: '1rem',
+  smallPad: '8px'
+};
+
 const getCropSpec = (name) => {
   if (!name || typeof name !== 'string') return { label: 'unknown' };
   const normalized = name.toLowerCase().trim();
@@ -286,14 +295,31 @@ const FarmAdvisor = () => {
 
       if (active && typeof rMin !== 'undefined' && rMin !== null) {
         const val = parseFloat(s.val);
+        const rangeWidth = Math.max(5, rMax - rMin);
+        const outDist = val < rMin ? (rMin - val) : (val > rMax ? (val - rMax) : 0);
+        
+        // 📊 INDUSTRIAL FUZZY LOGIC (Calibrated for noise & precision)
+        const EPSILON = 0.03; // 3% noise floor
+        const isOptimal = (val >= rMin - (rangeWidth * EPSILON) && val <= rMax + (rangeWidth * EPSILON));
+        const pct = isOptimal ? 100 : Math.max(15, 90 - (outDist / rangeWidth * 50));
+        
         if (isNaN(val)) {
           status = 'Missing'; type = 'missing';
-        } else if (val < rMin) { 
-          status = '🔻 Below Range'; type = 'bad'; action = s.rec; 
-        } else if (val > rMax) { 
-          status = '🔺 Above Range'; type = 'bad'; action = 'Drain'; isHigh = true;
-        } else { 
+        } else if (isOptimal || pct >= 95) { 
+          // 🟢 Optimal Zone (Green)
           status = '✅ Optimal'; type = 'good'; action = 'None'; 
+        } else if (pct >= 60) { 
+          // 🟡 Warning Zone (Yellow)
+          status = val < rMin ? '🔻 Low' : '🔺 High'; 
+          type = 'warning'; 
+          isHigh = val > rMax;
+          action = s.rec;
+        } else { 
+          // 🔴 < 60%: Critical / Bad
+          status = val < rMin ? '🔻 Critical Low' : '🔺 Critical High'; 
+          type = 'bad'; 
+          isHigh = false; // Force Red
+          action = s.rec;
         }
       }
       return { ...s, status, type, action, rMin, rMax, isHigh };
@@ -451,19 +477,22 @@ const FarmAdvisor = () => {
       if (s.type === 'missing' || !isAvailableLoc(s.val)) return 0;
       const val = parseFloat(s.val);
       const { rMin, rMax } = s;
-      const mid = (rMin + rMax) / 2;
-      const maxAllowedDist = Math.max(1, (rMax - rMin) / 2);
-      const distFromCenter = Math.abs(val - mid);
+      const rangeWidth = Math.max(5, rMax - rMin);
       
-      if (val < rMin || val > rMax) {
-        // Outside optimal boundary: Heavy decay based on severity of variance
-        const outDist = val < rMin ? (rMin - val) : (val - rMax);
-        return Math.max(15, Math.round(50 - ((outDist / maxAllowedDist) * 40)));
+      // 🎯 Precision Epsilon (noise floor)
+      const EPSILON = 0.03; 
+      const isOptimal = (val >= rMin - (rangeWidth * EPSILON) && val <= rMax + (rangeWidth * EPSILON));
+
+      if (isOptimal) {
+        // 🎯 Inside Optimal Range: Full 100% Match (Green)
+        return 100;
       }
       
-      // Inside boundary: Precision scale (70% at the edge, 100% at absolute perfect center)
-      const pctInside = 100 - ((distFromCenter / maxAllowedDist) * 30);
-      return Math.round(pctInside);
+      // ⚠️ Outside Range: Graceful Decay
+      const outDist = val < rMin ? (rMin - val) : (val - rMax);
+      // Linear decay: 90% at the edge, dropping to 60% (Red threshold) at a distance of 60% of the range width
+      const decay = (outDist / rangeWidth) * 50;
+      return Math.max(15, Math.round(90 - decay));
     };
 
     const categories = [
@@ -585,8 +614,8 @@ const FarmAdvisor = () => {
   const cardStyle = {
     background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)',
     borderRadius: RAD.card,
-    padding: '1.5rem',
-    marginBottom: '1.25rem',
+    padding: DESIGN.cardPad,
+    marginBottom: DESIGN.cardMargin,
     border: '1px solid rgba(255, 255, 255, 0.8)',
     boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
     position: 'relative',
@@ -599,15 +628,16 @@ const FarmAdvisor = () => {
     <div className="no-scrollbar" style={{ background: '#FFFFFF', minHeight: '100dvh', paddingBottom: '2rem', fontFamily: "'Outfit', sans-serif", overflowX: 'hidden' }}>
 
       {/* 🚀 INDUSTRIAL CROP HERO CARD - PREMIUM REDESIGN */}
-      <div style={{ padding: '1rem' }}>
+      <div style={{ padding: `0.5rem ${DESIGN.container} ${DESIGN.container}` }}>
         <motion.div 
           initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
           style={{ 
-            background: 'linear-gradient(165deg, #10B98105 0%, #FFFFFF 50%, #FBFDFF 100%)', borderRadius: '24px', padding: '1rem',
+            background: 'linear-gradient(165deg, #10B98105 0%, #FFFFFF 50%, #FBFDFF 100%)', borderRadius: '24px', padding: DESIGN.cardPad,
             boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)', border: '1px solid rgba(255, 255, 255, 0.8)',
             opacity: heroOpacity,
             position: 'relative',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            marginBottom: DESIGN.cardMargin
           }}
         >
           {/* 1. HEADER SECTION: CROP SELECTOR */}
@@ -616,7 +646,7 @@ const FarmAdvisor = () => {
             style={{ 
               display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
               background: '#FFFFFF', padding: '10px 14px', borderRadius: '14px', border: '1px solid #F1F5F9',
-              cursor: 'pointer', marginBottom: '1rem'
+              cursor: 'pointer', marginBottom: DESIGN.innerPad
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -632,8 +662,8 @@ const FarmAdvisor = () => {
 
           {/* 2. FIELD PROFILE CONTEXT: UNIFORM 3x2 GRID */}
           <div style={{ 
-            display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', 
-            marginBottom: '1.25rem' 
+            display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: DESIGN.gap, 
+            marginBottom: DESIGN.cardMargin 
           }}>
             {[
               { label: 'Soil Type', val: 'Loamy', icon: Layers, color: COLORS.primary },
@@ -660,8 +690,8 @@ const FarmAdvisor = () => {
 
           {/* 3. CORE ADVISORY DECISION */}
           <div style={{ 
-            background: `${brain.recColor}08`, borderRadius: '18px', padding: '1rem',
-            border: `1px solid ${brain.recColor}15`, marginBottom: '1.25rem',
+            background: `${brain.recColor}08`, borderRadius: '18px', padding: DESIGN.innerPad,
+            border: `1px solid ${brain.recColor}15`, marginBottom: DESIGN.cardMargin,
             display: 'flex', alignItems: 'center', gap: '14px'
           }}>
             <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: brain.recColor, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 4px 12px ${brain.recColor}30` }}>
@@ -680,7 +710,7 @@ const FarmAdvisor = () => {
 
           {/* 4. INDUSTRIAL METRICS ROW: REAL DATA LOGIC */}
           <div style={{ 
-            display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' 
+            display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: DESIGN.gap 
           }}>
             {[
               { 
@@ -735,7 +765,7 @@ const FarmAdvisor = () => {
       />
 
       {/* 🎛️ INDUSTRIAL TAB SWITCHER */}
-      <div style={{ padding: '0.5rem 1.25rem 1.25rem', display: 'flex', gap: '10px' }}>
+      <div style={{ padding: `0 ${DESIGN.container} ${DESIGN.container}`, display: 'flex', gap: DESIGN.gap }}>
         {[
           { id: 'sensor', label: 'Sensor Data', icon: Activity },
           { id: 'suitability', label: 'Crop Suitability', icon: Leaf }
@@ -761,12 +791,12 @@ const FarmAdvisor = () => {
         })}
       </div>
 
-      <div style={{ padding: '0 1.25rem' }}>
+      <div style={{ padding: `0 ${DESIGN.container}` }}>
         {activeTab === 'sensor' ? (
           <>
             {/* 📋 SMART MATCH TABLE ENGINE */}
-            <div style={{ ...cardStyle, padding: '1.5rem 0.5rem', background: `linear-gradient(165deg, ${COLORS.primary}08 0%, #FFFFFF 100%)` }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ ...cardStyle, background: `linear-gradient(165deg, ${COLORS.primary}08 0%, #FFFFFF 100%)` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: DESIGN.cardMargin }}>
                 <div style={{ padding: '0 2px' }}>
                   <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 950, color: COLORS.textMain, display: 'flex', alignItems: 'center', gap: '10px', textAlign: 'left' }}>
                     <Activity size={20} color={COLORS.primary} />
@@ -776,11 +806,11 @@ const FarmAdvisor = () => {
               </div>
 
               <div style={{ 
-                display: 'grid', gridTemplateColumns: '1.8fr 1fr 1fr', gap: '8px', 
-                padding: '10px 6px', 
+                display: 'grid', gridTemplateColumns: '1.8fr 1fr 1fr', gap: DESIGN.gap, 
+                padding: '10px 8px', 
                 background: `linear-gradient(90deg, ${COLORS.primary}08 0%, transparent 100%)`,
                 borderRadius: '12px',
-                marginBottom: '12px' 
+                marginBottom: DESIGN.gap 
               }}>
                  {['Factor', 'Field', 'Optimal'].map((h, i) => (
                    <span key={i} style={{ 
@@ -795,8 +825,8 @@ const FarmAdvisor = () => {
                 <div 
                   key={s.id}
                   style={{ 
-                    display: 'grid', gridTemplateColumns: '1.8fr 1fr 1.2fr', gap: '12px', 
-                    padding: '12px 4px', minHeight: '52px', borderBottom: `1px solid ${COLORS.background}`, 
+                    display: 'grid', gridTemplateColumns: '1.8fr 1fr 1fr', gap: DESIGN.gap, 
+                    padding: `${DESIGN.gap} 8px`, minHeight: '52px', borderBottom: `1px solid ${COLORS.background}`, 
                     alignItems: 'center' 
                   }}
                 >
@@ -808,7 +838,7 @@ const FarmAdvisor = () => {
                   </div>
                   <span style={{ 
                     fontSize: '1.15rem', fontWeight: 950, 
-                    color: s.type === 'good' ? COLORS.primary : (s.type === 'missing' ? COLORS.textMuted : (s.isHigh ? COLORS.warning : COLORS.danger)),
+                    color: s.type === 'good' ? COLORS.primary : (s.type === 'warning' ? COLORS.warning : (s.type === 'missing' ? COLORS.textMuted : COLORS.danger)),
                     textAlign: 'left' 
                   }}>
                     {s.type === 'missing' ? '---' : `${Math.round(parseFloat(s.val) || 0)}${s.unit}`}
@@ -827,7 +857,7 @@ const FarmAdvisor = () => {
                 background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%)', 
                 pointerEvents: 'none' 
               }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: DESIGN.cardMargin, position: 'relative', zIndex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${COLORS.secondary}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Calculator size={20} color={COLORS.secondary} />
@@ -845,7 +875,7 @@ const FarmAdvisor = () => {
               ) : (
                 <>
                   {/* HERO VALUE CARDS */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '1.25rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: DESIGN.gap, marginBottom: DESIGN.cardMargin }}>
                     {[
                       { label: 'Urea', val: brain.fertilizer.urea },
                       { label: 'SSP', val: brain.fertilizer.ssp },
@@ -862,7 +892,7 @@ const FarmAdvisor = () => {
                   </div>
 
                   {/* ACTIONABLE ADVISORY */}
-                  <div style={{ padding: '0 4px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ padding: `0 ${DESIGN.smallPad}`, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <div style={{ display: 'flex', alignItems: 'start', gap: '10px' }}>
                        <Scale size={13} color={COLORS.primary} style={{ marginTop: '2px' }} />
                        <div>
@@ -893,7 +923,7 @@ const FarmAdvisor = () => {
                 background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%)', 
                 pointerEvents: 'none' 
               }} />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: DESIGN.cardMargin }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${COLORS.primary}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Leaf size={20} color={COLORS.primary} />
@@ -911,13 +941,13 @@ const FarmAdvisor = () => {
               ) : (
                 <>
                   {/* BALANCE STATUS DISPLAY */}
-                  <div style={{ padding: '8px 20px', textAlign: 'left', marginBottom: '1.25rem' }}>
+                  <div style={{ padding: `8px ${DESIGN.container}`, textAlign: 'left', marginBottom: DESIGN.cardMargin }}>
                     <div style={{ fontSize: '0.6rem', fontWeight: 900, color: COLORS.textMuted, textTransform: 'uppercase', marginBottom: '4px' }}>Requirement:</div>
                     <span style={{ fontSize: '1.8rem', fontWeight: 950, color: COLORS.textMain, lineHeight: 1 }}>{brain.compost.perAcre}</span>
                   </div>
 
                   {/* COMPACT FOOTER */}
-                  <div style={{ padding: '4px', display: 'flex', alignItems: 'center', gap: '16px', opacity: 0.5 }}>
+                  <div style={{ padding: DESIGN.smallPad, display: 'flex', alignItems: 'center', gap: '16px', opacity: 0.5 }}>
                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                        <Sprout size={11} color={COLORS.primary} />
                        <span style={{ fontSize: '0.62rem', fontWeight: 800, color: COLORS.textMain }}>{brain.compost.product}</span>
@@ -938,7 +968,7 @@ const FarmAdvisor = () => {
                 background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%)', 
                 pointerEvents: 'none' 
               }} />
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: DESIGN.cardMargin }}>
                 <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${COLORS.danger}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Bug size={20} color={COLORS.danger} />
                 </div>
@@ -954,8 +984,8 @@ const FarmAdvisor = () => {
                 </div>
               ) : (
                 brain.pests.detected.map((p, i) => (
-                  <div key={i} style={{ padding: '4px 8px' }}>
-                    <div style={{ marginBottom: '8px' }}>
+                  <div key={i} style={{ padding: `${DESIGN.smallPad} ${DESIGN.innerPad}` }}>
+                    <div style={{ marginBottom: DESIGN.smallPad }}>
                        <span style={{ fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain }}>{p.n}</span>
                     </div>
                     <div style={{ fontSize: '0.72rem', fontWeight: 750, color: p.isActive ? COLORS.textMain : COLORS.textMuted }}>
@@ -968,8 +998,8 @@ const FarmAdvisor = () => {
           </>
         ) : (
           /* 🌾 CROP SUITABILITY CHECK TABLE - INDUSTRIAL REDESIGN */
-          <div style={{ ...cardStyle, padding: '1.5rem 0.5rem', background: `linear-gradient(165deg, ${COLORS.secondary}08 0%, #FFFFFF 100%)` }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', padding: '0 4px' }}>
+          <div style={{ ...cardStyle, background: `linear-gradient(165deg, ${COLORS.secondary}08 0%, #FFFFFF 100%)` }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: DESIGN.cardMargin, padding: '0 4px' }}>
               <h3 style={{ ...sectionHeader, fontSize: '1.3rem', fontWeight: 950, gap: '10px', marginBottom: 0 }}>
                 {getCropIcon(CROP_SPECS[selectedCrop]?.type, selectedCrop) && React.createElement(getCropIcon(CROP_SPECS[selectedCrop]?.type, selectedCrop).icon, { size: 20, color: COLORS.secondary })}
                 Crop Suitability Analysis Table
@@ -977,15 +1007,15 @@ const FarmAdvisor = () => {
             </div>
             
             <div style={{ 
-              display: 'grid', gridTemplateColumns: '1.5fr 1fr 2fr', gap: '12px', 
-              padding: '10px 6px', 
+              display: 'grid', gridTemplateColumns: '1.5fr 1fr 2fr', gap: DESIGN.gap, 
+              padding: '10px 8px', 
               background: `linear-gradient(90deg, ${COLORS.secondary}08 0%, transparent 100%)`,
               borderRadius: '12px',
-              marginBottom: '12px' 
+              marginBottom: DESIGN.gap 
             }}>
               {['Factor', 'Ideal', 'Industrial Insights'].map((h, i) => (
                 <span key={i} style={{ 
-                  fontSize: '0.9rem', fontWeight: 950, color: '#94A3B8', textTransform: 'uppercase',
+                  fontSize: '0.75rem', fontWeight: 950, color: '#94A3B8', textTransform: 'uppercase',
                   letterSpacing: '0.04em',
                   textAlign: 'left',
                   paddingLeft: i === 0 ? '30px' : 0
@@ -995,8 +1025,8 @@ const FarmAdvisor = () => {
 
             {brain.suitabilityTable.map((row, idx) => (
               <div key={row.id} style={{ 
-                display: 'grid', gridTemplateColumns: '1.5fr 1fr 2fr', gap: '12px', 
-                padding: '14px 4px', 
+                display: 'grid', gridTemplateColumns: '1.5fr 1fr 2fr', gap: DESIGN.gap, 
+                padding: `14px 8px`, 
                 minHeight: '60px',
                 borderBottom: idx === brain.suitabilityTable.length - 1 ? 'none' : `1px solid rgba(241, 245, 249, 0.8)`, 
                 alignItems: 'start'
@@ -1006,13 +1036,13 @@ const FarmAdvisor = () => {
                   <div style={{ minWidth: '22px', height: '22px', borderRadius: '5px', background: `${row.color}10`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     {React.createElement(row.icon, { size: 11, color: row.color })}
                   </div>
-                  <span style={{ fontSize: '1.1rem', fontWeight: 900, color: COLORS.textMain, lineHeight: 1.4 }}>{row.label || row.id}</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 800, color: COLORS.textMain, lineHeight: 1.4 }}>{row.label || row.id}</span>
                 </div>
 
                 {/* Column 2: Target Spec */}
                 <div style={{ textAlign: 'left' }}>
                   <span style={{ 
-                    fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain, 
+                    fontSize: '0.85rem', fontWeight: 800, color: COLORS.textMain, 
                     lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: '4', WebkitBoxOrient: 'vertical', 
                     overflow: 'hidden'
                   }}>
@@ -1023,7 +1053,7 @@ const FarmAdvisor = () => {
                 {/* Column 3: Insights */}
                 <div style={{ textAlign: 'left' }}>
                   <span style={{ 
-                    fontSize: '1rem', color: COLORS.textMain, fontWeight: 800, lineHeight: 1.3,
+                    fontSize: '0.8rem', color: COLORS.textMain, fontWeight: 600, lineHeight: 1.3,
                     display: '-webkit-box', WebkitLineClamp: '4', WebkitBoxOrient: 'vertical', 
                     overflow: 'hidden'
                   }}>

@@ -51,15 +51,20 @@ export const detectIssues = (node, sensors, status) => {
 /**
  * Calculates the weighted health score (0-100).
  */
-export const calculateHealthScore = (node, sensors) => {
-  const rssiScore = Math.max(0, Math.min(100, ((node.rssi + 90) / 60) * 100)) * 0.3;
-  const lossScore = Math.max(0, Math.min(100, (1 - (node.packet_loss / 5)) * 100)) * 0.3;
-  const latencyScore = Math.max(0, Math.min(100, (1 - (node.latency / 150)) * 100)) * 0.2;
+export const calculateHealthScore = (node = {}, sensors = []) => {
+  const rssi = typeof node.rssi === 'number' ? node.rssi : -70;
+  const packet_loss = typeof node.packet_loss === 'number' ? node.packet_loss : 0;
+  const latency = typeof node.latency === 'number' ? node.latency : 50;
+
+  const rssiScore = Math.max(0, Math.min(100, ((rssi + 90) / 60) * 100)) * 0.3;
+  const lossScore = Math.max(0, Math.min(100, (1 - (packet_loss / 5)) * 100)) * 0.3;
+  const latencyScore = Math.max(0, Math.min(100, (1 - (latency / 150)) * 100)) * 0.2;
   
   const activeCount = sensors.filter(s => s.status === 'ACTIVE').length;
   const availabilityScore = (activeCount / (sensors.length || 1)) * 100 * 0.2;
 
-  return Math.round(rssiScore + lossScore + latencyScore + availabilityScore);
+  const score = Math.round(rssiScore + lossScore + latencyScore + availabilityScore);
+  return isNaN(score) ? 0 : score;
 };
 
 /**

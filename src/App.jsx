@@ -4,13 +4,14 @@
  */
 
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { App as CapApp } from '@capacitor/app';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   LayoutGrid, LineChart, Cpu,
   Camera, Bell, User, Leaf,
-  Settings as SettingsIcon, FlaskConical, Sparkles
+  Settings as SettingsIcon, FlaskConical, Sparkles,
+  AlertCircle, AlertTriangle
 } from 'lucide-react';
 
 // Context & State
@@ -19,6 +20,7 @@ import { AppProvider, useApp } from './state/AppContext';
 // Reusable Components
 import TopBar from './ui/TopBar';
 import Sidebar from './ui/Sidebar';
+import AgriBot from './ui/AgriBot';
 
 // Pages - Organized Structure
 import Login from './pages/Auth/Login';
@@ -89,6 +91,36 @@ const BottomNav = () => {
   );
 };
 
+// ─── ERROR BOUNDARY ────────────────────────────────────────────────────────
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError(error) { return { hasError: true }; }
+  componentDidCatch(error, errorInfo) { console.error("AgriSense Crash Detected:", error, errorInfo); }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '2rem', textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF' }}>
+          <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem' }}>
+            <AlertCircle size={32} color="#EF4444" />
+          </div>
+          <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>Interface Conflict</h2>
+          <p style={{ fontSize: '0.85rem', color: '#64748B', marginTop: '8px', marginBottom: '1.5rem' }}>A diagnostic module encountered an unexpected state. Re-synchronizing may resolve the issue.</p>
+          <button 
+            onClick={() => window.location.reload()}
+            style={{ padding: '12px 24px', borderRadius: '14px', background: '#10B981', color: 'white', border: 'none', fontWeight: 800, fontSize: '0.85rem', cursor: 'pointer', boxShadow: '0 10px 20px rgba(16, 185, 129, 0.2)' }}
+          >
+            RE-SYNC PLATFORM
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const MainLayout = ({ children }) => {
   const location = useLocation();
   const mainRef = React.useRef(null);
@@ -113,7 +145,7 @@ const MainLayout = ({ children }) => {
     '/reports':                'Farm Reports',
     '/precision-soil-testing': 'Soil Forensics',
     '/crop-advisor':           'AI Field Advisor',
-    '/analytics':              'Analytics Hub',
+    '/admin':                  'Admin Terminal',
   };
 
   return (
@@ -130,12 +162,15 @@ const MainLayout = ({ children }) => {
       </main>
       <BottomNav />
       <Sidebar />
+      <AgriBot />
     </div>
   );
 };
 
 const AppRoutes = () => {
-  const { user, isDataLoading, isDarkMode } = useApp();
+  const app = useApp();
+  if (!app) return null; // Safety gate
+  const { user, isDataLoading, isDarkMode } = app;
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -170,11 +205,10 @@ const AppRoutes = () => {
             }
           });
 
-          // 🔗 Deep Link handling (Fixes White Screen after Login)
           urlListener = await CapApp.addListener('appUrlOpen', (data) => {
             console.log('🔗 AgriSense Deep Link Detected:', data.url);
             if (data.url.includes('google') || data.url.includes('firebase')) {
-              window.location.reload(); // Force refresh to pick up auth state
+              window.location.reload();
             }
           });
         }
@@ -190,10 +224,13 @@ const AppRoutes = () => {
   }, [location.pathname, navigate]);
 
 
-  if (isDataLoading) {
+  const isPublicRoute = ['/', '/login'].includes(location.pathname);
+
+  if (isDataLoading && !isPublicRoute) {
     return (
       <div style={{ 
-        height: '100dvh', width: '100vw', background: '#042F2E', 
+        height: '100dvh', width: '100vw', 
+        background: 'linear-gradient(135deg, #065F46 0%, #042F2E 100%)', 
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         fontFamily: "'Outfit', sans-serif", color: 'white'
       }}>
@@ -205,7 +242,30 @@ const AppRoutes = () => {
           <Leaf size={60} color="#10B981" />
         </motion.div>
         <h2 style={{ fontSize: '1.2rem', fontWeight: 600, margin: 0 }}>Syncing with Cloud</h2>
-        <p style={{ color: '#94A3B8', fontSize: '0.8rem', marginTop: '0.5rem' }}>Establishing secure handshake...</p>
+        <div style={{ 
+          marginTop: '1rem', padding: '6px 14px', borderRadius: '12px', 
+          background: cloudSyncStatus === 'Connected' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255, 255, 255, 0.05)',
+          border: `1px solid ${cloudSyncStatus === 'Connected' ? '#10B981' : 'rgba(255, 255, 255, 0.1)'}`,
+          fontSize: '0.7rem', fontWeight: 800, color: cloudSyncStatus === 'Connected' ? '#10B981' : '#94A3B8'
+        }}>
+          DATABASE: {cloudSyncStatus.toUpperCase()}
+        </div>
+        <p style={{ color: '#94A3B8', fontSize: '0.8rem', marginTop: '1rem' }}>Establishing secure handshake...</p>
+        
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 5 }}
+          onClick={() => { setIsDataLoading(false); }}
+          style={{ 
+            marginTop: '2rem', padding: '12px 24px', borderRadius: '14px', 
+            background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)',
+            color: 'rgba(255, 255, 255, 0.4)', fontSize: '0.75rem', fontWeight: 800, 
+            letterSpacing: '0.05em', cursor: 'pointer'
+          }}
+        >
+          CONTINUE OFFLINE
+        </motion.button>
       </div>
     );
   }
@@ -214,22 +274,27 @@ const AppRoutes = () => {
     <Routes>
       <Route path="/" element={<Splash />} />
       <Route path="/login" element={(!user || user.isGuest) ? <Login /> : <Navigate to="/dashboard" />} />
-      <Route path="/dashboard" element={<MainLayout><Dashboard /></MainLayout>} />
-      <Route path="/analytics" element={<MainLayout><AnalyticsHub /></MainLayout>} />
-      <Route path="/soil-monitoring" element={<MainLayout><SoilMonitor /></MainLayout>} />
-      <Route path="/irrigation" element={<MainLayout><IrrigationSystem /></MainLayout>} />
-      <Route path="/storage-hub" element={<MainLayout><StorageMonitor /></MainLayout>} />
-      <Route path="/camera" element={<MainLayout><VisualMonitor /></MainLayout>} />
-      <Route path="/device-area" element={<MainLayout><DeviceManager /></MainLayout>} />
-      <Route path="/alerts" element={<MainLayout><AlertCenter /></MainLayout>} />
-      <Route path="/reports" element={<MainLayout><Reports /></MainLayout>} />
+      
+      {/* 🛠️ PERSISTENT LAYOUT WRAPPER: Prevents layout re-mounting on every navigation */}
+      <Route element={<MainLayout><Outlet /></MainLayout>}>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/analytics" element={<AnalyticsHub />} />
+        <Route path="/soil-monitoring" element={<SoilMonitor />} />
+        <Route path="/irrigation" element={<IrrigationSystem />} />
+        <Route path="/storage-hub" element={<StorageMonitor />} />
+        <Route path="/camera" element={<VisualMonitor />} />
+        <Route path="/device-area" element={<DeviceManager />} />
+        <Route path="/alerts" element={<AlertCenter />} />
+        <Route path="/reports" element={<Reports />} />
+        <Route path="/account" element={<Account />} />
+        <Route path="/weather" element={<WeatherMonitor />} />
+        <Route path="/precision-soil-testing" element={<SoilForensics />} />
+        <Route path="/crop-advisor" element={<FarmAdvisor />} />
+        <Route path="/admin" element={user?.email?.toLowerCase() === 'prolayjitbiswas14112004@gmail.com' ? <AdminDashboard /> : <Navigate to="/dashboard" />} />
+      </Route>
+
       <Route path="/profile" element={<Navigate to="/account" />} />
       <Route path="/settings" element={<Navigate to="/account" />} />
-      <Route path="/account" element={<MainLayout><Account /></MainLayout>} />
-      <Route path="/weather" element={<MainLayout><WeatherMonitor /></MainLayout>} />
-      <Route path="/precision-soil-testing" element={<MainLayout><SoilForensics /></MainLayout>} />
-      <Route path="/crop-advisor" element={<MainLayout><FarmAdvisor /></MainLayout>} />
-      <Route path="/admin" element={user?.email?.toLowerCase() === 'prolayjitbiswas14112004@gmail.com' ? <AdminDashboard /> : <Navigate to="/dashboard" />} />
       <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
     </Routes>
   );
@@ -239,7 +304,9 @@ export default function App() {
   return (
     <Router>
       <AppProvider>
-        <AppRoutes />
+        <ErrorBoundary>
+          <AppRoutes />
+        </ErrorBoundary>
       </AppProvider>
     </Router>
   );

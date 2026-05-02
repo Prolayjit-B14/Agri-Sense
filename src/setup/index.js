@@ -39,6 +39,7 @@ export const MASTER_CONFIG = {
   
   // 🗺️ MAP & WEATHER (Optional External APIs)
   OPENWEATHER_API_KEY: import.meta.env.VITE_WEATHER_API_KEY || "YOUR_OPENWEATHER_API_KEY", 
+  GEMINI_API_KEY: "AIzaSyB6ZIjqm6InCjred-M99BccpHe1kwBrLZI",
   WEATHER_CITY: "Kalyani",
   
   MAP_LAT: 22.975,

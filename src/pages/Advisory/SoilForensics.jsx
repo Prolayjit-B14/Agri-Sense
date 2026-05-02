@@ -89,7 +89,7 @@ const StepIndicator = ({ currentStep }) => (
 );
 
 const SoilForensics = () => {
-  const { sensorData, devices, syncData } = useApp();
+  const { sensorData, devices, syncData, currentGPS, setCurrentGPS } = useApp();
   
   const isSoilNodeActive = useMemo(() => {
     const node = devices?.['soil_node'];
@@ -117,7 +117,7 @@ const SoilForensics = () => {
   const [analysisLayer, setAnalysisLayer] = useState('Moisture');
   const [lockedBBox, setLockedBBox] = useState(null);
   const [zoom] = useState(19); 
-  const [mapCenter, setMapCenter] = useState({ lat: MASTER_CONFIG.MAP_LAT || 22.5726, lng: MASTER_CONFIG.MAP_LNG || 88.3639 });
+  const [mapCenter, setMapCenter] = useState({ lat: currentGPS?.lat || MASTER_CONFIG.MAP_LAT || 22.5726, lng: currentGPS?.lng || MASTER_CONFIG.MAP_LNG || 88.3639 });
   const [isMapInteractive, setIsMapInteractive] = useState(true);
   const [locationName, setLocationName] = useState('Locating...');
 
@@ -128,38 +128,41 @@ const SoilForensics = () => {
         const permissions = await Geolocation.checkPermissions();
         if (permissions.location !== 'granted') {
           const req = await Geolocation.requestPermissions();
-          if (req.location !== 'granted') return;
+          if (req.location !== 'granted') {
+            if (currentGPS) setMapCenter({ lat: currentGPS.lat, lng: currentGPS.lng });
+            return;
+          }
         }
         
-        const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
+        const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 5000 });
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
         setMapCenter({ lat, lng });
         setGpsAccuracy(pos.coords.accuracy.toFixed(1));
+        if (setCurrentGPS) setCurrentGPS({ lat, lng, accuracy: pos.coords.accuracy });
 
         // Reverse Geocoding
         try {
           const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`, {
-            headers: { 'Accept': 'application/json', 'User-Agent': 'AgriSense/17.1.0 (Contact: admin@agrisense.tech)' }
+            headers: { 'Accept': 'application/json', 'User-Agent': 'AgriSense/17.1.0' }
           });
           if (response.ok) {
             const data = await response.json();
-            if (data.address) {
-              setLocationName(data.address.neighbourhood || data.address.suburb || data.address.village || data.address.town || data.address.city || data.address.county || data.address.state || "Local Field");
-            } else if (data.display_name) {
-              setLocationName(data.display_name.split(',')[0]);
-            }
+            const addr = data.address || {};
+            setLocationName(addr.neighbourhood || addr.suburb || addr.village || addr.town || addr.city || "Local Field");
           }
         } catch (e) {}
 
-        watchId = await Geolocation.watchPosition({ enableHighAccuracy: true }, (pos, err) => {
+        watchId = await Geolocation.watchPosition({ enableHighAccuracy: true }, (pos) => {
           if (pos) {
             setMapCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude });
             setGpsAccuracy(pos.coords.accuracy.toFixed(1));
+            if (setCurrentGPS) setCurrentGPS({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy });
           }
         });
       } catch (e) {
         console.error("GPS Error:", e);
+        if (currentGPS) setMapCenter({ lat: currentGPS.lat, lng: currentGPS.lng });
       }
     };
     initLocation();
@@ -361,7 +364,14 @@ const SoilForensics = () => {
                   <p style={{ fontSize: '0.65rem', fontWeight: 800, color: COLORS.subtext, margin: '2px 0 0 0' }}>{locationName}</p>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <div style={{ padding: '6px 10px', background: '#ECFDF5', borderRadius: '10px', fontSize: '0.65rem', fontWeight: 900, color: COLORS.primaryDark, border: `1px solid ${COLORS.primary}20` }}>GPS: {gpsAccuracy}m</div>
+                  <motion.button 
+                    whileTap={{ scale: 0.95 }} 
+                    onClick={() => { setLocationName('Refreshing...'); initLocation(); }} 
+                    style={{ padding: '6px 10px', background: '#ECFDF5', borderRadius: '10px', fontSize: '0.65rem', fontWeight: 900, color: COLORS.primaryDark, border: `1px solid ${COLORS.primary}20`, display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
+                  >
+                    <Navigation size={12} />
+                    GPS: {gpsAccuracy}m
+                  </motion.button>
                   <motion.button whileTap={{ scale: 0.95 }} onClick={() => setIsMapInteractive(!isMapInteractive)} style={{ padding: '6px 12px', background: isMapInteractive ? COLORS.warning : COLORS.primary, color: 'white', borderRadius: '10px', border: 'none', fontSize: '0.65rem', fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
                     {isMapInteractive ? 'LOCK TO DRAW' : 'UNLOCK MAP'}
                   </motion.button>

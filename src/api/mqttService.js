@@ -111,7 +111,7 @@ class MqttService {
     const oldSt = this.onStatus;
     this.disconnect();
     setTimeout(() => {
-      this.connect(oldCb, oldSt);
+      this.connect(this.primaryId, this.secondaryId, oldCb, oldSt);
     }, 500);
   }
 }

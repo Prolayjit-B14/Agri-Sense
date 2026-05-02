@@ -132,14 +132,10 @@ const Alerts = () => {
   return (
     <div style={{ padding: '1.25rem', paddingBottom: '100px', background: COLORS.bg }}>
       
-      {/* 1. HEADER */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 950, color: COLORS.text, margin: 0 }}>Alerts</h2>
-          <p style={{ fontSize: '0.75rem', fontWeight: 700, color: COLORS.subtext, marginTop: '2px' }}>System notifications & warnings</p>
-        </div>
-        <button onClick={clearAll} style={{ padding: '10px', borderRadius: '14px', background: 'white', border: `1px solid ${COLORS.border}`, color: COLORS.critical }}>
-          <Trash2 size={20} />
+      {/* 1. ACTIONS HEADER (Cleaned) */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
+        <button onClick={clearAll} style={{ padding: '10px', borderRadius: '14px', background: 'white', border: `1px solid ${COLORS.border}`, color: COLORS.critical, boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
+          <Trash2 size={18} />
         </button>
       </div>
 

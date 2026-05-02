@@ -6,11 +6,10 @@ import { Leaf } from 'lucide-react';
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────
 const COLORS = {
   primary: '#10B981', 
-  background: '#FFFFFF', 
-  containerBg: 'rgba(0, 0, 0, 0.03)',
-  containerBorder: 'rgba(0, 0, 0, 0.05)',
-  textMain: '#0F172A',
-  textMuted: '#64748B',
+  primaryLight: '#34D399',
+  background: '#10B981', // Changed to green
+  textMain: '#FFFFFF', // Changed to white for contrast
+  textMuted: 'rgba(255, 255, 255, 0.7)',
 };
 
 // ─── MAIN SCREEN ──────────────────────────────────────────────────────────
@@ -30,7 +29,7 @@ const Splash = () => {
     <div style={{ 
       height: '100dvh', 
       width: '100vw', 
-      background: COLORS.background,
+      background: `linear-gradient(135deg, ${COLORS.primary} 0%, #064E3B 100%)`,
       display: 'flex', 
       flexDirection: 'column', 
       alignItems: 'center', 
@@ -137,8 +136,8 @@ const Splash = () => {
       </div>
       
       {/* FOOTER - Versioning */}
-      <div style={{ position: 'absolute', bottom: '30px', color: COLORS.textMuted, opacity: 0.3, fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.1em' }}>
-        AGRISENSE PRO • v17.1.0
+      <div style={{ position: 'absolute', bottom: '30px', color: COLORS.textMuted, opacity: 0.6, fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.1em' }}>
+        AGRISENSE PRO • v17.3.1
       </div>
 
     </div>

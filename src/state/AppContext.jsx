@@ -15,7 +15,9 @@ import {
   createUserWithEmailAndPassword, 
   signOut, 
   onAuthStateChanged,
-  updateProfile
+  updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth';
 
 import { doc, setDoc, getDoc, collection, getDocs, addDoc, query, orderBy, limit, where, onSnapshot } from 'firebase/firestore';
@@ -110,7 +112,7 @@ export const AppProvider = ({ children }) => {
     };
   }, []);
 
-  const [isDataLoading, setIsDataLoading] = useState(true);
+  const [isDataLoading, setIsDataLoading] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [sensorData, setSensorData] = useState(INITIAL_SENSOR_DATA);
   
@@ -143,13 +145,18 @@ export const AppProvider = ({ children }) => {
     [ACTUATORS.LIGHT]:   false,
   });
 
-  const [nodePower, setNodePower] = useState({
-    soil: true,
-    weather: true,
-    water: true,
-    storage: true,
-    vision: true
+  const [nodePower, setNodePower] = useState(() => {
+    try {
+      const saved = localStorage.getItem('agrisense_node_power');
+      return saved ? JSON.parse(saved) : { soil: true, weather: true, water: true, storage: true, vision: true };
+    } catch (e) {
+      return { soil: true, weather: true, water: true, storage: true, vision: true };
+    }
   });
+
+  useEffect(() => {
+    localStorage.setItem('agrisense_node_power', JSON.stringify(nodePower));
+  }, [nodePower]);
 
   const toggleNodePower = (id) => {
     setNodePower(prev => ({ ...prev, [id]: !prev[id] }));
@@ -204,8 +211,6 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     // 1. Auth State Observer
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
-
-      setIsDataLoading(true);
       if (fbUser) {
         try {
           const userDoc = await getDoc(doc(db, "farmers", fbUser.email));
@@ -229,17 +234,43 @@ export const AppProvider = ({ children }) => {
           setUser(userData);
           localStorage.setItem('agrisense_user', JSON.stringify(userData));
 
+          // 🛰️ VERIFY DATABASE LINK
+          const checkDb = async () => {
+            try {
+              const testRef = doc(db, "farmers", fbUser.email);
+              await getDoc(testRef);
+              setCloudSyncStatus('Connected');
+            } catch (e) {
+              setCloudSyncStatus('Error');
+              console.error("Database Handshake Failed:", e);
+            }
+          };
+          checkDb();
+
           // 🛰️ FETCH DEEP TELEMETRY
           const telRef = collection(db, "farmers", fbUser.email, "telemetry");
           const q = query(
             telRef, 
             where("node", "==", "unified_snapshot"),
             orderBy("timestamp", "desc"), 
-            limit(1000)
+            limit(100) // Reduced limit for faster boot
           );
           const telSnap = await getDocs(q);
           const history = telSnap.docs.map(d => d.data()).reverse();
           setSensorHistory(history);
+
+          // If history exists, populate initial sensor state to prevent "---" flash
+          if (history.length > 0) {
+            const last = history[history.length - 1];
+            setSensorData(prev => ({
+              ...prev,
+              soil: last.soil || prev.soil,
+              weather: last.weather || prev.weather,
+              water: last.water || prev.water,
+              storage: last.storage || prev.storage,
+              vision: last.vision || prev.vision
+            }));
+          }
 
         } catch (err) {
           console.error("Auth/Data sync error:", err);
@@ -313,6 +344,17 @@ export const AppProvider = ({ children }) => {
 
 
 
+
+  const googleLogin = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      return true;
+    } catch (err) {
+      console.error("Google Login Failed", err);
+      return false;
+    }
+  };
 
   const guestLogin = (guestName) => {
     const userData = { 
@@ -496,23 +538,7 @@ export const AppProvider = ({ children }) => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // 🏥 STATE RECOVERY: Restore last known data on boot
-  useEffect(() => {
-    if (sensorHistory.length > 0) {
-      const last = sensorHistory[sensorHistory.length - 1];
-      if (last && !last.isInitial) {
-        setSensorData(prev => ({
-          ...prev,
-          soil: last.soil || prev.soil,
-          weather: last.weather || prev.weather,
-          water: last.water || prev.water,
-          storage: last.storage || prev.storage,
-          vision: last.vision || prev.vision
-        }));
-        setIsDataLoading(false);
-      }
-    }
-  }, []); // Run once on mount
+  // 🏥 STATE RECOVERY: No longer needed here as it's merged into Auth observer
 
 
 
@@ -631,6 +657,7 @@ export const AppProvider = ({ children }) => {
   // 4. MQTT Linkage
   useEffect(() => {
     const bootTimer = setTimeout(() => {
+      setIsDataLoading(true);
       const toId = (raw) => raw?.trim() ? raw.trim().toLowerCase().replace(/\s+/g, '_') : null;
       const primary   = toId(farmInfo?.projectName) || 'innovatex';
       const secondary = toId(farmInfo?.name)        || 'semicolon';
@@ -694,6 +721,14 @@ export const AppProvider = ({ children }) => {
         },
         (status) => setMqttStatus(status)
       );
+
+      // 🐕 FAIL-SAFE WATCHDOG: Force enter dashboard after 10s if handshake hangs
+      setTimeout(() => {
+        setIsDataLoading(prev => {
+          if (prev) console.warn("AgriSense: Sync Timeout - Entering Offline Mode");
+          return false;
+        });
+      }, 10000);
     }, 1500);
     return () => {
       clearTimeout(bootTimer);
@@ -739,6 +774,7 @@ export const AppProvider = ({ children }) => {
           const pos = await fetchPos();
           lat = pos.coords.latitude;
           lon = pos.coords.longitude;
+          setCurrentGPS({ lat, lng: lon, accuracy: pos.coords.accuracy });
         } catch (gpsErr) {
           // GPS Failed, check profile for "Lat, Lon • City" pattern
           if (user?.location && user.location.includes('•')) {
@@ -877,7 +913,7 @@ export const AppProvider = ({ children }) => {
 
   return (
     <AppContext.Provider value={{
-      user, login, guestLogin, register, fetchHistory, logout, updateUser, farmInfo, updateBranding,
+      user, login, guestLogin, register, googleLogin, fetchHistory, logout, updateUser, farmInfo, updateBranding,
       getAllFarmers,
       isDarkMode, toggleTheme, sensorData: maskedSensorData, apiWeather, apiForecast, recommendations, 
       sensorHistory: maskedSensorHistory,
