@@ -4,13 +4,23 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Agri Sense</title>
+    <title>AgriSense Pro</title>
     <script>
-      // Agri Sense v2.0.0 - Forensic Polyfills
+      // AgriSense Pro v19.0.0 - Cache Buster & Polyfills
       window.global = window;
       window.process = { env: { DEBUG: undefined }, nextTick: (cb) => setTimeout(cb, 0) };
-      // Buffer Polyfill for MQTT.js
-      // window.Buffer = window.Buffer || require('buffer').Buffer; 
+      
+      // 🛡️ CACHE BUSTER: Force refresh if using old version (ZERO AUTH RELEASE)
+      const APP_VERSION = "19.0.0_ZERO";
+      const lastSeen = localStorage.getItem('agrisense_v');
+      if (lastSeen && lastSeen !== APP_VERSION) {
+        console.log("🛰️ New Engine Detected! Purging Cache...");
+        localStorage.clear();
+        localStorage.setItem('agrisense_v', APP_VERSION);
+        window.location.reload(true);
+      } else {
+        localStorage.setItem('agrisense_v', APP_VERSION);
+      }
     </script>
     <!-- Fallback if require fails -->
     <script src="https://bundle.run/buffer@6.0.3"></script>

@@ -15,8 +15,8 @@ const char* mqtt_server = "broker.hivemq.com";
 // ║  App "Client Identifier" = secondary_id (like password)      ║
 // ╚══════════════════════════════════════════════════════════════╝
 
-String primary_id   = "innovatex";  // Must match app "Project Codename"
-String secondary_id = "semicolon";  // Must match app "Client Identifier"
+String primary_id   = "agrisense_pro";  // Must match app "Project Codename"
+String secondary_id = "master_field";   // Must match app "Client Identifier"
 
 // Combined topic: agrisense/innovatex/semicolon/sensors
 String topic_sensors  = "agrisense/" + primary_id + "/" + secondary_id + "/sensors";
@@ -60,6 +60,19 @@ void setup_wifi() {
   Serial.println(WiFi.localIP());
 }
 
+void callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("🕹️ [COMMAND RECEIVED] Topic: ");
+  Serial.println(topic);
+  String message = "";
+  for (int i = 0; i < length; i++) message += (char)payload[i];
+  Serial.print("Payload: ");
+  Serial.println(message);
+  
+  // Flash LED or perform action based on command
+  if (message.indexOf("PUMP_ON") != -1)  Serial.println(">>> ACTION: Pump Started! 💧");
+  if (message.indexOf("PUMP_OFF") != -1) Serial.println(">>> ACTION: Pump Stopped! 🛑");
+}
+
 void reconnect() {
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection to ");
@@ -67,6 +80,9 @@ void reconnect() {
     Serial.println("...");
     if (client.connect("AgriSense_Test_Simulator")) {
       Serial.println("CONNECTED to MQTT!");
+      client.subscribe(topic_commands.c_str());
+      Serial.print("SUBSCRIBED to: ");
+      Serial.println(topic_commands);
     } else {
       Serial.print("FAILED, rc=");
       Serial.print(client.state());
@@ -80,6 +96,7 @@ void setup() {
   Serial.begin(115200);
   setup_wifi();
   client.setServer(mqtt_server, 1883);
+  client.setCallback(callback);
   client.setBufferSize(1024); // CRITICAL: Increase buffer for unified industrial payload
   randomSeed(analogRead(0));
 }

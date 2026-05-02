@@ -96,11 +96,11 @@ const SoilForensics = () => {
     const s = sensorData?.soil;
     return (
       node?.status === 'ACTIVE' && 
-      s?.moisture !== null && 
-      s?.ph !== null && 
-      s?.npk?.n !== null && 
-      s?.npk?.p !== null && 
-      s?.npk?.k !== null
+      s?.moisture !== undefined && s?.moisture !== null && 
+      s?.ph !== undefined && s?.ph !== null && 
+      s?.npk?.n !== undefined && s?.npk?.n !== null && 
+      s?.npk?.p !== undefined && s?.npk?.p !== null && 
+      s?.npk?.k !== undefined && s?.npk?.k !== null
     );
   }, [devices, sensorData]);
 
@@ -212,17 +212,17 @@ const SoilForensics = () => {
     let timer;
     if (isCollecting && activeSampleIndex !== null && collectProgress < 100) {
       timer = setTimeout(() => {
-        if (!sensorData.soil || sensorData.soil.moisture === null) return;
+        if (!sensorData?.soil || sensorData?.soil?.moisture === null) return;
         const now = new Date();
         const newVal = {
-          moisture: sensorData.soil.moisture !== null ? parseFloat(sensorData.soil.moisture).toFixed(1) : null,
-          ph: sensorData.soil.ph !== null ? parseFloat(sensorData.soil.ph).toFixed(1) : null,
-          n: sensorData.soil.npk?.n !== null ? parseInt(sensorData.soil.npk.n) : null,
-          p: sensorData.soil.npk?.p !== null ? parseInt(sensorData.soil.npk.p) : null,
-          k: sensorData.soil.npk?.k !== null ? parseInt(sensorData.soil.npk.k) : null,
+          moisture: sensorData?.soil?.moisture !== null ? parseFloat(sensorData?.soil?.moisture).toFixed(1) : null,
+          ph: sensorData?.soil?.ph !== null ? parseFloat(sensorData?.soil?.ph).toFixed(1) : null,
+          n: sensorData?.soil?.npk?.n !== null ? parseInt(sensorData?.soil?.npk?.n) : null,
+          p: sensorData?.soil?.npk?.p !== null ? parseInt(sensorData?.soil?.npk?.p) : null,
+          k: sensorData?.soil?.npk?.k !== null ? parseInt(sensorData?.soil?.npk?.k) : null,
           date: now.toLocaleDateString(), 
           time: now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
-          gps: `${mapCenter.lat.toFixed(6)}, ${mapCenter.lng.toFixed(6)}`
+          gps: `${mapCenter?.lat?.toFixed(6) || 0}, ${mapCenter?.lng?.toFixed(6) || 0}`
         };
         if (newVal.moisture === null || newVal.ph === null || newVal.n === null) return;
         setCurrentReadings(prev => [...prev, newVal]); setCollectProgress(prev => prev + 33.4);

@@ -192,10 +192,23 @@ const Pinpoint = (props) => {
 };
 
 const AnalyticsHub = () => {
-  const { sensorData, devices, sensorHistory } = useApp();
+  const { sensorData, devices, sensorHistory, fetchHistory } = useApp();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState(location.state?.tab || 'soil');
   const [timeRange, setTimeRange] = useState(TIME_RANGES[0]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // 🛰️ DYNAMIC CLOUD FETCH: Load data when time range changes
+  useEffect(() => {
+    const rawNow = Date.now();
+    const startTime = rawNow - timeRange.duration;
+    
+    // Only fetch if we are looking at a range larger than the last few minutes
+    if (timeRange.id !== 'realtime') {
+      setIsLoading(true);
+      fetchHistory(startTime).finally(() => setIsLoading(false));
+    }
+  }, [timeRange.id]);
 
   // 🧠 TIME METRICS: Align with calendar boundaries for industrial determinism
   const timeMetrics = useMemo(() => {
@@ -596,6 +609,18 @@ const AnalyticsHub = () => {
 
   return (
     <div style={{ background: COLORS.bg, minHeight: '100vh', padding: '0.75rem', fontFamily: "'Outfit', sans-serif", display: 'flex', flexDirection: 'column' }}>
+      
+      {/* 🚀 ANALYTICS HEADER */}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <h1 style={{ fontSize: '1.6rem', fontWeight: 950, margin: 0, color: COLORS.text, letterSpacing: '-0.02em' }}>Analytical Intelligence</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: COLORS.good, boxShadow: `0 0 10px ${COLORS.good}80` }} />
+          <span style={{ fontSize: '0.7rem', fontWeight: 800, color: COLORS.subtext }}>
+            {isLoading ? 'SYNCING CLOUD ARCHIVE...' : 'LIVE CLOUD LINK ACTIVE'}
+          </span>
+        </div>
+      </div>
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
         <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }} className="no-scrollbar">
           {[

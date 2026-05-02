@@ -6,7 +6,7 @@ import { Leaf } from 'lucide-react';
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────
 const COLORS = {
   primary: '#10B981', // Professional Emerald Green
-  background: 'linear-gradient(160deg, #064E3B 0%, #022C22 100%)', // Deep forest teal/green
+  background: '#042F2E', // Unified Deep Forest Green
   containerBg: 'rgba(255, 255, 255, 0.03)',
   containerBorder: 'rgba(255, 255, 255, 0.1)',
   textMain: '#FFFFFF',
@@ -22,7 +22,7 @@ const Splash = () => {
     // Artificial delay to allow user to experience the splash screen
     const timer = setTimeout(() => {
       navigate('/login');
-    }, 4000);
+    }, 1000);
     return () => clearTimeout(timer);
   }, [navigate]);
 

@@ -9,11 +9,11 @@
 
 export const MASTER_CONFIG = {
   // 🎨 BRANDING & IDENTITY
-  PROJECT_NAME: "innovatex",
-  FARM_NAME: "semicolon",
-  TAGLINE: "For Better Farming",
+  PROJECT_NAME: "AgriSense Pro",
+  FARM_NAME: "Master Field",
+  TAGLINE: "Smart Agriculture Command Center",
   FOOTER_CREDIT: "by Prolayjit Biswas",
-  VERSION: "2.9.0",
+  VERSION: "19.0.0_ZERO_STABLE",
   
   // 🔐 AUTHORIZED INVESTIGATORS
   AUTHORIZED_USERS: [
@@ -25,7 +25,6 @@ export const MASTER_CONFIG = {
   LOGIN_EMAIL: "farmer@test.com", // Fallback for Login UI
   LOGIN_PASSWORD: "PASSWORD_HERE",     // Fallback for Login UI
   
-  // 📡 OPERATION MODE
   // 📡 OPERATION MODE
   USE_MOCK_DATA: false, // Set to true for demo, false for ESP32 hardware
   
@@ -45,6 +44,7 @@ export const MASTER_CONFIG = {
   MAP_LAT: 22.975,
   MAP_LNG: 88.434,
   MAP_ZOOM: 15,
+  
   
   // 📍 HARDWARE PIN SUGGESTIONS (For SoilNode.ino)
   HARDWARE: {

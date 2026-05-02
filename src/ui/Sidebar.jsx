@@ -5,7 +5,7 @@ import {
   X, Settings as SettingsIcon,
   CloudRain, Archive, FlaskConical, Camera,
   Sparkles, BarChart2, Network, BellRing,
-  Sprout, Droplets, FileText
+  Sprout, Droplets, FileText, ShieldCheck
 } from 'lucide-react';
 import { useApp } from '../state/AppContext';
 
@@ -95,6 +95,16 @@ const Sidebar = () => {
             </div>
             <div>
               <div style={{ fontSize: '1rem', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.01em' }}>{user?.name || 'Farmer'}</div>
+              {user?.email?.toLowerCase() === 'prolayjitbiswas14112004@gmail.com' && (
+                <div style={{ 
+                  display: 'inline-flex', alignItems: 'center', gap: '4px', 
+                  padding: '2px 6px', borderRadius: '4px', background: 'rgba(59, 130, 246, 0.2)',
+                  marginTop: '4px'
+                }}>
+                  <ShieldCheck size={10} color="#3B82F6" />
+                  <span style={{ fontSize: '0.5rem', fontWeight: 900, color: '#3B82F6', textTransform: 'uppercase' }}>Super-Admin</span>
+                </div>
+              )}
               <div style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.4)', fontWeight: 600, marginTop: '1px' }}>{user?.location || user?.email || 'Field Operator'}</div>
             </div>
           </div>
@@ -158,6 +168,23 @@ const Sidebar = () => {
             </div>
           ))}
         </div>
+
+        {/* ── ADMIN ACCESS (SECURE) ── */}
+        {user?.email?.toLowerCase() === 'prolayjitbiswas14112004@gmail.com' && (
+          <div style={{ padding: '0 10px 10px' }}>
+            <NavLink to="/admin" onClick={close}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '10px',
+                padding: '12px', borderRadius: '14px',
+                background: 'rgba(59, 130, 246, 0.1)',
+                border: '1px solid rgba(59, 130, 246, 0.2)',
+                textDecoration: 'none'
+              }}>
+              <ShieldCheck size={18} color="#3B82F6" />
+              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#3B82F6' }}>ADMIN COMMAND</span>
+            </NavLink>
+          </div>
+        )}
 
         {/* ── FOOTER ── */}
         <div style={{ padding: '12px 18px 20px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>

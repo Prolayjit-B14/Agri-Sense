@@ -9,7 +9,7 @@ import { App as CapApp } from '@capacitor/app';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   LayoutGrid, LineChart, Cpu,
-  Camera, Bell, User,
+  Camera, Bell, User, Leaf,
   Settings as SettingsIcon, FlaskConical, Sparkles
 } from 'lucide-react';
 
@@ -25,6 +25,10 @@ import Login from './pages/Auth/Login';
 import Splash from './pages/Auth/Splash';
 import Profile from './pages/Auth/Profile';
 import Settings from './pages/Auth/Settings';
+import AdminDashboard from './pages/Auth/AdminDashboard';
+
+
+import { MASTER_CONFIG } from './setup';
 
 import Dashboard from './pages/Core/Dashboard';
 import AlertCenter from './pages/Core/AlertCenter';
@@ -131,9 +135,16 @@ const MainLayout = ({ children }) => {
 };
 
 const AppRoutes = () => {
-  const { user, isDarkMode } = useApp();
+  const { user, isDataLoading, isDarkMode } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    // ✋ LOADING GUARD: Wait for Cloud Sync to finish
+    if (isDataLoading) return;
+
+    // 🚀 DIRECT ACCESS: No more forced onboarding.
+  }, [user, isDataLoading, location.pathname, navigate]);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -144,30 +155,65 @@ const AppRoutes = () => {
   }, [isDarkMode]);
 
   useEffect(() => {
-    let listener;
-    const initListener = async () => {
+    let backListener;
+    let urlListener;
+
+    const initListeners = async () => {
       try {
-        if (CapApp && typeof CapApp.addListener === 'function') {
-          listener = await CapApp.addListener('backButton', () => {
+        if (CapApp) {
+          // 🔙 Back button handling
+          backListener = await CapApp.addListener('backButton', () => {
             if (['/dashboard', '/login', '/'].includes(location.pathname)) {
               CapApp.exitApp();
             } else {
               navigate(-1);
             }
           });
+
+          // 🔗 Deep Link handling (Fixes White Screen after Login)
+          urlListener = await CapApp.addListener('appUrlOpen', (data) => {
+            console.log('🔗 AgriSense Deep Link Detected:', data.url);
+            if (data.url.includes('google') || data.url.includes('firebase')) {
+              window.location.reload(); // Force refresh to pick up auth state
+            }
+          });
         }
       } catch (e) {
-        console.warn("Capacitor listener failed:", e);
+        console.warn("Capacitor listeners failed:", e);
       }
     };
-    initListener();
-    return () => listener?.remove();
+    initListeners();
+    return () => {
+      backListener?.remove();
+      urlListener?.remove();
+    };
   }, [location.pathname, navigate]);
+
+
+  if (isDataLoading) {
+    return (
+      <div style={{ 
+        height: '100dvh', width: '100vw', background: '#042F2E', 
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        fontFamily: "'Outfit', sans-serif", color: 'white'
+      }}>
+        <motion.div
+          animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
+          transition={{ repeat: Infinity, duration: 2 }}
+          style={{ marginBottom: '2rem' }}
+        >
+          <Leaf size={60} color="#10B981" />
+        </motion.div>
+        <h2 style={{ fontSize: '1.2rem', fontWeight: 600, margin: 0 }}>Syncing with Cloud</h2>
+        <p style={{ color: '#94A3B8', fontSize: '0.8rem', marginTop: '0.5rem' }}>Establishing secure handshake...</p>
+      </div>
+    );
+  }
 
   return (
     <Routes>
       <Route path="/" element={<Splash />} />
-      <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
+      <Route path="/login" element={(!user || user.isGuest) ? <Login /> : <Navigate to="/dashboard" />} />
       <Route path="/dashboard" element={<MainLayout><Dashboard /></MainLayout>} />
       <Route path="/analytics" element={<MainLayout><AnalyticsHub /></MainLayout>} />
       <Route path="/soil-monitoring" element={<MainLayout><SoilMonitor /></MainLayout>} />
@@ -182,6 +228,7 @@ const AppRoutes = () => {
       <Route path="/weather" element={<MainLayout><WeatherMonitor /></MainLayout>} />
       <Route path="/precision-soil-testing" element={<MainLayout><SoilForensics /></MainLayout>} />
       <Route path="/crop-advisor" element={<MainLayout><FarmAdvisor /></MainLayout>} />
+      <Route path="/admin" element={user?.email?.toLowerCase() === 'prolayjitbiswas14112004@gmail.com' ? <AdminDashboard /> : <Navigate to="/dashboard" />} />
       <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
     </Routes>
   );
@@ -189,10 +236,10 @@ const AppRoutes = () => {
 
 export default function App() {
   return (
-    <AppProvider>
-      <Router>
+    <Router>
+      <AppProvider>
         <AppRoutes />
-      </Router>
-    </AppProvider>
+      </AppProvider>
+    </Router>
   );
 }

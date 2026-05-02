@@ -1,0 +1,18 @@
+{
+  "projects": {
+    "default": "agri-sense-a2333"
+  },
+  "targets": {
+    "agri-sense-a2333": {
+      "hosting": {
+        "agri-sense-a2333": [
+          "agri-sense-a2333"
+        ],
+        "agri-sense-pro": [
+          "agri-sense-pro"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

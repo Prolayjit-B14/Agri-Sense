@@ -1,5 +1,5 @@
 /**
- * Bharat Advisor Pro v17.1.0 Master State Manager
+ * AgriSense Pro v19.0.0 Master State Manager
  * Organized Industrial State Engine for AgriSense Ecosystem.
  */
 
@@ -9,6 +9,17 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import mqttService from '../api/mqttService';
 import { processDeviceState, calculateSystemOverview } from '../api/deviceService';
 import { MASTER_CONFIG } from '../setup';
+import { db, auth } from '../api/firebase';
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged,
+  updateProfile
+} from 'firebase/auth';
+
+import { doc, setDoc, getDoc, collection, getDocs, addDoc, query, orderBy, limit, where, onSnapshot } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
 
 // Types & Data Models
 import { 
@@ -29,17 +40,77 @@ import { processMqttMessage } from '../engines/sensorController';
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
+  const navigate = useNavigate();
   // ─── STATE DEFINITIONS ────────────────────────────────────────────────────
   const [user, setUser] = useState(() => {
     try {
       const saved = localStorage.getItem('agrisense_user');
       return saved ? JSON.parse(saved) : null;
-    } catch (e) {
-      console.error("Auth Persistence Failure:", e);
-      return null;
-    }
+    } catch (e) { return null; }
   });
 
+  const [currentGPS, setCurrentGPS] = useState({ lat: null, lng: null, accuracy: null, city: 'Locating...' });
+
+
+  // 🛰️ LIVE GPS ENGINE: Maintain a persistent high-accuracy coordinate anchor
+  useEffect(() => {
+    let watchId;
+    const startTracking = async () => {
+      try {
+        const { Geolocation } = await import('@capacitor/geolocation');
+        
+        // 🛡️ MANDATORY PERMISSION HANDSHAKE
+        const perm = await Geolocation.checkPermissions();
+        if (perm.location !== 'granted') {
+          const req = await Geolocation.requestPermissions();
+          if (req.location !== 'granted') throw new Error("Permission Denied");
+        }
+
+        // 🚀 INSTANT LOCK: Get current position immediately
+        const instantPos = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 5000 });
+        if (instantPos && instantPos.coords) {
+          setCurrentGPS(prev => ({
+            ...prev,
+            lat: instantPos.coords.latitude,
+            lng: instantPos.coords.longitude,
+            accuracy: instantPos.coords.accuracy
+          }));
+        }
+
+        watchId = await Geolocation.watchPosition({ enableHighAccuracy: true }, async (pos) => {
+          if (pos && pos.coords) {
+            const { latitude: lat, longitude: lon } = pos.coords;
+            setCurrentGPS(prev => ({
+              ...prev,
+              lat, lng: lon, accuracy: pos.coords.accuracy
+            }));
+
+            // 🌍 Reverse Geocode
+            try {
+              const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`, {
+                headers: { 'Accept': 'application/json', 'User-Agent': 'AgriSense/19.0.0' }
+              });
+              if (res.ok) {
+                const data = await res.json();
+                const cityName = data?.address?.city || data?.address?.village || data?.address?.town || data?.address?.neighbourhood || 'Unknown Field';
+                setCurrentGPS(prev => ({ ...prev, city: cityName }));
+              }
+            } catch (e) {}
+          }
+        });
+      } catch (e) {
+        console.warn("GPS Tracking Failed:", e.message);
+      }
+    };
+    startTracking();
+    return () => { 
+      if (watchId) {
+        import('@capacitor/geolocation').then(m => m.Geolocation.clearWatch({ id: watchId })).catch(() => {});
+      }
+    };
+  }, []);
+
+  const [isDataLoading, setIsDataLoading] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [sensorData, setSensorData] = useState(INITIAL_SENSOR_DATA);
   
@@ -61,7 +132,6 @@ export const AppProvider = ({ children }) => {
   const [mqttStatus, setMqttStatus] = useState('disconnected');
   const [connectivityStatus, setConnectivityStatus] = useState('Online');
   const [cloudSyncStatus, setCloudSyncStatus] = useState('Active');
-  const [isDataLoading, setIsDataLoading] = useState(true);
   const [lastGlobalUpdate, setLastGlobalUpdate] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [actuators, setActuators] = useState({
@@ -77,7 +147,6 @@ export const AppProvider = ({ children }) => {
     try {
       const saved = localStorage.getItem('agrisense_branding');
       const parsed = saved ? JSON.parse(saved) : null;
-      // Migrate stale defaults from old installs
       if (parsed?.projectName === 'Agri Sense' || parsed?.name === 'MAKAUT, WB') {
         localStorage.removeItem('agrisense_branding');
       }
@@ -111,38 +180,225 @@ export const AppProvider = ({ children }) => {
     aiSensitivity: 'Balanced'
   });
 
-  const lastSensorUpdate = useRef(null);
+  const [sensorHistory, setSensorHistory] = useState([]);
 
-  const updateBranding = (newInfo) => {
+  const lastSensorUpdate = useRef(null);
+  const lastHistoryUpdate = useRef(0);
+  const [, setTick] = useState(0);
+  const sensorDataRef = useRef(sensorData);
+  const lastSavedLen = useRef(0);
+
+  // 🛰️ FIREBASE AUTH OBSERVER
+  useEffect(() => {
+    // 1. Auth State Observer
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+
+      setIsDataLoading(true);
+      if (fbUser) {
+        try {
+          const userDoc = await getDoc(doc(db, "farmers", fbUser.email));
+          const userData = {
+            uid: fbUser.uid,
+            email: fbUser.email,
+            name: fbUser.displayName || 'Farmer',
+            photoURL: fbUser.photoURL,
+            lastLogin: new Date().toISOString(),
+            location: 'Field Zone A'
+          };
+          
+          if (userDoc.exists()) {
+            const cloudData = userDoc.data();
+            if (cloudData.farmInfo) setFarmInfo(cloudData.farmInfo);
+            if (cloudData.profileMeta) setProfileMeta(cloudData.profileMeta);
+          } else {
+            await setDoc(doc(db, "farmers", fbUser.email), userData);
+          }
+
+          setUser(userData);
+          localStorage.setItem('agrisense_user', JSON.stringify(userData));
+
+          // 🛰️ FETCH DEEP TELEMETRY
+          const telRef = collection(db, "farmers", fbUser.email, "telemetry");
+          const q = query(
+            telRef, 
+            where("node", "==", "unified_snapshot"),
+            orderBy("timestamp", "desc"), 
+            limit(1000)
+          );
+          const telSnap = await getDocs(q);
+          const history = telSnap.docs.map(d => d.data()).reverse();
+          setSensorHistory(history);
+
+        } catch (err) {
+          console.error("Auth/Data sync error:", err);
+        } finally {
+          setIsDataLoading(false);
+        }
+      } else {
+        // Handle Guest or Logged Out
+        const saved = localStorage.getItem('agrisense_user');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed.isGuest) {
+            setUser(parsed);
+          } else {
+            setUser(null);
+            localStorage.removeItem('agrisense_user');
+          }
+        }
+        setIsDataLoading(false);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const updateBranding = async (newInfo) => {
     const updated = { ...farmInfo, ...newInfo };
     setFarmInfo(updated);
-    localStorage.setItem('agrisense_branding', JSON.stringify(updated));
+    if (user?.email) {
+      await setDoc(doc(db, "farmers", user.email), { farmInfo: updated }, { merge: true });
+    }
   };
 
-  const updateProfileMeta = (newData) => setProfileMeta(prev => ({ ...prev, ...newData }));
-  const updateUser = (newUserData) => {
-    const updated = { ...user, ...newUserData, isGuest: false };
+  const updateProfileMeta = async (newData) => {
+    const updated = { ...profileMeta, ...newData };
+    setProfileMeta(updated);
+    if (user?.email) {
+      await setDoc(doc(db, "farmers", user.email), { profileMeta: updated }, { merge: true });
+    }
+  };
+
+  const updateUser = async (newUserData) => {
+    const isEmailChange = newUserData.email && newUserData.email !== user?.email;
+    const updated = { 
+      ...user, 
+      ...newUserData, 
+      isGuest: isEmailChange ? false : (user?.isGuest || false) 
+    };
+    
     setUser(updated);
     localStorage.setItem('agrisense_user', JSON.stringify(updated));
-  };
-
-  const login = (id, pass) => {
-    const matchedUser = MASTER_CONFIG.AUTHORIZED_USERS.find(
-      u => u.email.toLowerCase() === id?.trim().toLowerCase() && u.password === pass?.trim()
-    );
-    if (matchedUser || id === 'guest') {
-      const userData = matchedUser || { email: 'guest@agrisense.io', name: 'Guest Farmer', location: 'Field Zone A', isGuest: true };
-      setUser(userData);
-      localStorage.setItem('agrisense_user', JSON.stringify(userData));
-      return true;
+    if (updated.email) {
+      await setDoc(doc(db, "farmers", updated.email), updated, { merge: true });
     }
-    return false;
   };
 
-  const logout = () => { 
-    const defaultUser = { name: 'Guest Farmer', email: 'guest@agrisense.io', isGuest: true };
-    setUser(defaultUser); 
-    localStorage.setItem('agrisense_user', JSON.stringify(defaultUser));
+  const login = async (email, password) => {
+    try {
+      const res = await signInWithEmailAndPassword(auth, email, password);
+      // onAuthStateChanged will handle the rest
+      return true;
+    } catch (err) {
+      console.error("Login Failed", err);
+      // Check if it's a master config user (fallback for dev)
+      const matchedUser = MASTER_CONFIG.AUTHORIZED_USERS.find(
+        u => u.email.toLowerCase() === email?.trim().toLowerCase() && u.password === password?.trim()
+      );
+      if (matchedUser) {
+        setUser(matchedUser);
+        localStorage.setItem('agrisense_user', JSON.stringify(matchedUser));
+        return true;
+      }
+      return false;
+    }
+  };
+
+
+
+
+
+
+
+
+
+
+
+  const guestLogin = (guestName) => {
+    const userData = { 
+      email: `guest_${Math.random().toString(36).substr(2, 5)}@agrisense.io`, 
+      name: guestName || 'Guest Farmer', 
+      location: 'Field Zone A', 
+      isGuest: true,
+      lastLogin: new Date().toISOString()
+    };
+    setUser(userData);
+    localStorage.setItem('agrisense_user', JSON.stringify(userData));
+    return true;
+  };
+
+  const register = async (name, email, password) => {
+    try {
+      const res = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(res.user, { displayName: name });
+      
+      const newUser = {
+        name: name.trim(),
+        email: email.toLowerCase().trim(),
+        location: 'Field Zone A',
+        lastLogin: new Date().toISOString(),
+        isRegistered: true,
+        farmInfo: { ...farmInfo, name: name.trim() }
+      };
+
+      await setDoc(doc(db, "farmers", newUser.email), newUser);
+      // onAuthStateChanged will handle the rest
+      return true;
+    } catch (err) {
+      console.error("Registration Failed", err);
+      return false;
+    }
+  };
+
+  const updateUser = async (data) => {
+
+    if (!user?.email) return false;
+    try {
+      const userRef = doc(db, "farmers", user.email);
+      await setDoc(userRef, data, { merge: true });
+      const updatedUser = { ...user, ...data };
+      setUser(updatedUser);
+      localStorage.setItem('agrisense_user', JSON.stringify(updatedUser));
+      return true;
+    } catch (err) {
+      console.error("Update Failed:", err);
+      return false;
+    }
+  };
+
+  const getAllFarmers = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "farmers"));
+      return querySnapshot.docs.map(doc => doc.data());
+    } catch (err) {
+      console.error("Failed to fetch farmers:", err);
+      return [];
+    }
+  };
+
+  const fetchHistory = async (startTime) => {
+    if (!user?.email) return [];
+    try {
+      const telRef = collection(db, "farmers", user.email, "telemetry");
+      const q = query(
+        telRef, 
+        where("node", "==", "unified_snapshot"),
+        where("timestamp", ">=", startTime),
+        orderBy("timestamp", "asc")
+      );
+      const telSnap = await getDocs(q);
+      const history = telSnap.docs.map(d => d.data());
+      setSensorHistory(history);
+      return history;
+    } catch (err) {
+      console.error("Historical Fetch Failed:", err);
+      return [];
+    }
+  };
+
+  const logout = async () => { 
+    await signOut(auth);
+    setUser(null); 
+    localStorage.removeItem('agrisense_user');
   };
 
   const toggleActuator = (key) => {
@@ -211,24 +467,9 @@ export const AppProvider = ({ children }) => {
   }, [sensorData]);
 
 
-  // 3. Sensor History Logger (Stateful Sync with Multi-Tab Persistence)
-  const [sensorHistory, setSensorHistory] = useState(() => {
-    try {
-      const saved = localStorage.getItem('agrisense_history');
-      if (!saved) return [];
-      const parsed = JSON.parse(saved);
-      // 🧪 MIGRATION: Clear history if it's corrupted (timestamp: 0 or missing)
-      if (Array.isArray(parsed) && parsed.length > 0 && (!parsed[0].timestamp || parsed[0].timestamp < 1000000)) {
-        localStorage.removeItem('agrisense_history');
-        return [];
-      }
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (e) {
-      return [];
-    }
-  });
+  // 3. Sensor History Logger (Throttled Persistence Logic)
 
-  // 🏥 SYNC HISTORY ACROSS TABS
+
   useEffect(() => {
     const handleStorageChange = (e) => {
       if (e.key === 'agrisense_history' && e.newValue) {
@@ -236,7 +477,6 @@ export const AppProvider = ({ children }) => {
           const remoteHistory = JSON.parse(e.newValue);
           setSensorHistory(prev => {
             if (remoteHistory.length > prev.length) {
-              // Mark as saved so we don't trigger a circular save loop
               lastSavedLen.current = remoteHistory.length;
               return remoteHistory;
             }
@@ -267,25 +507,7 @@ export const AppProvider = ({ children }) => {
     }
   }, []); // Run once on mount
 
-  // Throttled persistence with multi-tab safety
-  const lastSavedLen = useRef(0);
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (sensorHistory.length > lastSavedLen.current) {
-        try {
-          localStorage.setItem('agrisense_history', JSON.stringify(sensorHistory));
-          lastSavedLen.current = sensorHistory.length;
-        } catch (e) {
-          console.warn("Storage Full - pruning history");
-          setSensorHistory(prev => prev.slice(-500));
-        }
-      }
-    }, 3000); 
-    return () => clearTimeout(timer);
-  }, [sensorHistory]);
 
-  const lastHistoryUpdate = useRef(0);
-  const [, setTick] = useState(0);
 
   // 🚀 HEARTBEAT: Force re-render every 5 seconds to keep Live charts moving
   useEffect(() => {
@@ -341,36 +563,63 @@ export const AppProvider = ({ children }) => {
     return () => clearInterval(watchdog);
   }, []);
 
-  const sensorDataRef = useRef(sensorData);
   useEffect(() => { sensorDataRef.current = sensorData; }, [sensorData]);
 
-  // 🚀 PULSE ENGINE: Dedicated 5-second heartbeat for history logging
+  // 🚀 CLOUD PULSE ENGINE: High-frequency 5-second Cloud Push
   useEffect(() => {
-    const loggerInterval = setInterval(() => {
+    const loggerInterval = setInterval(async () => {
       const currentData = sensorDataRef.current;
-      if (!currentData || (!currentData.soil && !currentData.weather)) return;
+      if (!currentData) return; // Only block if root data is missing
 
-      setSensorHistory(prev => {
-        const now = Date.now();
-        lastHistoryUpdate.current = now;
-        const newEntry = { ...currentData, timestamp: now };
-        return [...prev, newEntry].slice(-5000); 
-      });
+      const now = Date.now();
+      const newEntry = { ...currentData, timestamp: now };
+
+      // 1. Update Local State (for instant UI charts)
+      setSensorHistory(prev => [...prev, newEntry].slice(-2000));
+
+      // 2. ☁️ PUSH TO CLOUD (5-Second Real-Time Pulse)
+      if (user?.email) {
+        try {
+          setCloudSyncStatus('Syncing...');
+          const telemetryRef = collection(db, "farmers", user.email, "telemetry");
+          console.log(`📡 [CLOUDPULSE] Syncing to: farmers/${user.email}/telemetry`);
+          
+          // 🛡️ BULLETPROOF IST OVERRIDE (UTC + 5:30)
+          const now = new Date();
+          const istDate = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+          const istTime = istDate.getUTCDate().toString().padStart(2, '0') + "/" + 
+                         (istDate.getUTCMonth() + 1).toString().padStart(2, '0') + "/" + 
+                          istDate.getUTCFullYear() + ", " + 
+                          istDate.getUTCHours().toString().padStart(2, '0') + ":" + 
+                          istDate.getUTCMinutes().toString().padStart(2, '0') + ":" + 
+                          istDate.getUTCSeconds().toString().padStart(2, '0') + " IST";
+
+          await addDoc(telemetryRef, {
+            ...newEntry,
+            localTime: istTime,
+            gps: currentGPS?.lat ? { lat: currentGPS.lat, lng: currentGPS.lng, acc: currentGPS.accuracy, city: currentGPS.city } : null,
+            node: 'unified_snapshot',
+            isGuest: !!user.isGuest
+          });
+          setCloudSyncStatus('Active');
+          console.log("☁️ [CLOUDPULSE] 5s Sync Complete");
+        } catch (e) {
+          setCloudSyncStatus('Error');
+          console.error("Cloud Pulse Failed", e);
+        }
+      }
     }, 5000); 
     
     return () => clearInterval(loggerInterval);
-  }, []); // Run once, uses ref for stable data access
+  }, [user?.email]); // Re-run if user changes to ensure correct path
 
   // 🛰️ DYNAMIC VISION ZONE SYNC: Inherit from profile/location
   useEffect(() => {
     if (sensorData.vision.zone === '---' || sensorData.vision.zone === 'Sector A') {
-      const loc = farmInfo?.location || user?.location || 'Field A';
-      setSensorData(prev => ({
-        ...prev,
-        vision: { ...prev.vision, zone: loc }
-      }));
+      const activeZone = (farmInfo?.name !== 'AgriSense') ? farmInfo.name : 'Primary Zone';
+      setSensorData(prev => ({ ...prev, vision: { ...prev.vision, zone: activeZone }}));
     }
-  }, [user, farmInfo, sensorData.vision.zone]);
+  }, [farmInfo?.name]);
 
   // 4. MQTT Linkage
   useEffect(() => {
@@ -389,6 +638,20 @@ export const AppProvider = ({ children }) => {
           setSensorData(prev => {
             const updated = processMqttMessage(topic, data, prev);
             
+            // 🛰️ DEEP CLOUD LOGGING: Persist every node update to Firestore Telemetry
+            if (user?.email) {
+              const parts = topic.split('/');
+              const nodeType = parts[parts.length - 1]; // e.g., 'soil', 'weather'
+              
+              const telemetryRef = collection(db, "farmers", user.email, "telemetry");
+              addDoc(telemetryRef, {
+                node: nodeType,
+                timestamp: Date.now(),
+                data: data, // Raw payload for deep audit
+                isGuest: !!user.isGuest
+              }).catch(e => console.error("Telemetry Sync Error:", e));
+            }
+
             // 🛰️ DEVICE STATUS SYNC (Unified Node Wake-Up)
             setDevices(prevDevs => {
               const parts = topic.split('/');
@@ -573,17 +836,19 @@ export const AppProvider = ({ children }) => {
 
   return (
     <AppContext.Provider value={{
-      user, login, logout, updateUser, farmInfo, updateBranding,
+      user, login, guestLogin, register, fetchHistory, logout, updateUser, farmInfo, updateBranding,
+      getAllFarmers,
       isDarkMode, toggleTheme, sensorData, apiWeather, apiForecast, recommendations, sensorHistory,
       actuators, toggleActuator, isSidebarOpen, setIsSidebarOpen, ACTUATORS,
       farmHealthScore, systemHealth, connectivityStatus, cloudSyncStatus, profileMeta, updateProfileMeta,
       isDataLoading, lastGlobalUpdate, mqttStatus, syncData, syncDeviceId,
-      devices, systemOverview, apiWeather, apiForecast
+      devices, systemOverview, currentGPS
     }}>
       {children}
     </AppContext.Provider>
   );
 };
+
 
 export const useApp = () => useContext(AppContext);
 export default AppContext;
