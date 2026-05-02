@@ -35,7 +35,7 @@ const COLORS = {
   secondary: '#0EA5E9',
   danger: '#EF4444',
   warning: '#F59E0B',
-  background: '#F8FAFC',
+  background: '#FFFFFF',
   cardBg: '#FFFFFF',
   textMain: '#0F172A',
   textMuted: '#64748B',
@@ -75,9 +75,9 @@ const CropBottomSheet = ({ isOpen, onClose, crops, onSelect, selectedCrop }) => 
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             style={{ 
               position: 'fixed', bottom: 0, left: 0, right: 0, 
-              background: '#FFFFFF', borderTopLeftRadius: '32px', borderTopRightRadius: '32px',
+              background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderTopLeftRadius: '32px', borderTopRightRadius: '32px',
               zIndex: 1001, maxHeight: '85vh', display: 'flex', flexDirection: 'column',
-              padding: '1.5rem', boxShadow: '0 -10px 40px rgba(0,0,0,0.1)'
+              padding: '1.5rem', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)'
             }}
           >
             <div style={{ width: '40px', height: '4px', background: '#E2E8F0', borderRadius: '2px', alignSelf: 'center', marginBottom: '1.5rem' }} />
@@ -92,7 +92,7 @@ const CropBottomSheet = ({ isOpen, onClose, crops, onSelect, selectedCrop }) => 
                   onChange={(e) => setSearch(e.target.value)}
                   style={{ 
                     width: '100%', padding: '14px 14px 14px 48px', borderRadius: '16px',
-                    border: '1px solid #E2E8F0', background: '#F8FAFC', outline: 'none',
+                    border: '1px solid #E2E8F0', background: '#FFFFFF', outline: 'none',
                     fontSize: '1rem', fontWeight: 600, color: '#0F172A'
                   }}
                 />
@@ -153,7 +153,7 @@ const FarmAdvisor = () => {
   const [activeTab, setActiveTab] = useState('sensor'); // 'sensor' or 'suitability'
 
   // Guard against missing context or sensors
-  if (!sensorData) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: COLORS.background }}><RefreshCw className="animate-spin" color={COLORS.primary} /></div>;
+  if (!sensorData) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF' }}><RefreshCw className="animate-spin" color={COLORS.primary} /></div>;
 
 
   const allCropsList = useMemo(() => {
@@ -570,35 +570,35 @@ const FarmAdvisor = () => {
     };
   }, [db, selectedCrop, sensorData]);
 
-  if (db.loading || !brain) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: COLORS.background }}><RefreshCw className="animate-spin" color={COLORS.primary} /></div>;
+  if (db.loading || !brain) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF' }}><RefreshCw className="animate-spin" color={COLORS.primary} /></div>;
 
-  if (db.error) return <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: COLORS.background, padding: '20px', textAlign: 'center' }}>
+  if (db.error) return <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF', padding: '20px', textAlign: 'center' }}>
     <AlertTriangle size={48} color={COLORS.danger} style={{ marginBottom: '1rem' }} />
     <h2 style={{ fontWeight: 900 }}>Database Sync Error</h2>
     <p style={{ color: COLORS.textMuted }}>Unable to load industrial crop specifications.</p>
   </div>;
 
   const cardStyle = {
-    background: COLORS.cardBg,
+    background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)',
     borderRadius: RAD.card,
     padding: '1.5rem',
     marginBottom: '1.25rem',
-    border: `1px solid ${COLORS.border}`,
-    boxShadow: '0 4px 16px rgba(0,0,0,0.02)'
+    border: '1px solid rgba(255, 255, 255, 0.8)',
+    boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)'
   };
 
   const sectionHeader = { margin: '0 0 1.25rem 0', fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain, display: 'flex', alignItems: 'center', gap: '10px' };
 
   return (
-    <div className="no-scrollbar" style={{ background: COLORS.background, minHeight: '100dvh', paddingBottom: '2rem', fontFamily: "'Outfit', sans-serif", overflowX: 'hidden' }}>
+    <div className="no-scrollbar" style={{ background: '#FFFFFF', minHeight: '100dvh', paddingBottom: '2rem', fontFamily: "'Outfit', sans-serif", overflowX: 'hidden' }}>
 
       {/* 🚀 INDUSTRIAL CROP HERO CARD - PREMIUM REDESIGN */}
       <div style={{ padding: '1rem' }}>
         <motion.div 
           initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
           style={{ 
-            background: '#FFFFFF', borderRadius: '24px', padding: '1rem',
-            boxShadow: '0 12px 40px rgba(0,0,0,0.04)', border: `1px solid rgba(0,0,0,0.02)`,
+            background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '24px', padding: '1rem',
+            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)', border: '1px solid rgba(255, 255, 255, 0.8)',
             opacity: heroOpacity
           }}
         >
@@ -607,7 +607,7 @@ const FarmAdvisor = () => {
             onClick={() => setIsSheetOpen(true)}
             style={{ 
               display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
-              background: '#F8FAFC', padding: '10px 14px', borderRadius: '14px',
+              background: '#FFFFFF', padding: '10px 14px', borderRadius: '14px', border: '1px solid #F1F5F9',
               cursor: 'pointer', marginBottom: '1rem'
             }}
           >
@@ -695,8 +695,9 @@ const FarmAdvisor = () => {
               }
             ].map((m, i) => (
               <div key={i} style={{ 
-                background: '#F8FAFC', borderRadius: '16px', padding: '12px',
-                border: `1px solid rgba(0,0,0,0.02)`, display: 'flex', flexDirection: 'column', gap: '6px'
+                background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '16px', padding: '12px',
+                border: '1px solid rgba(255, 255, 255, 0.8)', display: 'flex', flexDirection: 'column', gap: '6px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.02), inset 0 1px 1px rgba(255,255,255,0.9)'
               }}>
                 <span style={{ fontSize: '0.55rem', fontWeight: 900, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{m.id}</span>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -738,9 +739,9 @@ const FarmAdvisor = () => {
               onClick={() => setActiveTab(t.id)}
               style={{
                 flex: 1, padding: '14px', borderRadius: '18px',
-                background: isActive ? '#FFFFFF' : 'rgba(0,0,0,0.02)',
-                border: isActive ? `1px solid rgba(0,0,0,0.05)` : '1px solid transparent',
-                boxShadow: isActive ? '0 8px 20px rgba(0,0,0,0.04)' : 'none',
+                background: isActive ? 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)' : 'rgba(0,0,0,0.02)',
+                border: isActive ? '1px solid rgba(255, 255, 255, 0.8)' : '1px solid transparent',
+                boxShadow: isActive ? '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)' : 'none',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                 cursor: 'pointer', transition: 'none', outline: 'none'
               }}
@@ -828,7 +829,7 @@ const FarmAdvisor = () => {
               </div>
 
               {!brain.fertilizer.isValid ? (
-                <div style={{ padding: '30px 20px', textAlign: 'center', background: '#F8FAFC', borderRadius: '20px', border: `1px dashed ${COLORS.border}` }}>
+                <div style={{ padding: '30px 20px', textAlign: 'center', background: '#FFFFFF', borderRadius: '20px', border: `1px dashed ${COLORS.border}` }}>
                   <RefreshCw size={24} color={COLORS.textMuted} style={{ marginBottom: '10px', opacity: 0.5 }} />
                   <div style={{ fontSize: '0.8rem', fontWeight: 800, color: COLORS.textMuted }}>NPK SENSORS OFFLINE</div>
                 </div>
@@ -842,7 +843,7 @@ const FarmAdvisor = () => {
                       { label: 'MOP', val: brain.fertilizer.mop }
                     ].map((f, i) => (
                       <div key={i} style={{ 
-                        background: '#F8FAFC', borderRadius: '16px', padding: '12px 8px', 
+                        background: '#FFFFFF', borderRadius: '16px', padding: '12px 8px', 
                         border: '1px solid rgba(0,0,0,0.02)', textAlign: 'center'
                       }}>
                         <div style={{ fontSize: '0.62rem', fontWeight: 900, color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{f.label}</div>
@@ -888,14 +889,14 @@ const FarmAdvisor = () => {
               </div>
 
               {!brain.compost.isValid ? (
-                <div style={{ padding: '30px 20px', textAlign: 'center', background: '#F8FAFC', borderRadius: '20px', border: `1px dashed ${COLORS.border}` }}>
+                <div style={{ padding: '30px 20px', textAlign: 'center', background: '#FFFFFF', borderRadius: '20px', border: `1px dashed ${COLORS.border}` }}>
                   <RefreshCw size={24} color={COLORS.textMuted} style={{ marginBottom: '10px', opacity: 0.5 }} />
                   <div style={{ fontSize: '0.8rem', fontWeight: 800, color: COLORS.textMuted }}>SOIL SENSORS OFFLINE</div>
                 </div>
               ) : (
                 <>
                   {/* BALANCE STATUS CARD */}
-                  <div style={{ background: '#F8FAFC', padding: '16px 20px', borderRadius: '24px', textAlign: 'center', marginBottom: '0.75rem', border: '1px solid rgba(0,0,0,0.02)' }}>
+                  <div style={{ background: '#FFFFFF', padding: '16px 20px', borderRadius: '24px', textAlign: 'center', marginBottom: '0.75rem', border: '1px solid rgba(0,0,0,0.02)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                       <span style={{ fontSize: '1.6rem', fontWeight: 950, color: COLORS.textMain, lineHeight: 1 }}>{brain.compost.perAcre}</span>
                       <span style={{ fontSize: '1.6rem', fontWeight: 950, color: '#E2E8F0' }}>•</span>
@@ -934,7 +935,7 @@ const FarmAdvisor = () => {
               {brain.pests.detected.map((p, i) => (
                 <div key={i} style={{ 
                   padding: '20px', borderRadius: '24px', 
-                  background: p.isActive ? `${COLORS.danger}05` : '#F8FAFC', 
+                  background: p.isActive ? `${COLORS.danger}05` : '#FFFFFF', 
                   border: p.isActive ? `1px solid ${COLORS.danger}20` : '1px solid rgba(0,0,0,0.02)'
                 }}>
                   {/* TOP LINE: ICON + PEST | STATUS */}

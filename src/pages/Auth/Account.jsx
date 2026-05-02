@@ -16,7 +16,7 @@ const COLORS = {
   primary: '#10B981',
   text: '#0F172A',
   subtext: '#64748B',
-  bg: '#F8FAFC',
+  bg: '#FFFFFF',
   border: '#E2E8F0',
   danger: '#EF4444',
   card: '#FFFFFF'
@@ -133,7 +133,7 @@ const Account = () => {
   };
 
   return (
-    <div style={{ padding: '12px', background: COLORS.bg, paddingBottom: '0px', position: 'relative' }}>
+    <div style={{ padding: '12px', background: '#FFFFFF', paddingBottom: '0px', position: 'relative' }}>
       
       {/* CUSTOM TOAST NOTIFICATION */}
       <motion.div
@@ -154,10 +154,10 @@ const Account = () => {
         <span>{toast?.message}</span>
       </motion.div>
       <div style={{ 
-        background: 'white', borderRadius: '20px', padding: '16px', 
+        background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '24px', padding: '16px', 
         display: 'flex', alignItems: 'center', gap: '16px',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.02)', marginBottom: '12px',
-        border: `1px solid ${COLORS.border}`
+        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)', marginBottom: '12px',
+        border: '1px solid rgba(255, 255, 255, 0.8)'
       }}>
         <div style={{ position: 'relative', cursor: 'pointer' }} onClick={handleImageUpload}>
           <div style={{ position: 'relative', width: '64px', height: '64px' }}>
@@ -188,7 +188,7 @@ const Account = () => {
             background: COLORS.primary, width: '28px', height: '28px', borderRadius: '14px', 
             border: '2px solid white', color: 'white',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
+            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05)'
           }}>
             <Camera size={10} />
           </div>
@@ -214,7 +214,7 @@ const Account = () => {
       </div>
 
         {/* 2. PERSONAL INFORMATION */}
-        <div style={{ background: 'white', borderRadius: '20px', overflow: 'hidden', border: `1px solid ${COLORS.border}`, marginBottom: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.01)' }}>
+        <div style={{ background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '24px', overflow: 'hidden', border: '1px solid rgba(255, 255, 255, 0.8)', marginBottom: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)' }}>
           <div style={{ padding: '14px 16px 4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <User size={16} color={COLORS.primary} strokeWidth={2} />
             <h3 style={{ fontSize: '0.75rem', fontWeight: 800, color: COLORS.text, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Personal Information</h3>
@@ -275,7 +275,7 @@ const Account = () => {
         </div>
 
         {/* 3. DEVICE & SYSTEM */}
-        <div style={{ background: 'white', borderRadius: '20px', padding: '14px 16px', border: `1px solid ${COLORS.border}`, marginBottom: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.01)' }}>
+        <div style={{ background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '24px', padding: '14px 16px', border: '1px solid rgba(255, 255, 255, 0.8)', marginBottom: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
             <Cpu size={16} color={COLORS.primary} strokeWidth={2} />
             <h3 style={{ fontSize: '0.75rem', fontWeight: 800, color: COLORS.text, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Device & System</h3>
@@ -335,8 +335,8 @@ const Account = () => {
 
       {/* 5. ABOUT APP (BOTTOM) */}
       <div style={{ 
-        background: 'white', borderRadius: '20px', padding: '16px', border: `1px solid ${COLORS.border}`,
-        boxShadow: '0 4px 20px rgba(0,0,0,0.01)'
+        background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '24px', padding: '16px', border: '1px solid rgba(255, 255, 255, 0.8)',
+        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>

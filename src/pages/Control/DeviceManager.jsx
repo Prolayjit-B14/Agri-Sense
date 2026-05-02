@@ -32,7 +32,7 @@ const T = {
   text: '#1E293B',
   sub: '#64748B',
   muted: '#94A3B8',
-  bg: '#F8FAFC',
+  bg: '#FFFFFF',
   card: '#FFFFFF',
   border: '#F1F5F9',
   shadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
@@ -92,15 +92,16 @@ const NodeCard = ({ icon: Icon, label, color, isOnline, sensors, actuators, togg
   <motion.div
     whileHover={{ y: -2 }}
     style={{
-      background: T.card,
+      background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)',
       borderRadius: '24px',
       padding: '16px',
-      boxShadow: T.shadow,
+      boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
       display: 'flex',
       flexDirection: 'column',
       gridColumn: isFullWidth ? '1 / -1' : 'auto',
       position: 'relative',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      border: '1px solid rgba(255, 255, 255, 0.8)'
     }}
   >
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
@@ -163,13 +164,13 @@ const NetworkHealthCard = ({ activeCount, totalCount, mqttStatus }) => {
 
   return (
     <div style={{
-      background: 'white',
+      background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)',
       borderRadius: '24px',
       padding: '16px',
       position: 'relative',
       overflow: 'hidden',
-      boxShadow: T.shadow,
-      border: `1px solid ${T.border}`
+      boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
+      border: '1px solid rgba(255, 255, 255, 0.8)'
     }}>
       {/* Wavy Background Decoration */}
       <svg style={{ position: 'absolute', right: 0, bottom: 0, width: '60%', height: '100%', opacity: 0.1, zIndex: 0 }} viewBox="0 0 200 200">
@@ -249,14 +250,15 @@ const VisionCard = ({ isOnline, detection }) => {
 
   return (
     <div style={{
-      background: 'white',
+      background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)',
       borderRadius: '24px',
       padding: '16px',
-      boxShadow: T.shadow,
+      boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
       gridColumn: '1 / -1',
       display: 'flex',
       flexDirection: 'column',
-      gap: '16px'
+      gap: '16px',
+      border: '1px solid rgba(255, 255, 255, 0.8)'
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -301,7 +303,7 @@ const VisionCard = ({ isOnline, detection }) => {
 
         <div style={{ 
           flex: 1, 
-          background: isOnline ? '#F8FAFC' : `${T.danger}05`, 
+          background: isOnline ? '#FFFFFF' : `${T.danger}05`, 
           borderRadius: '16px', 
           padding: '12px 8px',
           display: 'flex',
@@ -350,11 +352,11 @@ const NodePowerPanel = ({ nodePower, toggleNodePower, devices }) => {
   return (
     <div style={{ 
       marginTop: '8px',
-      background: 'white',
+      background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)',
       padding: '16px',
       borderRadius: '24px',
-      boxShadow: T.shadow,
-      border: `1px solid ${T.border}`,
+      boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
+      border: '1px solid rgba(255, 255, 255, 0.8)',
       display: 'flex',
       flexDirection: 'column',
       gap: '14px'
@@ -438,16 +440,16 @@ const ControlPanel = ({ actuators, toggleActuator, sensorData }) => {
             <motion.div 
               key={c.id} 
               style={{
-                background: isOn ? c.color : 'white',
+                background: isOn ? c.color : 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)',
                 borderRadius: '16px',
                 padding: '12px 4px',
-                boxShadow: isOn ? `0 8px 20px ${c.color}30` : T.shadow,
+                boxShadow: isOn ? `0 8px 20px ${c.color}30` : '0 4px 12px rgba(0,0,0,0.02), inset 0 1px 1px rgba(255,255,255,0.9)',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
-                border: `1px solid ${isOn ? c.color : T.border}`,
+                border: `1px solid ${isOn ? c.color : 'rgba(255, 255, 255, 0.8)'}`,
                 transition: 'all 0.3s ease',
                 cursor: 'default'
               }}

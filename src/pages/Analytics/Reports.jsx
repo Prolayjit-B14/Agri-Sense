@@ -18,7 +18,7 @@ const COLORS = {
   danger: '#EF4444',
   text: '#1E293B',
   subtext: '#64748B',
-  bg: '#F8FAFC',
+  bg: '#FFFFFF',
   border: '#F1F5F9'
 };
 
@@ -63,7 +63,7 @@ const Reports = () => {
   };
 
   return (
-    <div style={{ padding: '1.25rem', background: COLORS.bg, minHeight: '100vh', paddingBottom: '100px' }}>
+    <div style={{ padding: '1.25rem', background: '#FFFFFF', minHeight: '100vh', paddingBottom: '100px' }}>
       
       <header style={{ marginBottom: '2rem' }}>
         <h2 style={{ fontSize: '1.5rem', fontWeight: 950, color: COLORS.text, margin: 0 }}>System Reports</h2>
@@ -74,8 +74,8 @@ const Reports = () => {
       <motion.div
         initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}
         style={{ 
-          background: 'white', borderRadius: '32px', padding: '2rem', textAlign: 'center', 
-          marginBottom: '2.5rem', border: `1px solid ${COLORS.border}`, boxShadow: '0 10px 30px rgba(0,0,0,0.02)'
+          background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '24px', padding: '2rem', textAlign: 'center', 
+          marginBottom: '2.5rem', border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)'
         }}
       >
          <div style={{ width: '70px', height: '70px', borderRadius: '24px', background: `${COLORS.primary}10`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
@@ -114,8 +114,8 @@ const Reports = () => {
         <FileSearch size={18} color={COLORS.secondary} /> Document Preview
       </h3>
       <div style={{ 
-        background: 'white', borderRadius: '32px', minHeight: '400px', 
-        border: `1px solid ${COLORS.border}`, boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
+        background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '24px', minHeight: '400px', 
+        border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
         position: 'relative', overflow: 'hidden'
       }}>
          <div style={{ padding: '2.5rem', filter: genStep === 4 ? 'none' : 'blur(5px)', opacity: genStep === 4 ? 1 : 0.3, transition: '0.5s' }}>
@@ -127,8 +127,8 @@ const Reports = () => {
             <div style={{ marginBottom: '2rem' }}>
                <h5 style={{ fontSize: '0.7rem', fontWeight: 950, color: COLORS.primary, marginBottom: '1rem', textTransform: 'uppercase' }}>Telemetry Data</h5>
                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <div style={{ padding: '1rem', background: '#F8FAFC', borderRadius: '12px' }}><p style={{ fontSize: '0.6rem', fontWeight: 800, color: COLORS.subtext, margin: 0 }}>MOISTURE AVG</p><p style={{ fontSize: '1.2rem', fontWeight: 950, margin: '4px 0 0 0' }}>{sensorData?.soil?.moisture || 45}%</p></div>
-                  <div style={{ padding: '1rem', background: '#F8FAFC', borderRadius: '12px' }}><p style={{ fontSize: '0.6rem', fontWeight: 800, color: COLORS.subtext, margin: 0 }}>HEALTH RATING</p><p style={{ fontSize: '1.2rem', fontWeight: 950, color: COLORS.primary, margin: '4px 0 0 0' }}>88/100</p></div>
+                   <div style={{ padding: '1rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.9)' }}><p style={{ fontSize: '0.6rem', fontWeight: 800, color: COLORS.subtext, margin: 0 }}>MOISTURE AVG</p><p style={{ fontSize: '1.2rem', fontWeight: 950, margin: '4px 0 0 0' }}>{sensorData?.soil?.moisture || 45}%</p></div>
+                   <div style={{ padding: '1rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.9)' }}><p style={{ fontSize: '0.6rem', fontWeight: 800, color: COLORS.subtext, margin: 0 }}>HEALTH RATING</p><p style={{ fontSize: '1.2rem', fontWeight: 950, color: COLORS.primary, margin: '4px 0 0 0' }}>88/100</p></div>
                </div>
             </div>
 

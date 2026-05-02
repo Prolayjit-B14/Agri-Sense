@@ -12,7 +12,7 @@ html {
   --primary-ultra: rgba(16, 185, 129, 0.08);
   
   --secondary: #0ea5e9;
-  --bg-main: #f1f5f9;
+  --bg-main: #FFFFFF;
   --bg-card: #ffffff;
   
   --text-main: #0f172a;
@@ -25,7 +25,7 @@ html {
   --radius-lg: 24px;
   --radius-md: 16px;
   
-  --shadow-premium: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
+  --shadow-premium: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
   --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.02);
   --shadow-glow: 0 0 20px rgba(16, 185, 129, 0.2);
   
@@ -64,7 +64,7 @@ body {
   padding: 0;
   width: 100%;
   min-height: 100vh;
-  background-color: #F8FAFC;
+  background-color: #FFFFFF;
   font-family: 'Outfit', system-ui, -apple-system, sans-serif;
   color: #0f172a;
   -webkit-font-smoothing: antialiased;
@@ -128,7 +128,7 @@ body {
 /* 🦴 SKELETON LOADING */
 .skeleton {
   background: #f1f5f9;
-  background: linear-gradient(90deg, #f1f5f9 25%, #f8fafc 50%, #f1f5f9 75%);
+  background: linear-gradient(90deg, #F1F5F9 25%, #FFFFFF 50%, #F1F5F9 75%);
   background-size: 200% 100%;
   animation: skeleton-loading 1.5s infinite;
   border-radius: 8px;

@@ -28,7 +28,7 @@ const COLORS = {
   secondary: '#0EA5E9',
   warning: '#F59E0B',
   danger: '#EF4444',
-  background: '#F8FAFC',
+  background: '#FFFFFF',
   cardBg: '#FFFFFF',
   textMain: '#0F172A',
   textMuted: '#64748B',
@@ -39,7 +39,7 @@ const COLORS = {
 };
 
 const RAD = {
-  card: '32px',
+  card: '24px',
   inner: '20px',
   btn: '16px'
 };
@@ -66,13 +66,13 @@ const isPointInPolygon = (point, vs) => {
 };
 
 const StepIndicator = ({ currentStep }) => (
-  <div style={{ background: 'white', padding: '1.25rem', borderBottom: `1px solid ${COLORS.border}`, position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 4px 10px rgba(0,0,0,0.02)' }}>
+  <div style={{ background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', padding: '1.25rem', borderBottom: '1px solid rgba(255, 255, 255, 0.8)', position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)' }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '500px', margin: '0 auto' }}>
       {[1, 2, 3, 4, 5].map(step => (
         <div key={step} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', flex: 1 }}>
           <div style={{ 
             width: '30px', height: '30px', borderRadius: '50%', 
-            background: currentStep >= step ? COLORS.primary : COLORS.background, 
+            background: currentStep >= step ? COLORS.primary : '#FFFFFF', 
             color: currentStep >= step ? 'white' : COLORS.textMuted, 
             display: 'flex', alignItems: 'center', justifyContent: 'center', 
             fontSize: '0.75rem', fontWeight: 900, transition: '0.3s'
@@ -327,7 +327,7 @@ const SoilForensics = () => {
   );
 
   return (
-    <div style={{ background: COLORS.background, minHeight: '100%', paddingBottom: '0', fontFamily: "'Outfit', sans-serif" }}>
+    <div style={{ background: '#FFFFFF', minHeight: '100%', paddingBottom: '0', fontFamily: "'Outfit', sans-serif" }}>
       <StepIndicator currentStep={currentStep} />
       <div style={{ padding: '1.25rem' }}>
         <AnimatePresence mode="wait">
@@ -336,7 +336,7 @@ const SoilForensics = () => {
               {!isSoilNodeActive && (
                 <div style={{ 
                   position: 'absolute', inset: '-10px', zIndex: 1000, 
-                  background: 'rgba(248, 250, 252, 0.92)', backdropFilter: 'blur(12px)', 
+                  background: 'rgba(255, 255, 255, 0.92)', backdropFilter: 'blur(12px)', 
                   borderRadius: RAD.card, display: 'flex', flexDirection: 'column', 
                   alignItems: 'center', justifyContent: 'center', textAlign: 'center', 
                   padding: '2rem', border: `2px dashed ${COLORS.border}`
@@ -367,7 +367,7 @@ const SoilForensics = () => {
                   </motion.button>
                 </div>
               </div>
-              <div onClick={isMapInteractive ? undefined : handleAddPoint} style={{ height: '400px', background: '#E2E8F0', borderRadius: RAD.card, position: 'relative', border: `4px solid ${isMapInteractive ? COLORS.warning : 'white'}`, boxShadow: '0 10px 30px rgba(0,0,0,0.05)', overflow: 'hidden', transition: '0.3s' }}>
+              <div onClick={isMapInteractive ? undefined : handleAddPoint} style={{ height: '400px', background: '#E2E8F0', borderRadius: RAD.card, position: 'relative', border: `4px solid ${isMapInteractive ? COLORS.warning : 'white'}`, boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05)', overflow: 'hidden', transition: '0.3s' }}>
                  <iframe width="100%" height="100%" frameBorder="0" src={`https://www.openstreetmap.org/export/embed.html?bbox=${calculateBBox()}&layer=mapnik&marker=${mapCenter.lat},${mapCenter.lng}`} style={{ filter: 'grayscale(0.3)', pointerEvents: isMapInteractive ? 'auto' : 'none' }} />
                  {!isMapInteractive && (
                    <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
@@ -397,7 +397,7 @@ const SoilForensics = () => {
                    <h3 style={{ fontSize: '1.5rem', fontWeight: 950, color: COLORS.textMain, margin: '4px 0' }}>{sampleRequirements.max}</h3>
                  </motion.div>
               </div>
-              <div style={{ height: '320px', background: 'white', borderRadius: RAD.card, border: `1px solid ${COLORS.border}`, position: 'relative', marginBottom: '1.25rem', overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.02)' }}>
+              <div style={{ height: '320px', background: 'white', borderRadius: RAD.card, border: `1px solid ${COLORS.border}`, position: 'relative', marginBottom: '1.25rem', overflow: 'hidden', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05)' }}>
                  <iframe width="100%" height="100%" frameBorder="0" src={`https://www.openstreetmap.org/export/embed.html?bbox=${calculateBBox()}&layer=mapnik`} style={{ filter: 'grayscale(0.4)', pointerEvents: 'none' }} />
                  <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
                    <polygon points={boundaryPoints.map(p => `${p.x},${p.y}`).join(' ')} fill={`${COLORS.primary}10`} stroke={COLORS.primary} strokeWidth="3" strokeDasharray="6 4" />
@@ -416,7 +416,7 @@ const SoilForensics = () => {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '1.5rem' }}>
                  {samples.map((s, i) => (
-                   <motion.div key={i} whileTap={s.status === 'pending' && !isCollecting ? { scale: 0.98 } : {}} onClick={() => s.status === 'pending' && !isCollecting && startCollection(i)} style={{ background: COLORS.cardBg, padding: '1.25rem', borderRadius: RAD.inner, border: `1px solid ${activeSampleIndex === i ? COLORS.primary : COLORS.border}`, position: 'relative', overflow: 'hidden', boxShadow: '0 4px 10px rgba(0,0,0,0.02)' }}>
+                    <motion.div key={i} whileTap={s.status === 'pending' && !isCollecting ? { scale: 0.98 } : {}} onClick={() => s.status === 'pending' && !isCollecting && startCollection(i)} style={{ background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', padding: '1.25rem', borderRadius: RAD.inner, border: `1px solid ${activeSampleIndex === i ? COLORS.primary : 'rgba(255, 255, 255, 0.8)'}`, position: 'relative', overflow: 'hidden', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)' }}>
                       <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
                         <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: s.status === 'completed' ? COLORS.primary : COLORS.background, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           {s.status === 'completed' ? <CheckCircle2 size={24} color="white" /> : <MapPin size={24} color={COLORS.textMuted} />}
@@ -460,7 +460,7 @@ const SoilForensics = () => {
                   ))}
                 </div>
               </div>
-              <div style={{ height: '400px', background: 'white', borderRadius: RAD.card, border: `1px solid ${COLORS.border}`, position: 'relative', marginBottom: '1.5rem', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
+              <div style={{ height: '400px', background: 'white', borderRadius: RAD.card, border: `1px solid ${COLORS.border}`, position: 'relative', marginBottom: '1.5rem', overflow: 'hidden', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05)' }}>
                 <iframe width="100%" height="100%" frameBorder="0" src={`https://www.openstreetmap.org/export/embed.html?bbox=${calculateBBox()}&layer=mapnik`} style={{ filter: 'grayscale(0.6)', pointerEvents: 'none' }} />
                 <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
                   <defs><clipPath id="fClp_final_z"><polygon points={boundaryPoints.map(p => `${p.x},${p.y}`).join(' ')} /></clipPath></defs>
@@ -500,7 +500,7 @@ const SoilForensics = () => {
                     { label: 'Phosphorus', val: healthReport.p, icon: Atom, color: COLORS.nutrient.p },
                     { label: 'Potassium', val: healthReport.k, icon: Sparkles, color: COLORS.nutrient.k }
                   ].map((it, i) => (
-                    <div key={i} style={{ background: COLORS.cardBg, padding: '1rem', borderRadius: '22px', border: `1px solid ${COLORS.border}`, boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
+                    <div key={i} style={{ background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', padding: '1rem', borderRadius: '22px', border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)' }}>
                       <it.icon size={16} color={it.color} style={{ marginBottom: '6px' }} />
                       <p style={{ fontSize: '0.5rem', fontWeight: 900, color: COLORS.textMuted, textTransform: 'uppercase', marginBottom: '2px' }}>{it.label}</p>
                       <h4 style={{ fontSize: '1rem', fontWeight: 950, color: COLORS.textMain, margin: 0 }}>{it.val}</h4>
@@ -520,7 +520,7 @@ const SoilForensics = () => {
                   </div>
                </div>
 
-               <div style={{ background: COLORS.cardBg, borderRadius: RAD.inner, border: `1px solid ${COLORS.border}`, padding: '1.25rem', marginBottom: '1.5rem', boxShadow: '0 4px 16px rgba(0,0,0,0.02)' }}>
+               <div style={{ background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: RAD.inner, border: '1px solid rgba(255, 255, 255, 0.8)', padding: '1.25rem', marginBottom: '1.5rem', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)' }}>
                   <div style={{ overflowX: 'auto' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.65rem', color: COLORS.textMain }}>
                       <thead>

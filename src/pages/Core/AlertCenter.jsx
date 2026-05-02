@@ -15,7 +15,7 @@ const COLORS = {
   success: '#10B981',
   text: '#1E293B',
   subtext: '#64748B',
-  bg: '#F8FAFC',
+  bg: '#FFFFFF',
   border: '#F1F5F9'
 };
 
@@ -36,9 +36,9 @@ const AlertCard = ({ alert, onDismiss }) => {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       style={{
-        background: 'white', borderRadius: '24px', padding: '1.25rem',
-        marginBottom: '1rem', border: `1px solid ${COLORS.border}`,
-        boxShadow: '0 4px 12px rgba(0,0,0,0.02)', position: 'relative', overflow: 'hidden'
+        background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '24px', padding: '1.25rem',
+        marginBottom: '1rem', border: '1px solid rgba(255, 255, 255, 0.8)',
+        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)', position: 'relative', overflow: 'hidden'
       }}
     >
       <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: config.color }} />

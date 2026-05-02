@@ -28,13 +28,14 @@ const TopBar = ({ title }) => {
   return (
     <header style={{ 
       position: 'relative', zIndex: 1000, 
-      background: 'rgba(255,255,255,0.95)',
+      background: 'linear-gradient(165deg, rgba(255,255,255,0.95) 0%, rgba(251,253,255,0.95) 100%)',
       backdropFilter: 'blur(20px)',
       WebkitBackdropFilter: 'blur(20px)',
-      borderBottom: '1px solid #F1F5F9',
+      borderBottom: '1px solid rgba(255, 255, 255, 0.8)',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       padding: '0 1rem', height: '60px',
-      flexShrink: 0
+      flexShrink: 0,
+      boxShadow: '0 4px 20px rgba(0,0,0,0.02), inset 0 1px 1px rgba(255,255,255,0.9)'
     }}>
 
       {/* LEFT: MENU & TITLE */}
@@ -43,7 +44,7 @@ const TopBar = ({ title }) => {
           <motion.button 
             whileTap={{ scale: 0.9 }}
             onClick={() => setIsSidebarOpen(prev => !prev)}
-            style={{ background: '#F8FAFC', border: '1px solid #F1F5F9', color: '#1E293B', cursor: 'pointer', width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+            style={{ background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', border: '1px solid rgba(255, 255, 255, 0.8)', color: '#1E293B', cursor: 'pointer', width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 12px rgba(0,0,0,0.02), inset 0 1px 1px rgba(255,255,255,0.9)' }}
           >
             <Menu size={19} strokeWidth={2.5} />
           </motion.button>
@@ -51,7 +52,7 @@ const TopBar = ({ title }) => {
           <motion.button 
             whileTap={{ scale: 0.9 }}
             onClick={() => setIsSidebarOpen(prev => !prev)}
-            style={{ background: '#F8FAFC', border: '1px solid #F1F5F9', color: '#1E293B', cursor: 'pointer', width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+            style={{ background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', border: '1px solid rgba(255, 255, 255, 0.8)', color: '#1E293B', cursor: 'pointer', width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 12px rgba(0,0,0,0.02), inset 0 1px 1px rgba(255,255,255,0.9)' }}
           >
             <Menu size={19} strokeWidth={2.5} />
           </motion.button>
@@ -78,7 +79,7 @@ const TopBar = ({ title }) => {
         <motion.div 
           whileTap={{ scale: 0.95 }}
           onClick={() => navigate('/alerts')}
-          style={{ cursor: 'pointer', padding: '8px', background: '#f8fafc', borderRadius: '12px', position: 'relative' }}
+          style={{ cursor: 'pointer', padding: '8px', background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', border: '1px solid rgba(255, 255, 255, 0.8)', borderRadius: '12px', position: 'relative', boxShadow: '0 4px 12px rgba(0,0,0,0.02), inset 0 1px 1px rgba(255,255,255,0.9)' }}
         >
           <Bell size={20} color="#64748b" strokeWidth={2} />
           {recommendations.length > 0 && (
@@ -94,7 +95,7 @@ const TopBar = ({ title }) => {
         <motion.div 
           whileTap={{ scale: 0.95 }}
           onClick={() => navigate('/account')}
-          style={{ cursor: 'pointer', padding: '8px', background: '#f8fafc', borderRadius: '12px' }}
+          style={{ cursor: 'pointer', padding: '8px', background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', border: '1px solid rgba(255, 255, 255, 0.8)', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.02), inset 0 1px 1px rgba(255,255,255,0.9)' }}
         >
           <User size={20} color="#64748b" strokeWidth={2} />
         </motion.div>

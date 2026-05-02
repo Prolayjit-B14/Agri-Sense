@@ -18,7 +18,7 @@ const COLORS = {
   primary: '#10B981',
   secondary: '#3B82F6',
   danger: '#EF4444',
-  bg: '#F8FAFC',
+  bg: '#FFFFFF',
   card: '#FFFFFF',
   border: '#F1F5F9',
   text: '#0F172A',
@@ -156,10 +156,10 @@ const AdminDashboard = () => {
             type="text" placeholder="Search operational ID or email..."
             value={search} onChange={e => setSearch(e.target.value)}
             style={{ 
-              width: '100%', height: '58px', background: 'white', 
-              border: `1px solid ${COLORS.border}`, borderRadius: '20px',
+              width: '100%', height: '58px', background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', 
+              border: '1px solid rgba(255, 255, 255, 0.8)', borderRadius: '20px',
               paddingLeft: '52px', fontSize: '0.95rem', fontWeight: 600,
-              outline: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
+              outline: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)'
             }}
           />
         </div>
@@ -175,7 +175,7 @@ const AdminDashboard = () => {
                 <p style={{ marginTop: '16px', fontSize: '0.85rem', fontWeight: 700, color: COLORS.textMuted }}>Synchronizing with Global Database...</p>
               </div>
             ) : filteredFarmers.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px', background: 'white', borderRadius: '24px', border: `1px dashed ${COLORS.border}` }}>
+              <div style={{ textAlign: 'center', padding: '40px', background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '24px', border: '1px dashed rgba(255, 255, 255, 0.8)', boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.9)' }}>
                 <p style={{ color: COLORS.textMuted, fontSize: '0.9rem' }}>No operational records found.</p>
               </div>
             ) : (
@@ -195,8 +195,8 @@ const StatCard = ({ label, value, icon: Icon, color }) => (
   <motion.div 
     whileHover={{ y: -4 }}
     style={{ 
-      background: 'white', padding: '20px', borderRadius: '24px',
-      border: `1px solid ${COLORS.border}`, boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
+      background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', padding: '20px', borderRadius: '24px',
+      border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)'
     }}
   >
     <div style={{ 
@@ -216,9 +216,9 @@ const FarmerRow = ({ farmer, index }) => (
     animate={{ opacity: 1, x: 0 }}
     transition={{ delay: index * 0.05 }}
     style={{ 
-      background: 'white', borderRadius: '24px', padding: '16px 20px',
-      border: `1px solid ${COLORS.border}`, display: 'flex', alignItems: 'center',
-      justifyContent: 'space-between', boxShadow: '0 4px 6px rgba(0,0,0,0.01)',
+      background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '24px', padding: '16px 20px',
+      border: '1px solid rgba(255, 255, 255, 0.8)', display: 'flex', alignItems: 'center',
+      justifyContent: 'space-between', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
       marginBottom: '8px'
     }}
   >

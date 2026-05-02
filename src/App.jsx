@@ -62,10 +62,10 @@ const BottomNav = () => {
 
   return (
     <nav style={{
-      position: 'relative', background: '#FFFFFF', borderTop: '1px solid #F1F5F9',
+      position: 'relative', background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderTop: '1px solid rgba(255, 255, 255, 0.8)',
       height: '65px', display: 'flex', justifyContent: 'space-around',
       alignItems: 'center', padding: '0 10px', zIndex: 1000,
-      boxShadow: '0 -4px 20px rgba(0,0,0,0.03)', flexShrink: 0
+      boxShadow: '0 -4px 20px rgba(0,0,0,0.03), inset 0 1px 1px rgba(255,255,255,0.9)', flexShrink: 0
     }}>
       {tabs.map((item) => {
         const Icon = item.icon;
@@ -117,7 +117,7 @@ const MainLayout = ({ children }) => {
   };
 
   return (
-    <div style={{ height: '100dvh', width: '100vw', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#F8FAFC' }}>
+    <div style={{ height: '100dvh', width: '100vw', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#FFFFFF' }}>
       <TopBar title={titles[location.pathname] || 'AgriSense'} />
       <main ref={mainRef} style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <div style={{ maxWidth: '500px', margin: '0 auto', width: '100%', paddingBottom: '10px' }}>

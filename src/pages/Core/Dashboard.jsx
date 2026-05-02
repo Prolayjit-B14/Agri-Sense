@@ -24,7 +24,7 @@ const COLORS = {
   primary: '#10B981',
   primaryDark: '#059669',
   secondary: '#0EA5E9',
-  background: '#F8FAFC',
+  background: '#FFFFFF',
   cardBg: '#FFFFFF',
   textMain: '#0F172A',
   textMuted: '#64748B',
@@ -83,8 +83,8 @@ const HealthOverview = ({ score, systemHealth }) => {
     <motion.div
       initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
       style={{
-        background: 'white', borderRadius: '24px', padding: '1rem',
-        border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 10px 30px rgba(0,0,0,0.03)',
+        background: isOffline ? 'linear-gradient(165deg, #F8FAFC 0%, #F1F5F9 100%)' : 'linear-gradient(165deg, #ECFDF5 0%, #FFFFFF 100%)', borderRadius: '24px', padding: '1rem',
+        border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
         marginBottom: '1.5rem', display: 'flex', gap: '0.75rem', alignItems: 'center',
         overflow: 'hidden'
       }}
@@ -285,8 +285,8 @@ const InsightsCard = ({ sensorData, sensorHistory }) => {
     <motion.div
       initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
       style={{
-        background: 'white', borderRadius: '24px', padding: '1.25rem',
-        border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 10px 30px rgba(0,0,0,0.03)',
+        background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '24px', padding: '1.25rem',
+        border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
         marginBottom: '1.5rem'
       }}
     >
@@ -327,8 +327,8 @@ const SensorCard = ({ title, value, icon: Icon, color, status, score, onClick, n
       initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}
       whileTap={{ scale: 0.98 }} onClick={onClick}
       style={{
-        background: '#FFFFFF', borderRadius: '24px', padding: '1rem',
-        border: '1px solid #F1F5F9', boxShadow: '0 10px 30px rgba(0,0,0,0.02)',
+        background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '24px', padding: '1rem',
+        border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
         cursor: 'pointer', position: 'relative', overflow: 'hidden',
         display: 'flex', gap: '12px', height: '96px', alignItems: 'center'
       }}
@@ -354,8 +354,8 @@ const CamCard = ({ isOnline, onClick }) => (
   <motion.div
     whileTap={{ scale: 0.98 }} onClick={onClick}
     style={{
-      background: '#FFFFFF', borderRadius: '24px', padding: '1rem',
-      border: '1px solid #F1F5F9', boxShadow: '0 10px 30px rgba(0,0,0,0.02)',
+      background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '24px', padding: '1rem',
+      border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
       cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '0',
       height: '186px', width: '100%', boxSizing: 'border-box'
     }}
@@ -399,8 +399,8 @@ const ControlsCard = ({ actuators, toggleActuator, ACTUATORS }) => {
     <motion.div
       initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
       style={{
-        background: '#FFFFFF', borderRadius: '24px', padding: '1rem',
-        border: '1px solid #F1F5F9', boxShadow: '0 10px 30px rgba(0,0,0,0.02)',
+        background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '24px', padding: '1rem',
+        border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
         display: 'flex', flexDirection: 'column', gap: '0.75rem', justifyContent: 'center',
         width: '100%', boxSizing: 'border-box', marginBottom: '1.2rem'
       }}
@@ -411,7 +411,7 @@ const ControlsCard = ({ actuators, toggleActuator, ACTUATORS }) => {
           return (
             <div key={c.label} style={{ 
               flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', 
-              padding: '12px 4px', borderRadius: '20px', border: '1px solid #F8FAFC', background: '#FBFDFF' 
+              padding: '12px 4px', borderRadius: '20px', border: '1px solid #F1F5F9', background: '#FFFFFF' 
             }}>
               <div style={{ width: '42px', height: '42px', borderRadius: '14px', background: c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <c.icon size={20} color={c.color} strokeWidth={2.5} />

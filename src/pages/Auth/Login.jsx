@@ -10,13 +10,13 @@ import {
 
 // ─── DESIGN TOKENS (SAMPLED FROM SCREENSHOT) ──────────────────────────────
 const COLORS = {
-  background: '#042F2E', // Deep Forest Green
-  card: '#0D3D36',       // Dark Teal Card
-  primary: '#10B981',    // Emerald Green
-  input: 'rgba(255, 255, 255, 0.05)',
-  inputBorder: 'rgba(255, 255, 255, 0.1)',
-  textMain: '#FFFFFF',
-  textMuted: 'rgba(255, 255, 255, 0.4)',
+  background: '#FFFFFF', 
+  card: '#FFFFFF',       
+  primary: '#10B981',    
+  input: '#FFFFFF',
+  inputBorder: '#E2E8F0',
+  textMain: '#0F172A',
+  textMuted: '#64748B',
 };
 
 const Login = () => {
@@ -74,7 +74,7 @@ const Login = () => {
       minHeight: '100dvh', width: '100vw', background: COLORS.background,
       display: 'flex', flexDirection: 'column', alignItems: 'center', 
       padding: '2rem 1.5rem', fontFamily: "'Outfit', sans-serif",
-      color: 'white', position: 'relative'
+      color: COLORS.textMain, position: 'relative'
     }}>
       
       {/* 🍃 COMPACT LOGO */}
@@ -90,16 +90,16 @@ const Login = () => {
         }}>
           <Leaf size={30} color={COLORS.primary} strokeWidth={2.5} />
         </div>
-        <h1 style={{ fontSize: '1.6rem', fontWeight: 800, margin: 0, letterSpacing: '-0.02em' }}>AgriSense</h1>
+        <h1 style={{ fontSize: '1.6rem', fontWeight: 800, margin: 0, letterSpacing: '-0.02em', color: COLORS.textMain }}>AgriSense</h1>
       </motion.div>
 
       {/* 🃏 AUTH CARD */}
       <motion.div 
         layout
         style={{ 
-          width: '100%', maxWidth: '360px', background: COLORS.card,
+          width: '100%', maxWidth: '360px', background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)',
           borderRadius: '32px', padding: '1.8rem 1.5rem',
-          boxShadow: '0 40px 100px rgba(0,0,0,0.4)', border: `1px solid ${COLORS.inputBorder}`
+          boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)', border: '1px solid rgba(255, 255, 255, 0.8)'
         }}
       >
         <AnimatePresence mode="wait">
@@ -120,20 +120,20 @@ const Login = () => {
                   <div style={{ marginBottom: '0.75rem', position: 'relative' }}>
                     <User size={18} color={COLORS.textMuted} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
                     <input type="text" placeholder="Full Name" value={fullName} onChange={e => setFullName(e.target.value)}
-                      style={{ width: '100%', height: '52px', background: COLORS.input, border: `1px solid ${COLORS.inputBorder}`, borderRadius: '16px', paddingLeft: '44px', color: 'white', fontSize: '0.9rem', outline: 'none' }}
+                      style={{ width: '100%', height: '52px', background: COLORS.input, border: `1px solid ${COLORS.inputBorder}`, borderRadius: '16px', paddingLeft: '44px', color: COLORS.textMain, fontSize: '0.9rem', outline: 'none' }}
                     />
                   </div>
                 )}
                 <div style={{ marginBottom: '0.75rem', position: 'relative' }}>
                   <Mail size={18} color={COLORS.textMuted} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
                   <input type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)}
-                    style={{ width: '100%', height: '52px', background: COLORS.input, border: `1px solid ${COLORS.inputBorder}`, borderRadius: '16px', paddingLeft: '44px', color: 'white', fontSize: '0.9rem', outline: 'none' }}
+                    style={{ width: '100%', height: '52px', background: COLORS.input, border: `1px solid ${COLORS.inputBorder}`, borderRadius: '16px', paddingLeft: '44px', color: COLORS.textMain, fontSize: '0.9rem', outline: 'none' }}
                   />
                 </div>
                 <div style={{ marginBottom: '1.2rem', position: 'relative' }}>
                   <Lock size={18} color={COLORS.textMuted} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
                   <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)}
-                    style={{ width: '100%', height: '52px', background: COLORS.input, border: `1px solid ${COLORS.inputBorder}`, borderRadius: '16px', paddingLeft: '44px', color: 'white', fontSize: '0.9rem', outline: 'none' }}
+                    style={{ width: '100%', height: '52px', background: COLORS.input, border: `1px solid ${COLORS.inputBorder}`, borderRadius: '16px', paddingLeft: '44px', color: COLORS.textMain, fontSize: '0.9rem', outline: 'none' }}
                   />
                 </div>
                 <button type="submit" style={{ width: '100%', height: '56px', borderRadius: '16px', background: COLORS.primary, border: 'none', color: 'white', fontWeight: 800, fontSize: '1rem', cursor: 'pointer', boxShadow: `0 8px 24px ${COLORS.primary}40`, marginBottom: '1rem' }}>
@@ -171,7 +171,7 @@ const Login = () => {
                 <div style={{ marginBottom: '1.2rem', position: 'relative' }}>
                   <User size={18} color={COLORS.textMuted} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
                   <input type="text" placeholder="Your Name" value={guestName} onChange={e => setGuestName(e.target.value)} autoFocus
-                    style={{ width: '100%', height: '52px', background: COLORS.input, border: `1px solid ${COLORS.inputBorder}`, borderRadius: '16px', paddingLeft: '44px', color: 'white', fontSize: '0.9rem', outline: 'none' }}
+                    style={{ width: '100%', height: '52px', background: COLORS.input, border: `1px solid ${COLORS.inputBorder}`, borderRadius: '16px', paddingLeft: '44px', color: COLORS.textMain, fontSize: '0.9rem', outline: 'none' }}
                   />
                 </div>
                 <button type="submit" style={{ width: '100%', height: '56px', borderRadius: '16px', background: COLORS.primary, border: 'none', color: 'white', fontWeight: 800, fontSize: '1rem', cursor: 'pointer' }}>
@@ -189,7 +189,7 @@ const Login = () => {
 
       {/* 🛡️ FOOTER */}
       <div style={{ marginTop: 'auto', paddingBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.3, fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.05em' }}>
-        <ShieldCheck size={14} /> INDUSTRIAL MODE ACTIVE
+        <ShieldCheck size={14} /> <span style={{ color: COLORS.textMuted }}>INDUSTRIAL MODE ACTIVE</span>
       </div>
 
     </div>

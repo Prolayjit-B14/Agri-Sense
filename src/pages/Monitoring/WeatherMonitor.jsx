@@ -16,7 +16,7 @@ const COLORS = {
   warning: '#F59E0B',
   critical: '#EF4444',
   offline: '#94A3B8',
-  bg: '#F8FAFC',
+  bg: '#FFFFFF',
   text: '#1E293B',
   subtext: '#64748B',
   white: '#FFFFFF',
@@ -42,15 +42,15 @@ const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, statusText 
   const isCritical = safeStatus.includes('critical') || safeStatus.includes('warning') || safeStatus.includes('heavy') || safeStatus.includes('storm');
   
   const stateColor = isOffline ? COLORS.offline : (isOptimal ? COLORS.primary : (isModerate ? COLORS.warning : (isCritical ? COLORS.critical : COLORS.offline)));
-  const cardBg = isOffline ? '#F1F5F9' : (isOptimal ? '#F0FDF4' : (isModerate ? '#FFFBEB' : '#FEF2F2'));
+  const cardBg = isOffline ? 'linear-gradient(165deg, #F8FAFC 0%, #F1F5F9 100%)' : (isOptimal ? 'linear-gradient(165deg, #F0FDF4 0%, #FFFFFF 100%)' : (isModerate ? 'linear-gradient(165deg, #FFFBEB 0%, #FFFFFF 100%)' : 'linear-gradient(165deg, #FEF2F2 0%, #FFFFFF 100%)'));
 
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
       style={{
-        background: cardBg, borderRadius: '28px', padding: '1.25rem 1rem',
-        border: `1.5px solid ${isOffline ? '#E2E8F0' : COLORS.border}`,
-        boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
+        background: cardBg, borderRadius: '24px', padding: '1.25rem 1rem',
+        border: '1px solid rgba(255, 255, 255, 0.8)',
+        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
         position: 'relative', height: '185px',
         display: 'flex', flexDirection: 'column',
         justifyContent: 'space-between', overflow: 'hidden'
@@ -97,7 +97,7 @@ const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, statusText 
 };
 
 const RegionalMetric = ({ label, value, icon: Icon, color }) => (
-  <div style={{ background: '#FFFFFF', padding: '12px 8px', borderRadius: '16px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+  <div style={{ background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', padding: '12px 8px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.8)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', boxShadow: '0 4px 12px rgba(0,0,0,0.02), inset 0 1px 1px rgba(255,255,255,0.9)' }}>
      <Icon size={16} color={color} />
      <div style={{ textAlign: 'center' }}>
        <p style={{ margin: 0, fontSize: '0.5rem', fontWeight: 800, color: COLORS.subtext, textTransform: 'uppercase' }}>{label}</p>
@@ -130,9 +130,9 @@ const WeatherMonitoring = () => {
   const heroConfig = useMemo(() => {
     if (!isOnline || weatherScore === null) return { label: 'DEVICE OFFLINE', status: 'Offline', gradient: GRADIENTS.offline, iconColor: COLORS.offline, message: 'Check node power and connectivity.', bg: '#F1F5F9', border: '#E2E8F0' };
     
-    if (weatherScore >= 75) return { label: 'CLIMATE STABILITY', status: 'Optimal', gradient: GRADIENTS.optimal, iconColor: COLORS.primary, message: 'Current conditions support peak crop respiration.', bg: '#F0FDF4', border: 'rgba(20, 184, 166, 0.1)' };
-    if (weatherScore >= 45) return { label: 'CLIMATE STABILITY', status: 'Moderate', gradient: GRADIENTS.moderate, iconColor: COLORS.warning, message: 'Sub-optimal climate detected. Monitor heat stress.', bg: '#FFFBEB', border: 'rgba(245, 158, 11, 0.1)' };
-    return { label: 'CLIMATE STABILITY', status: 'Critical', gradient: GRADIENTS.critical, iconColor: COLORS.critical, message: 'Extreme weather threshold breached.', bg: '#FEF2F2', border: 'rgba(239, 68, 68, 0.1)' };
+    if (weatherScore >= 75) return { label: 'CLIMATE STABILITY', status: 'Optimal', gradient: GRADIENTS.optimal, iconColor: COLORS.primary, message: 'Current conditions support peak crop respiration.', bg: '#DCFCE7', border: 'rgba(20, 184, 166, 0.1)' };
+    if (weatherScore >= 45) return { label: 'CLIMATE STABILITY', status: 'Moderate', gradient: GRADIENTS.moderate, iconColor: COLORS.warning, message: 'Sub-optimal climate detected. Monitor heat stress.', bg: '#FEF3C7', border: 'rgba(245, 158, 11, 0.1)' };
+    return { label: 'CLIMATE STABILITY', status: 'Critical', gradient: GRADIENTS.critical, iconColor: COLORS.critical, message: 'Extreme weather threshold breached.', bg: '#FEE2E2', border: 'rgba(239, 68, 68, 0.1)' };
   }, [isOnline, weatherScore]);
 
   return (
@@ -142,10 +142,10 @@ const WeatherMonitoring = () => {
       <motion.div
         initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}
         style={{
-          background: heroConfig.bg, borderRadius: '24px', padding: '1.75rem',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
+          background: `linear-gradient(165deg, ${heroConfig.bg} 0%, #FFFFFF 100%)`, borderRadius: '24px', padding: '1.75rem',
+          boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 2px rgba(255,255,255,0.9)',
           marginBottom: '1.5rem', position: 'relative', overflow: 'hidden',
-          border: `1.5px solid ${heroConfig.border}`,
+          border: '1px solid rgba(255, 255, 255, 0.8)',
           display: 'flex', flexDirection: 'column', gap: '1.5rem',
           transition: 'background 0.5s ease, border 0.5s ease'
         }}
@@ -201,7 +201,7 @@ const WeatherMonitoring = () => {
       </div>
 
       {/* ─── REGIONAL & FORECAST ─── */}
-      <section style={{ background: 'white', borderRadius: '28px', padding: '1.5rem', border: `1px solid ${COLORS.border}`, marginBottom: '1.5rem' }}>
+      <section style={{ background: 'white', borderRadius: '24px', padding: '1.5rem', border: `1px solid ${COLORS.border}`, marginBottom: '1.5rem' }}>
         <h3 style={{ fontSize: '0.75rem', fontWeight: 800, color: COLORS.text, marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Navigation size={18} color={COLORS.primary} /> Regional Data
         </h3>
@@ -217,7 +217,7 @@ const WeatherMonitoring = () => {
         </div>
       </section>
 
-      <section style={{ background: 'white', borderRadius: '32px', padding: '1.5rem', border: `1px solid ${COLORS.border}`, marginBottom: '1.5rem' }}>
+      <section style={{ background: 'white', borderRadius: '24px', padding: '1.5rem', border: `1px solid ${COLORS.border}`, marginBottom: '1.5rem' }}>
         <h3 style={{ margin: '0 0 1rem 0', fontSize: '0.75rem', fontWeight: 800, color: COLORS.text, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <LineChart size={18} color={COLORS.primary} /> 5-Day Forecast
         </h3>
@@ -230,7 +230,7 @@ const WeatherMonitoring = () => {
               return <Sun size={16} color={COLORS.warning} />;
             };
             return (
-              <div key={idx} style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', background: '#F8FAFC', borderRadius: '20px', border: '1px solid #F1F5F9' }}>
+              <div key={idx} style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '20px', border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: '0 2px 8px rgba(0,0,0,0.01), inset 0 1px 1px rgba(255,255,255,0.9)' }}>
                 <div style={{ width: '60px' }}><p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 800, color: COLORS.text }}>{day.date}</p></div>
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #E2E8F0' }}>

@@ -20,7 +20,7 @@ import { useLocation } from 'react-router-dom';
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────
 const COLORS = {
   good: '#10B981', warning: '#F59E0B', critical: '#EF4444', neutral: '#94A3B8',
-  bg: '#F8FAFC', card: '#FFFFFF', border: '#E2E8F0', text: '#0F172A', subtext: '#64748B',
+  bg: '#FFFFFF', card: '#FFFFFF', border: '#E2E8F0', text: '#0F172A', subtext: '#64748B',
   soil: ['#10B981', '#3B82F6', '#A855F7', '#EC4899', '#F59E0B', '#14B8A6', '#6366F1', '#8B5CF6'],
   weather: ['#0EA5E9', '#F59E0B', '#6366F1', '#10B981', '#F43F5E', '#8B5CF6', '#14B8A6', '#A855F7'],
   storage: ['#8B5CF6', '#F43F5E', '#10B981', '#3B82F6', '#0EA5E9', '#F59E0B', '#6366F1', '#14B8A6']
@@ -33,11 +33,11 @@ const AnalyticsCard = ({ title, isOffline, children, height = '340px', currentVa
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       style={{
-        background: COLORS.card,
-        borderRadius: '28px',
+        background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)',
+        borderRadius: '24px',
         padding: '1.5rem',
-        border: '1px solid rgba(0,0,0,0.04)',
-        boxShadow: '0 10px 30px rgba(0,0,0,0.02)',
+        border: '1px solid rgba(255, 255, 255, 0.8)',
+        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
         display: 'flex',
         flexDirection: 'column',
         height,
@@ -71,11 +71,11 @@ const AnalyticsCard = ({ title, isOffline, children, height = '340px', currentVa
             background: 'rgba(0,0,0,0.05)', padding: '1px', borderRadius: '12px',
             overflow: 'hidden'
           }}>
-            <div style={{ background: COLORS.card, padding: '8px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ background: 'transparent', padding: '8px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <span style={{ fontSize: '0.5rem', fontWeight: 900, color: COLORS.subtext, textTransform: 'uppercase', marginBottom: '2px' }}>MIN</span>
               <span style={{ fontSize: '0.85rem', fontWeight: 950, color: COLORS.text }}>{minVal?.toFixed(1) || '--'}</span>
             </div>
-            <div style={{ background: COLORS.card, padding: '8px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ background: 'transparent', padding: '8px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <span style={{ fontSize: '0.5rem', fontWeight: 900, color: COLORS.subtext, textTransform: 'uppercase', marginBottom: '2px' }}>MAX</span>
               <span style={{ fontSize: '0.85rem', fontWeight: 950, color: COLORS.text }}>{maxVal?.toFixed(1) || '--'}</span>
             </div>

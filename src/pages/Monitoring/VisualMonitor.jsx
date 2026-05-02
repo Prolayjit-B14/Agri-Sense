@@ -24,12 +24,12 @@ const COLORS = {
   text: '#0F172A',
   muted: '#64748B',
   border: 'rgba(0,0,0,0.04)',
-  bg: '#F8FAFC',
+  bg: '#FFFFFF',
   card: '#FFFFFF'
 };
 
 const RAD = {
-  card: '28px',
+  card: '24px',
   inner: '18px',
   btn: '14px'
 };
@@ -51,14 +51,14 @@ const ControlButton = ({ icon: Icon, label, active, onClick, color = COLORS.seco
   <motion.div 
     whileTap={{ scale: 0.95 }}
     onClick={onClick}
-    style={{ 
-      background: active ? color : COLORS.card, 
-      border: `1px solid ${active ? color : COLORS.border}`,
-      borderRadius: '14px', padding: '10px 4px', display: 'flex', flexDirection: 'column', 
-      alignItems: 'center', gap: '5px', flex: 1, cursor: 'pointer',
-      boxShadow: active ? `0 4px 12px ${color}25` : '0 1px 4px rgba(0,0,0,0.03)',
-      userSelect: 'none',
-    }}
+      style={{ 
+        background: active ? color : 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', 
+        border: `1px solid ${active ? color : 'rgba(255, 255, 255, 0.8)'}`,
+        borderRadius: '14px', padding: '10px 4px', display: 'flex', flexDirection: 'column', 
+        alignItems: 'center', gap: '5px', flex: 1, cursor: 'pointer',
+        boxShadow: active ? `0 8px 16px ${color}30` : '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
+        userSelect: 'none',
+      }}
   >
     <div style={{ 
       width: '30px', height: '30px', borderRadius: '10px', 
@@ -160,7 +160,7 @@ const VisualMonitor = () => {
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
         style={{ 
           position: 'relative', borderRadius: '32px', overflow: 'hidden', 
-          background: '#000', marginBottom: '1.5rem', boxShadow: '0 12px 40px rgba(0,0,0,0.15)' 
+          background: '#000', marginBottom: '1.5rem', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05)' 
         }}
       >
         <div style={{ height: '240px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0F172A' }}>
@@ -217,8 +217,8 @@ const VisualMonitor = () => {
           <motion.div 
             initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
             style={{ 
-              background: '#FEF2F2', borderRadius: RAD.card, padding: '1.25rem', marginBottom: '1.5rem',
-              border: `1px solid ${COLORS.danger}20`, boxShadow: '0 8px 30px rgba(239,68,68,0.1)'
+              background: 'linear-gradient(165deg, #FEF2F2 0%, #FFFFFF 100%)', borderRadius: RAD.card, padding: '1.25rem', marginBottom: '1.5rem',
+              border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)'
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -237,11 +237,11 @@ const VisualMonitor = () => {
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div style={{ background: 'white', padding: '10px', borderRadius: '14px', border: '1px solid rgba(0,0,0,0.02)' }}>
+              <div style={{ background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', padding: '10px', borderRadius: '14px', border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.9)' }}>
                 <div style={{ fontSize: '0.55rem', fontWeight: 800, color: COLORS.muted }}>ZONE</div>
                 <div style={{ fontSize: '0.75rem', fontWeight: 900, color: COLORS.text }}>{telemetry.detection.zone}</div>
               </div>
-              <div style={{ background: 'white', padding: '10px', borderRadius: '14px', border: '1px solid rgba(0,0,0,0.02)' }}>
+              <div style={{ background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', padding: '10px', borderRadius: '14px', border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.9)' }}>
                 <div style={{ fontSize: '0.55rem', fontWeight: 800, color: COLORS.muted }}>TIMESTAMP</div>
                 <div style={{ fontSize: '0.75rem', fontWeight: 900, color: COLORS.text }}>
                   {telemetry.detection.timestamp ? new Date(telemetry.detection.timestamp).toLocaleTimeString() : '---'}

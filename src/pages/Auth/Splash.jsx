@@ -5,12 +5,12 @@ import { Leaf } from 'lucide-react';
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────
 const COLORS = {
-  primary: '#10B981', // Professional Emerald Green
-  background: '#042F2E', // Unified Deep Forest Green
-  containerBg: 'rgba(255, 255, 255, 0.03)',
-  containerBorder: 'rgba(255, 255, 255, 0.1)',
-  textMain: '#FFFFFF',
-  textMuted: 'rgba(255, 255, 255, 0.5)',
+  primary: '#10B981', 
+  background: '#FFFFFF', 
+  containerBg: 'rgba(0, 0, 0, 0.03)',
+  containerBorder: 'rgba(0, 0, 0, 0.05)',
+  textMain: '#0F172A',
+  textMuted: '#64748B',
 };
 
 // ─── MAIN SCREEN ──────────────────────────────────────────────────────────
@@ -57,13 +57,13 @@ const Splash = () => {
             width: '110px', 
             height: '110px', 
             borderRadius: '28px', 
-            background: COLORS.containerBg, 
+            background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', 
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center',
             backdropFilter: 'blur(12px)', 
-            border: `1px solid ${COLORS.containerBorder}`,
-            boxShadow: '0 20px 40px rgba(0,0,0,0.4)', 
+            border: '1px solid rgba(255, 255, 255, 0.8)',
+            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)', 
             marginBottom: '2.5rem'
           }}
         >
@@ -137,7 +137,7 @@ const Splash = () => {
       </div>
       
       {/* FOOTER - Versioning */}
-      <div style={{ position: 'absolute', bottom: '30px', color: 'rgba(255,255,255,0.2)', fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.1em' }}>
+      <div style={{ position: 'absolute', bottom: '30px', color: COLORS.textMuted, opacity: 0.3, fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.1em' }}>
         AGRISENSE PRO • v17.1.0
       </div>
 

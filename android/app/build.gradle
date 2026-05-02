@@ -7,8 +7,8 @@ android {
         applicationId "com.agrisense.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 172
-        versionName "17.2.0"
+        versionCode 175
+        versionName "17.2.5"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {

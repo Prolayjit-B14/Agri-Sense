@@ -16,7 +16,7 @@ const COLORS = {
   warning: '#D97706',
   critical: '#DC2626',
   offline: '#94A3B8',
-  bg: '#F8FAFC',
+  bg: '#FFFFFF',
   text: '#1E293B',
   subtext: '#64748B',
   white: '#FFFFFF',
@@ -42,7 +42,7 @@ const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, statusText 
   const isHighLow = safeStatus.includes('high') || safeStatus.includes('low') || safeStatus.includes('acidic') || safeStatus.includes('alkaline') || safeStatus.includes('hot') || safeStatus.includes('cold');
   
   const stateColor = isOffline ? COLORS.offline : (isOptimal ? COLORS.primary : (isModerate ? COLORS.warning : (isHighLow ? COLORS.critical : COLORS.offline)));
-  const cardBg = isOffline ? '#F1F5F9' : (isOptimal ? '#F0FDF4' : (isModerate ? '#FFFBEB' : '#FEF2F2'));
+  const cardBg = isOffline ? 'linear-gradient(165deg, #F8FAFC 0%, #F1F5F9 100%)' : (isOptimal ? 'linear-gradient(165deg, #F0FDF4 0%, #FFFFFF 100%)' : (isModerate ? 'linear-gradient(165deg, #FFFBEB 0%, #FFFFFF 100%)' : 'linear-gradient(165deg, #FEF2F2 0%, #FFFFFF 100%)'));
 
   const renderTrendIcon = () => {
     if (isOffline) return <Minus size={18} color="#CBD5E1" strokeWidth={3} />;
@@ -67,9 +67,9 @@ const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, statusText 
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
       style={{
-        background: cardBg, borderRadius: '28px', padding: '1.25rem 1rem',
-        border: `1.5px solid ${isOffline ? '#E2E8F0' : COLORS.border}`,
-        boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
+        background: cardBg, borderRadius: '24px', padding: '1.25rem 1rem',
+        border: '1px solid rgba(255, 255, 255, 0.8)',
+        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
         position: 'relative', minHeight: '185px',
         display: 'flex', flexDirection: 'column',
         justifyContent: 'space-between', overflow: 'hidden'
@@ -119,10 +119,10 @@ const ActionItem = ({ label, message, priority, icon: Icon }) => {
   const color = priority === 'high' ? COLORS.critical : (priority === 'medium' ? COLORS.warning : COLORS.primary);
   return (
     <div style={{ 
-      padding: '1.25rem', borderRadius: '24px', background: 'white', 
-      border: `1px solid ${COLORS.border}`, marginBottom: '12px',
+      padding: '1.25rem', borderRadius: '24px', background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', 
+      border: '1px solid rgba(255, 255, 255, 0.8)', marginBottom: '12px',
       display: 'flex', gap: '16px', alignItems: 'center',
-      boxShadow: '0 4px 10px rgba(0,0,0,0.02)'
+      boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)'
     }}>
       <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: `${color}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Icon size={20} color={color} />
@@ -161,10 +161,10 @@ const SoilMonitoring = () => {
     if (!isOnline) return { label: 'DEVICE OFFLINE', status: 'Offline', gradient: GRADIENTS.offline, iconColor: COLORS.offline, message: 'Check node power and connectivity.', bg: '#F1F5F9', border: '#E2E8F0' };
     if (isDataIncomplete) return { label: 'WAITING FOR DATA', status: 'Calibrating', gradient: GRADIENTS.offline, iconColor: COLORS.offline, message: 'Establishing sensor handshake...', bg: '#F1F5F9', border: '#E2E8F0' };
     
-    if (healthScore >= 75) return { label: 'OVERALL SOIL HEALTH', status: 'Optimal', gradient: GRADIENTS.optimal, iconColor: COLORS.primary, message: 'Conditions are stable for high growth.', bg: '#F0FDF4', border: 'rgba(5, 150, 105, 0.1)' };
-    if (healthScore >= 45) return { label: 'OVERALL SOIL HEALTH', status: 'Moderate', gradient: GRADIENTS.moderate, iconColor: COLORS.warning, message: 'Some parameters require field adjustment.', bg: '#FFFBEB', border: 'rgba(217, 119, 6, 0.1)' };
-    if (healthScore >= 25) return { label: 'OVERALL SOIL HEALTH', status: 'Low', gradient: GRADIENTS.low, iconColor: COLORS.critical, message: 'Soil health is below the safe threshold.', bg: '#FEF2F2', border: 'rgba(220, 38, 38, 0.1)' };
-    return { label: 'OVERALL SOIL HEALTH', status: 'Critical', gradient: GRADIENTS.critical, iconColor: COLORS.critical, message: 'Immediate soil intervention required.', bg: '#FEF2F2', border: 'rgba(220, 38, 38, 0.2)' };
+    if (healthScore >= 75) return { label: 'OVERALL SOIL HEALTH', status: 'Optimal', gradient: GRADIENTS.optimal, iconColor: COLORS.primary, message: 'Conditions are stable for high growth.', bg: '#DCFCE7', border: 'rgba(5, 150, 105, 0.1)' };
+    if (healthScore >= 45) return { label: 'OVERALL SOIL HEALTH', status: 'Moderate', gradient: GRADIENTS.moderate, iconColor: COLORS.warning, message: 'Some parameters require field adjustment.', bg: '#FEF3C7', border: 'rgba(217, 119, 6, 0.1)' };
+    if (healthScore >= 25) return { label: 'OVERALL SOIL HEALTH', status: 'Low', gradient: GRADIENTS.low, iconColor: COLORS.critical, message: 'Soil health is below the safe threshold.', bg: '#FEE2E2', border: 'rgba(220, 38, 38, 0.1)' };
+    return { label: 'OVERALL SOIL HEALTH', status: 'Critical', gradient: GRADIENTS.critical, iconColor: COLORS.critical, message: 'Immediate soil intervention required.', bg: '#FEE2E2', border: 'rgba(220, 38, 38, 0.2)' };
   }, [isOnline, isDataIncomplete, healthScore]);
 
   const recommendations = useMemo(() => {
@@ -197,10 +197,10 @@ const SoilMonitoring = () => {
       <motion.div
         initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}
         style={{
-          background: heroConfig.bg, borderRadius: '24px', padding: '1.75rem',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
+          background: `linear-gradient(165deg, ${heroConfig.bg} 0%, #FFFFFF 100%)`, borderRadius: '24px', padding: '1.75rem',
+          boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 2px rgba(255,255,255,0.9)',
           marginBottom: '1.5rem', position: 'relative', overflow: 'hidden',
-          border: `1.5px solid ${heroConfig.border}`,
+          border: '1px solid rgba(255, 255, 255, 0.8)',
           display: 'flex', flexDirection: 'column', gap: '1.5rem',
           transition: 'background 0.5s ease, border 0.5s ease'
         }}
@@ -278,7 +278,7 @@ const SoilMonitoring = () => {
               </motion.div>
             ))
           ) : (
-            <div style={{ textAlign: 'center', padding: '1.5rem', background: 'white', borderRadius: '32px', border: `1.25px dashed #E2E8F0` }}>
+            <div style={{ textAlign: 'center', padding: '1.5rem', background: 'white', borderRadius: '24px', border: `1.25px dashed #E2E8F0` }}>
               <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 700, color: COLORS.subtext }}>All field parameters are within healthy limits.</p>
             </div>
           )}

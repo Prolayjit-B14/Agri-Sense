@@ -66,10 +66,11 @@ const Sidebar = () => {
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
         style={{
           position: 'fixed', top: 0, left: 0, bottom: 0, width: '250px', zIndex: 10002,
-          background: '#FFFFFF',
+          background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)',
           display: 'flex', flexDirection: 'column',
-          boxShadow: isSidebarOpen ? '20px 0 50px rgba(0,0,0,0.05)' : 'none',
-          overflow: 'hidden'
+          boxShadow: isSidebarOpen ? '20px 0 50px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)' : 'none',
+          overflow: 'hidden',
+          borderRight: '1px solid rgba(255, 255, 255, 0.8)'
         }}
       >
         {/* ── HEADER: USER PROFILE ── */}
@@ -151,7 +152,7 @@ const Sidebar = () => {
             </div>
           </div>
           <div style={{ fontSize: '0.6rem', color: '#94a3b8', fontWeight: 600, marginLeft: '26px' }}>
-            v17.1.0
+            v17.2.5
           </div>
         </div>
       </motion.div>

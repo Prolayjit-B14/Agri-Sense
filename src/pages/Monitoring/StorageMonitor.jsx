@@ -15,7 +15,7 @@ const COLORS = {
   warning: '#F59E0B',
   critical: '#F43F5E',
   offline: '#94A3B8',
-  bg: '#F8FAFC',
+  bg: '#FFFFFF',
   text: '#0F172A',
   subtext: '#64748B',
   white: '#FFFFFF',
@@ -41,15 +41,15 @@ const DiagnosticCard = ({ label, value, icon: Icon, color, statusText = '', rang
   const isCritical = safeStatus.includes('critical') || safeStatus.includes('high') || safeStatus.includes('low');
   
   const stateColor = isOffline ? COLORS.offline : (isOptimal ? COLORS.primary : (isModerate ? COLORS.warning : COLORS.critical));
-  const cardBg = isOffline ? '#F1F5F9' : (isOptimal ? '#F5F3FF' : (isModerate ? '#FFFBEB' : '#FEF2F2'));
+  const cardBg = isOffline ? 'linear-gradient(165deg, #F8FAFC 0%, #F1F5F9 100%)' : (isOptimal ? 'linear-gradient(165deg, #F5F3FF 0%, #FFFFFF 100%)' : (isModerate ? 'linear-gradient(165deg, #FFFBEB 0%, #FFFFFF 100%)' : 'linear-gradient(165deg, #FEF2F2 0%, #FFFFFF 100%)'));
 
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
       style={{
-        background: cardBg, borderRadius: '28px', padding: '1.25rem 1rem',
-        border: `1.5px solid ${isOffline ? '#E2E8F0' : COLORS.border}`,
-        boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
+        background: cardBg, borderRadius: '24px', padding: '1.25rem 1rem',
+        border: '1px solid rgba(255, 255, 255, 0.8)',
+        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
         position: 'relative', height: '185px',
         display: 'flex', flexDirection: 'column',
         justifyContent: 'space-between', overflow: 'hidden'
@@ -118,9 +118,9 @@ const StorageMonitoring = () => {
   const heroConfig = useMemo(() => {
     if (!isOnline) return { label: 'FACILITY OFFLINE', status: 'Offline', gradient: GRADIENTS.offline, iconColor: COLORS.offline, message: 'Verify gateway connectivity for storage node.', bg: '#F1F5F9', border: '#E2E8F0' };
     
-    if (storageScore >= 75) return { label: 'FACILITY STABILITY', status: 'Optimal', gradient: GRADIENTS.optimal, iconColor: COLORS.primary, message: 'Stable conditions for perishable storage.', bg: '#F5F3FF', border: 'rgba(139, 92, 246, 0.1)' };
-    if (storageScore >= 45) return { label: 'FACILITY STABILITY', status: 'Moderate', gradient: GRADIENTS.moderate, iconColor: COLORS.warning, message: 'Variable stability detected. Check ventilation.', bg: '#FFFBEB', border: 'rgba(245, 158, 11, 0.1)' };
-    return { label: 'FACILITY STABILITY', status: 'Critical', gradient: GRADIENTS.critical, iconColor: COLORS.critical, message: 'Storage safety threshold breached!', bg: '#FEF2F2', border: 'rgba(244, 63, 94, 0.1)' };
+    if (storageScore >= 75) return { label: 'FACILITY STABILITY', status: 'Optimal', gradient: GRADIENTS.optimal, iconColor: COLORS.primary, message: 'Stable conditions for perishable storage.', bg: '#EDE9FE', border: 'rgba(139, 92, 246, 0.1)' };
+    if (storageScore >= 45) return { label: 'FACILITY STABILITY', status: 'Moderate', gradient: GRADIENTS.moderate, iconColor: COLORS.warning, message: 'Variable stability detected. Check ventilation.', bg: '#FEF3C7', border: 'rgba(245, 158, 11, 0.1)' };
+    return { label: 'FACILITY STABILITY', status: 'Critical', gradient: GRADIENTS.critical, iconColor: COLORS.critical, message: 'Storage safety threshold breached!', bg: '#FEE2E2', border: 'rgba(244, 63, 94, 0.1)' };
   }, [isOnline, storageScore]);
 
   return (
@@ -130,10 +130,10 @@ const StorageMonitoring = () => {
       <motion.div
         initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}
         style={{
-          background: heroConfig.bg, borderRadius: '24px', padding: '1.75rem',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
+          background: `linear-gradient(165deg, ${heroConfig.bg} 0%, #FFFFFF 100%)`, borderRadius: '24px', padding: '1.75rem',
+          boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 2px rgba(255,255,255,0.9)',
           marginBottom: '1.5rem', position: 'relative', overflow: 'hidden',
-          border: `1.5px solid ${heroConfig.border}`,
+          border: '1px solid rgba(255, 255, 255, 0.8)',
           display: 'flex', flexDirection: 'column', gap: '1.5rem',
           transition: 'background 0.5s ease, border 0.5s ease'
         }}
@@ -174,7 +174,7 @@ const StorageMonitoring = () => {
       </div>
 
       {/* ─── FACILITY SUMMARY ─── */}
-      <section style={{ background: 'white', borderRadius: '28px', padding: '1.5rem', border: `1px solid ${COLORS.border}`, marginBottom: '1.5rem' }}>
+      <section style={{ background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '24px', padding: '1.5rem', border: '1px solid rgba(255, 255, 255, 0.8)', marginBottom: '1.5rem', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem' }}>
           <Server size={18} color={COLORS.primary} />
           <h3 style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: COLORS.text, textTransform: 'uppercase' }}>Facility Analysis</h3>

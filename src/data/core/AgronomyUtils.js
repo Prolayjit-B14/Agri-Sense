@@ -189,7 +189,7 @@ export const getCropIcon = (type, name = '') => {
   if (n.includes('sugarcane')) return { icon: Trees, color: '#22C55E' };
   if (n.includes('coffee')) return { icon: Coffee, color: '#78350F' };
   if (n.includes('tea')) return { icon: Leaf, color: '#15803D' };
-  if (n.includes('rubber')) return { icon: Milk, color: '#F8FAFC' };
+  if (n.includes('rubber')) return { icon: Milk, color: '#FFFFFF' };
   if (n.includes('ginger') || n.includes('turmeric')) return { icon: Nut, color: '#D97706' };
   if (n.includes('cumin')) return { icon: Wheat, color: '#92400E' };
   if (n.includes('pepper')) return { icon: Nut, color: '#1E293B' };

@@ -15,7 +15,7 @@ const COLORS = {
   warning: '#F59E0B',
   critical: '#EF4444',
   offline: '#94A3B8',
-  bg: '#F8FAFC',
+  bg: '#FFFFFF',
   text: '#1E293B',
   subtext: '#64748B',
   white: '#FFFFFF',
@@ -43,15 +43,15 @@ const DiagnosticCard = ({ label, value, icon: Icon, color, statusText = '', rang
   const isCritical = safeStatus.includes('critical') || safeStatus.includes('low') || safeStatus.includes('offline');
   
   const stateColor = isOffline ? COLORS.offline : (isOptimal ? COLORS.primary : (isModerate ? COLORS.warning : COLORS.critical));
-  const cardBg = isOffline ? '#F1F5F9' : (isOptimal ? '#F0F9FF' : (isModerate ? '#FFFBEB' : '#FEF2F2'));
+  const cardBg = isOffline ? 'linear-gradient(165deg, #F8FAFC 0%, #F1F5F9 100%)' : (isOptimal ? 'linear-gradient(165deg, #F0F9FF 0%, #FFFFFF 100%)' : (isModerate ? 'linear-gradient(165deg, #FFFBEB 0%, #FFFFFF 100%)' : 'linear-gradient(165deg, #FEF2F2 0%, #FFFFFF 100%)'));
 
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
       style={{
-        background: cardBg, borderRadius: '28px', padding: '1.25rem 1rem',
-        border: `1.5px solid ${isOffline ? '#E2E8F0' : COLORS.border}`,
-        boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
+        background: cardBg, borderRadius: '24px', padding: '1.25rem 1rem',
+        border: '1px solid rgba(255, 255, 255, 0.8)',
+        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
         position: 'relative', height: '185px',
         display: 'flex', flexDirection: 'column',
         justifyContent: 'space-between', overflow: 'hidden'
@@ -118,9 +118,9 @@ const IrrigationControl = () => {
   const heroConfig = useMemo(() => {
     if (!isOnline || healthScore === null) return { label: 'TANK OFFLINE', status: 'Offline', gradient: GRADIENTS.offline, iconColor: COLORS.offline, message: 'Check water level sensor connectivity.', bg: '#F1F5F9', border: '#E2E8F0' };
     
-    if (healthScore >= 75) return { label: 'WATER RESERVE', status: 'Optimal', gradient: GRADIENTS.optimal, iconColor: COLORS.primary, message: 'Adequate supply for scheduled irrigation.', bg: '#F0F9FF', border: 'rgba(14, 165, 233, 0.1)' };
-    if (healthScore >= 35) return { label: 'WATER RESERVE', status: 'Moderate', gradient: GRADIENTS.moderate, iconColor: COLORS.warning, message: 'Reserves are decreasing. Monitor consumption.', bg: '#FFFBEB', border: 'rgba(245, 158, 11, 0.1)' };
-    return { label: 'WATER RESERVE', status: 'Low', gradient: GRADIENTS.low, iconColor: COLORS.critical, message: 'Water reserves below safe threshold!', bg: '#FEF2F2', border: 'rgba(239, 68, 68, 0.1)' };
+    if (healthScore >= 75) return { label: 'WATER RESERVE', status: 'Optimal', gradient: GRADIENTS.optimal, iconColor: COLORS.primary, message: 'Adequate supply for scheduled irrigation.', bg: '#DBEAFE', border: 'rgba(14, 165, 233, 0.1)' };
+    if (healthScore >= 35) return { label: 'WATER RESERVE', status: 'Moderate', gradient: GRADIENTS.moderate, iconColor: COLORS.warning, message: 'Reserves are decreasing. Monitor consumption.', bg: '#FEF3C7', border: 'rgba(245, 158, 11, 0.1)' };
+    return { label: 'WATER RESERVE', status: 'Low', gradient: GRADIENTS.low, iconColor: COLORS.critical, message: 'Water reserves below safe threshold!', bg: '#FEE2E2', border: 'rgba(239, 68, 68, 0.1)' };
   }, [isOnline, healthScore]);
 
   return (
@@ -130,10 +130,10 @@ const IrrigationControl = () => {
       <motion.div
         initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}
         style={{
-          background: heroConfig.bg, borderRadius: '24px', padding: '1.75rem',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
+          background: `linear-gradient(165deg, ${heroConfig.bg} 0%, #FFFFFF 100%)`, borderRadius: '24px', padding: '1.75rem',
+          boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 2px rgba(255,255,255,0.9)',
           marginBottom: '1.5rem', position: 'relative', overflow: 'hidden',
-          border: `1.5px solid ${heroConfig.border}`,
+          border: '1px solid rgba(255, 255, 255, 0.8)',
           display: 'flex', flexDirection: 'column', gap: '1.5rem',
           transition: 'background 0.5s ease, border 0.5s ease'
         }}
@@ -166,7 +166,7 @@ const IrrigationControl = () => {
       </motion.div>
 
       {/* ─── PUMP CONTROL ─── */}
-      <section style={{ background: 'white', borderRadius: '28px', padding: '1.5rem', border: `1.5px solid ${COLORS.border}`, marginBottom: '1.5rem', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
+      <section style={{ background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '24px', padding: '1.5rem', border: '1px solid rgba(255, 255, 255, 0.8)', marginBottom: '1.5rem', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
             <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: isPumpActive ? '#ECFDF5' : '#F0F9FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
