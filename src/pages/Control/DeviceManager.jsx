@@ -92,7 +92,7 @@ const NodeCard = ({ icon: Icon, label, color, isOnline, sensors, actuators, togg
   <motion.div
     whileHover={{ y: -2 }}
     style={{
-      background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)',
+      background: `linear-gradient(165deg, ${color}10 0%, #FFFFFF 100%)`,
       borderRadius: '24px',
       padding: '16px',
       boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
@@ -164,7 +164,7 @@ const NetworkHealthCard = ({ activeCount, totalCount, mqttStatus }) => {
 
   return (
     <div style={{
-      background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)',
+      background: isConnected ? 'linear-gradient(165deg, #ECFDF5 0%, #FFFFFF 100%)' : 'linear-gradient(165deg, #FEF2F2 0%, #FFFFFF 100%)',
       borderRadius: '24px',
       padding: '16px',
       position: 'relative',
@@ -250,7 +250,7 @@ const VisionCard = ({ isOnline, detection }) => {
 
   return (
     <div style={{
-      background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)',
+      background: 'linear-gradient(165deg, #F5F3FF 0%, #FFFFFF 100%)',
       borderRadius: '24px',
       padding: '16px',
       boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
@@ -352,7 +352,7 @@ const NodePowerPanel = ({ nodePower, toggleNodePower, devices }) => {
   return (
     <div style={{ 
       marginTop: '8px',
-      background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)',
+      background: 'linear-gradient(165deg, #F0F9FF 0%, #FFFFFF 100%)',
       padding: '16px',
       borderRadius: '24px',
       boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',

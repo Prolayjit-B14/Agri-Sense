@@ -285,7 +285,7 @@ const InsightsCard = ({ sensorData, sensorHistory }) => {
     <motion.div
       initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
       style={{
-        background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '24px', padding: '1.25rem',
+        background: 'linear-gradient(165deg, #ECFDF5 0%, #FFFFFF 100%)', borderRadius: '24px', padding: '1.25rem',
         border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
         marginBottom: '1.5rem'
       }}
@@ -327,7 +327,7 @@ const SensorCard = ({ title, value, icon: Icon, color, status, score, onClick, n
       initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}
       whileTap={{ scale: 0.98 }} onClick={onClick}
       style={{
-        background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '24px', padding: '1rem',
+        background: `linear-gradient(165deg, ${systemColor}10 0%, #FFFFFF 100%)`, borderRadius: '24px', padding: '1rem',
         border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
         cursor: 'pointer', position: 'relative', overflow: 'hidden',
         display: 'flex', gap: '12px', height: '96px', alignItems: 'center'
@@ -354,7 +354,7 @@ const CamCard = ({ isOnline, onClick }) => (
   <motion.div
     whileTap={{ scale: 0.98 }} onClick={onClick}
     style={{
-      background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '24px', padding: '1rem',
+      background: 'linear-gradient(165deg, #F8FAFC 0%, #FFFFFF 100%)', borderRadius: '24px', padding: '1rem',
       border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
       cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '0',
       height: '186px', width: '100%', boxSizing: 'border-box'
@@ -399,7 +399,7 @@ const ControlsCard = ({ actuators, toggleActuator, ACTUATORS }) => {
     <motion.div
       initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
       style={{
-        background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '24px', padding: '1rem',
+        background: 'linear-gradient(165deg, #F0F9FF 0%, #FFFFFF 100%)', borderRadius: '24px', padding: '1rem',
         border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
         display: 'flex', flexDirection: 'column', gap: '0.75rem', justifyContent: 'center',
         width: '100%', boxSizing: 'border-box', marginBottom: '1.2rem'

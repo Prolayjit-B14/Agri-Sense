@@ -152,7 +152,7 @@ const Sidebar = () => {
             </div>
           </div>
           <div style={{ fontSize: '0.6rem', color: '#94a3b8', fontWeight: 600, marginLeft: '26px' }}>
-            v17.2.5
+            v17.2.6
           </div>
         </div>
       </motion.div>
