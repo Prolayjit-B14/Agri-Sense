@@ -130,22 +130,22 @@ const MainLayout = ({ children }) => {
   }, [location.pathname]);
 
   const titles = {
-    '/dashboard': 'Dashboard',
-    '/analytics': 'Analytics Hub',
-    '/irrigation':             'Irrigation System',
-    '/weather':                'Weather Station',
+    '/dashboard':              'Dashboard',
     '/soil-monitoring':        'Soil Monitor',
-    '/storage-hub':            'Storage Hub',
-    '/device-area':            'Device Network',
-    '/camera':                 'Field Vision',
-    '/alerts':                 'Alert Center',
+    '/irrigation':             'Irrigation Control',
+    '/weather':                'Weather Station',
+    '/storage-hub':            'Storage Area',
+    '/camera':                 'Camera View',
+    '/device-area':            'Device Management',
+    '/precision-soil-testing': 'Soil Test',
+    '/crop-advisor':           'Farm Advisor',
+    '/reports':                'Farm Report',
+    '/analytics':              'Analytics Hub',
+    '/account':                'My Account',
+    '/alerts':                 'Alerts',
     '/profile':                'My Account',
     '/settings':               'My Account',
-    '/account':                'My Account',
-    '/reports':                'Farm Reports',
-    '/precision-soil-testing': 'Soil Forensics',
-    '/crop-advisor':           'AI Field Advisor',
-    '/admin':                  'Admin Terminal',
+    '/admin':                  'Admin Panel',
   };
 
   return (
@@ -153,7 +153,7 @@ const MainLayout = ({ children }) => {
       <TopBar title={titles[location.pathname] || 'AgriSense'} />
       <main ref={mainRef} style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <div style={{ maxWidth: '500px', margin: '0 auto', width: '100%', paddingBottom: '10px' }}>
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             <motion.div key={location.pathname} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
               {children}
             </motion.div>
@@ -170,7 +170,7 @@ const MainLayout = ({ children }) => {
 const AppRoutes = () => {
   const app = useApp();
   if (!app) return null; // Safety gate
-  const { user, isDataLoading, isDarkMode } = app;
+  const { user, isDataLoading, isDarkMode, cloudSyncStatus, setIsDataLoading } = app;
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -226,49 +226,6 @@ const AppRoutes = () => {
 
   const isPublicRoute = ['/', '/login'].includes(location.pathname);
 
-  if (isDataLoading && !isPublicRoute) {
-    return (
-      <div style={{ 
-        height: '100dvh', width: '100vw', 
-        background: 'linear-gradient(135deg, #065F46 0%, #042F2E 100%)', 
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        fontFamily: "'Outfit', sans-serif", color: 'white'
-      }}>
-        <motion.div
-          animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
-          transition={{ repeat: Infinity, duration: 2 }}
-          style={{ marginBottom: '2rem' }}
-        >
-          <Leaf size={60} color="#10B981" />
-        </motion.div>
-        <h2 style={{ fontSize: '1.2rem', fontWeight: 600, margin: 0 }}>Syncing with Cloud</h2>
-        <div style={{ 
-          marginTop: '1rem', padding: '6px 14px', borderRadius: '12px', 
-          background: cloudSyncStatus === 'Connected' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255, 255, 255, 0.05)',
-          border: `1px solid ${cloudSyncStatus === 'Connected' ? '#10B981' : 'rgba(255, 255, 255, 0.1)'}`,
-          fontSize: '0.7rem', fontWeight: 800, color: cloudSyncStatus === 'Connected' ? '#10B981' : '#94A3B8'
-        }}>
-          DATABASE: {cloudSyncStatus.toUpperCase()}
-        </div>
-        <p style={{ color: '#94A3B8', fontSize: '0.8rem', marginTop: '1rem' }}>Establishing secure handshake...</p>
-        
-        <motion.button
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 5 }}
-          onClick={() => { setIsDataLoading(false); }}
-          style={{ 
-            marginTop: '2rem', padding: '12px 24px', borderRadius: '14px', 
-            background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)',
-            color: 'rgba(255, 255, 255, 0.4)', fontSize: '0.75rem', fontWeight: 800, 
-            letterSpacing: '0.05em', cursor: 'pointer'
-          }}
-        >
-          CONTINUE OFFLINE
-        </motion.button>
-      </div>
-    );
-  }
 
   return (
     <Routes>

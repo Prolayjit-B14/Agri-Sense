@@ -365,7 +365,7 @@ const NodePowerPanel = ({ nodePower, toggleNodePower, devices }) => {
         <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: `${T.secondary}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Settings2 size={16} color={T.secondary} />
         </div>
-        <span style={{ fontSize: '0.9rem', fontWeight: 950, color: T.text }}>Node Network Power</span>
+        <span style={{ fontSize: '0.9rem', fontWeight: 950, color: T.text }}>Node Control</span>
       </div>
 
       <div style={{ 

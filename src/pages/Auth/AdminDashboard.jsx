@@ -53,7 +53,7 @@ const AdminDashboard = () => {
           total: data.length,
           registered: data.filter(f => !f.isGuest).length,
           guest: data.filter(f => f.isGuest).length,
-          activeToday: data.filter(f => f.lastLogin?.includes(today)).length
+          activeToday: data.filter(f => f.lastLogin && String(f.lastLogin).includes(today)).length
         });
         
         setLoading(false);

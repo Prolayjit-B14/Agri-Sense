@@ -1,5 +1,5 @@
 /**
- * Farm Advisor v17.1.0 - Industrial Agronomy Decision Suite
+ * Farm Advisor v17.1.0 - Smart Farm Advice Center
  * Comprehensive Overhaul: Integrating Match, Fertilizer, Compost, and Pest Engines.
  * 
  * Aesthetics: Industrial Premium, Consistent Padding/Margins, Framer Motion.
@@ -298,7 +298,7 @@ const FarmAdvisor = () => {
         const rangeWidth = Math.max(5, rMax - rMin);
         const outDist = val < rMin ? (rMin - val) : (val > rMax ? (val - rMax) : 0);
         
-        // 📊 INDUSTRIAL FUZZY LOGIC (Calibrated for noise & precision)
+        // 📊 SMART ANALYSIS LOGIC (Calibrated for accuracy)
         const EPSILON = 0.03; // 3% noise floor
         const isOptimal = (val >= rMin - (rangeWidth * EPSILON) && val <= rMax + (rangeWidth * EPSILON));
         const pct = isOptimal ? 100 : Math.max(15, 90 - (outDist / rangeWidth * 50));
@@ -361,7 +361,7 @@ const FarmAdvisor = () => {
       { id: 'Key Insight', icon: Lightbulb, color: '#F59E0B', ideal: meta.insight || '---', decision: meta.insightDetail || '---' }
     ].map(row => ({
       ...row,
-      status: row.match?.status || '✅ Industrial Info',
+      status: row.match?.status || '✅ Crop Info',
       type: row.match?.type || 'good'
     }));
 
@@ -444,7 +444,7 @@ const FarmAdvisor = () => {
       n: 'Standard Control', 
       s: 'PREVENTATIVE', 
       isActive: false, 
-      intel: 'Industrial schedule preventative care', 
+      intel: 'Standard scheduled preventative care', 
       action: 'Routine Schedule' 
     }]);
 
@@ -608,7 +608,7 @@ const FarmAdvisor = () => {
   if (db.error) return <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF', padding: '20px', textAlign: 'center' }}>
     <AlertTriangle size={48} color={COLORS.danger} style={{ marginBottom: '1rem' }} />
     <h2 style={{ fontWeight: 900 }}>Database Sync Error</h2>
-    <p style={{ color: COLORS.textMuted }}>Unable to load industrial crop specifications.</p>
+    <p style={{ color: COLORS.textMuted }}>Unable to load crop specifications.</p>
   </div>;
 
   const cardStyle = {

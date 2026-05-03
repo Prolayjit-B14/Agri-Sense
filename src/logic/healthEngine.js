@@ -117,22 +117,29 @@ export const getAIv2Recommendations = (data) => {
  * Calculates the overall farm health score.
  */
 export const calculateOverallHealth = (systemHealth, devices = {}) => {
-  // Build score list: only include nodes that are physically ACTIVE or PARTIAL
+  // Build score list: include nodes that are ACTIVE/PARTIAL OR have valid data from history
   const scores = Object.entries(systemHealth)
     .filter(([nodeType, score]) => {
-      if (score === null || score === undefined) return false;
+      // 1. Root Safety: Must have a score
+      if (score === null || score === undefined || isNaN(score)) return false;
+      
+      // 2. Resolve Device Key
       const deviceKey = `${nodeType === 'water' ? 'water' : nodeType}_node`;
       const device = devices[deviceKey];
-      return device && (device.status === 'ACTIVE' || device.status === 'PARTIAL');
+      
+      // 3. Inclusion Logic: Count if Device is Active OR if we have valid non-zero data
+      const isDeviceOnline = device && (device.status === 'ACTIVE' || device.status === 'PARTIAL');
+      const hasRecentData = score > 0; // If score > 0, it means we have some data point
+      
+      return isDeviceOnline || hasRecentData;
     })
     .map(([, score]) => score);
 
   if (scores.length === 0) return null;
 
-  const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
-  const min = scores.length > 0 ? Math.min(...scores) : 0;
+  const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+  const min = Math.min(...scores);
 
-  if (scores.length === 0) return 0;
   // Safety-First: If ANY active node is critical (< 40), it dominates the overall score
   if (min < 40) return Math.round((avg * 0.2) + (min * 0.8));
   // If any active node is warning (< 65), apply moderate penalty

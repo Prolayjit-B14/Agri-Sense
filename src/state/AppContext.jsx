@@ -247,30 +247,9 @@ export const AppProvider = ({ children }) => {
           };
           checkDb();
 
-          // 🛰️ FETCH DEEP TELEMETRY
-          const telRef = collection(db, "farmers", fbUser.email, "telemetry");
-          const q = query(
-            telRef, 
-            where("node", "==", "unified_snapshot"),
-            orderBy("timestamp", "desc"), 
-            limit(100) // Reduced limit for faster boot
-          );
-          const telSnap = await getDocs(q);
-          const history = telSnap.docs.map(d => d.data()).reverse();
-          setSensorHistory(history);
+          // telRef check moved to separate useEffect
 
-          // If history exists, populate initial sensor state to prevent "---" flash
-          if (history.length > 0) {
-            const last = history[history.length - 1];
-            setSensorData(prev => ({
-              ...prev,
-              soil: last.soil || prev.soil,
-              weather: last.weather || prev.weather,
-              water: last.water || prev.water,
-              storage: last.storage || prev.storage,
-              vision: last.vision || prev.vision
-            }));
-          }
+          // History population moved to separate useEffect
 
         } catch (err) {
           console.error("Auth/Data sync error:", err);
@@ -282,7 +261,8 @@ export const AppProvider = ({ children }) => {
         const saved = localStorage.getItem('agrisense_user');
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (parsed.isGuest) {
+          const isAuthorizedFallback = MASTER_CONFIG.AUTHORIZED_USERS.some(u => u.email.toLowerCase() === parsed.email?.toLowerCase());
+          if (parsed.isGuest || isAuthorizedFallback) {
             setUser(parsed);
           } else {
             setUser(null);
@@ -295,11 +275,65 @@ export const AppProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
+  // 🛰️ UNIVERSAL HISTORY ENGINE: Fetch previous data points for any logged-in user
+  useEffect(() => {
+    const fetchDeepHistory = async () => {
+      if (!user?.email) return;
+      try {
+        console.log("🛰️ [HISTORY] Synchronizing Operational Logs for:", user.email);
+        const telRef = collection(db, "farmers", user.email, "telemetry");
+        const q = query(
+          telRef, 
+          where("node", "==", "unified_snapshot"),
+          orderBy("timestamp", "desc"), 
+          limit(2000) // 🚀 INCREASED: 2x more history on initial load
+        );
+        const telSnap = await getDocs(q);
+        const history = telSnap.docs.map(d => d.data()).reverse();
+        
+        if (history.length > 0) {
+          setSensorHistory(history);
+          const last = history[history.length - 1];
+          
+          // 1. Restore Sensor Values
+          setSensorData(prev => ({
+            ...prev,
+            soil: last.soil || prev.soil,
+            weather: last.weather || prev.weather,
+            water: last.water || prev.water,
+            storage: last.storage || prev.storage,
+            vision: last.vision || prev.vision
+          }));
+
+          // 2. 🛰️ WAKE UP DEVICES: Mark nodes as ACTIVE if data exists in history
+          setDevices(prevDevs => {
+            const nextDevs = { ...prevDevs };
+            const timestamp = last.timestamp || Date.now();
+            
+            if (last.soil)    nextDevs['soil_node']    = { ...nextDevs['soil_node'],    status: 'ACTIVE', lastUpdate: timestamp };
+            if (last.weather) nextDevs['weather_node'] = { ...nextDevs['weather_node'], status: 'ACTIVE', lastUpdate: timestamp };
+            if (last.storage) nextDevs['storage_node'] = { ...nextDevs['storage_node'], status: 'ACTIVE', lastUpdate: timestamp };
+            if (last.water)   nextDevs['water_node']   = { ...nextDevs['water_node'],   status: 'ACTIVE', lastUpdate: timestamp };
+            if (last.vision)  nextDevs['vision_node']  = { ...nextDevs['vision_node'],  status: 'ACTIVE', lastUpdate: timestamp };
+            
+            return nextDevs;
+          });
+
+          console.log("☁️ [HISTORY] Device Status Synchronized from Logs");
+        }
+      } catch (err) {
+        console.error("Historical Sync Failed:", err);
+      }
+    };
+
+    fetchDeepHistory();
+  }, [user?.email]);
+
   const updateBranding = async (newInfo) => {
     const updated = { ...farmInfo, ...newInfo };
     setFarmInfo(updated);
     localStorage.setItem('agrisense_branding', JSON.stringify(updated));
-    if (user?.email && !user?.isGuest) {
+    if (user?.email) {
       try {
         await setDoc(doc(db, "farmers", user.email), { farmInfo: updated }, { merge: true });
       } catch (e) { console.warn("Firestore Branding Sync Failed", e); }
@@ -356,9 +390,29 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const guestLogin = (guestName) => {
+  const guestLogin = async (guestName, existingId = null) => {
+    const savedGuest = localStorage.getItem('agrisense_guest_id');
+    // If we have an existing ID or a saved one that matches the new format, use it.
+    // Otherwise, we generate a new sequential ID.
+    let guestEmail = existingId || (savedGuest?.startsWith('guest-') ? savedGuest : null);
+
+    if (!guestEmail) {
+      try {
+        // Fetch current guest count for sequential ID
+        const q = query(collection(db, "farmers"), where("isGuest", "==", true));
+        const snap = await getDocs(q);
+        const count = snap.size + 1;
+        const paddedCount = String(count).padStart(4, '0');
+        guestEmail = `guest-${paddedCount}@agrisense.in`;
+      } catch (e) {
+        // Fallback if cloud check fails
+        guestEmail = `guest-${Math.floor(1000 + Math.random() * 9000)}@agrisense.in`;
+      }
+      localStorage.setItem('agrisense_guest_id', guestEmail);
+    }
+
     const userData = { 
-      email: `guest_${Math.random().toString(36).substr(2, 5)}@agrisense.io`, 
+      email: guestEmail, 
       name: guestName || 'Guest Farmer', 
       location: 'Field Zone A', 
       isGuest: true,
@@ -366,6 +420,12 @@ export const AppProvider = ({ children }) => {
     };
     setUser(userData);
     localStorage.setItem('agrisense_user', JSON.stringify(userData));
+    
+    // Save Initial Guest Record to Cloud
+    try {
+      await setDoc(doc(db, "farmers", guestEmail), userData, { merge: true });
+    } catch (e) { console.warn("Guest Cloud Sync Delayed:", e); }
+    
     return true;
   };
 
@@ -400,9 +460,9 @@ export const AppProvider = ({ children }) => {
       setUser(updatedUser);
       localStorage.setItem('agrisense_user', JSON.stringify(updatedUser));
 
-      // 2. Attempt Firestore Sync only for Registered Users
-      if (user.email && !user.isGuest) {
-        const userRef = doc(db, "farmers", user.email);
+      // 2. Attempt Firestore Sync for ALL Users (including Admin and Guests)
+      if (updatedUser.email) {
+        const userRef = doc(db, "farmers", updatedUser.email);
         await setDoc(userRef, data, { merge: true });
       }
       
@@ -430,9 +490,9 @@ export const AppProvider = ({ children }) => {
       const telRef = collection(db, "farmers", user.email, "telemetry");
       const q = query(
         telRef, 
-        where("node", "==", "unified_snapshot"),
         where("timestamp", ">=", startTime),
-        orderBy("timestamp", "asc")
+        orderBy("timestamp", "asc"),
+        limit(20000)
       );
       const telSnap = await getDocs(q);
       const history = telSnap.docs.map(d => d.data());
@@ -598,53 +658,70 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => { sensorDataRef.current = sensorData; }, [sensorData]);
 
-  // 🚀 CLOUD PULSE ENGINE: High-frequency 5-second Cloud Push
+  // 🚀 LIVE GRAPH ENGINE: High-frequency 5-second Local UI Update
   useEffect(() => {
-    const loggerInterval = setInterval(async () => {
+    const livePulse = setInterval(() => {
       const currentData = sensorDataRef.current;
-      if (!currentData) return; // Only block if root data is missing
+      if (!currentData) return;
 
       const now = Date.now();
       const newEntry = { ...currentData, timestamp: now };
 
-      // 1. Update Local State (for instant UI charts)
-      setSensorHistory(prev => [...prev, newEntry].slice(-2000));
-
-      // 2. ☁️ PUSH TO CLOUD (5-Second Real-Time Pulse)
-      if (user?.email) {
-        try {
-          setCloudSyncStatus('Syncing...');
-          const telemetryRef = collection(db, "farmers", user.email, "telemetry");
-          console.log(`📡 [CLOUDPULSE] Syncing to: farmers/${user.email}/telemetry`);
-          
-          // 🛡️ BULLETPROOF IST OVERRIDE (UTC + 5:30)
-          const now = new Date();
-          const istDate = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
-          const istTime = istDate.getUTCDate().toString().padStart(2, '0') + "/" + 
-                         (istDate.getUTCMonth() + 1).toString().padStart(2, '0') + "/" + 
-                          istDate.getUTCFullYear() + ", " + 
-                          istDate.getUTCHours().toString().padStart(2, '0') + ":" + 
-                          istDate.getUTCMinutes().toString().padStart(2, '0') + ":" + 
-                          istDate.getUTCSeconds().toString().padStart(2, '0') + " IST";
-
-          await addDoc(telemetryRef, {
-            ...newEntry,
-            localTime: istTime,
-            gps: currentGPS?.lat ? { lat: currentGPS.lat, lng: currentGPS.lng, acc: currentGPS.accuracy, city: currentGPS.city } : null,
-            node: 'unified_snapshot',
-            isGuest: !!user.isGuest
-          });
-          setCloudSyncStatus('Active');
-          console.log("☁️ [CLOUDPULSE] 5s Sync Complete");
-        } catch (e) {
-          setCloudSyncStatus('Error');
-          console.error("Cloud Pulse Failed", e);
-        }
-      }
-    }, 5000); 
+      // Update Local State (for instant UI charts)
+      setSensorHistory(prev => {
+        // Prevent duplicate timestamps if processing is fast
+        if (prev.length > 0 && prev[prev.length - 1].timestamp === now) return prev;
+        return [...prev, newEntry].slice(-5000); // 🚀 INCREASED: Store more 'Live' points
+      });
+      
+      console.log("📈 [LIVEGRAPH] 5s High-Res Pulse Complete");
+    }, 5000);
     
-    return () => clearInterval(loggerInterval);
-  }, [user?.email]); // Re-run if user changes to ensure correct path
+    return () => clearInterval(livePulse);
+  }, []);
+
+  // ☁️ CLOUD PULSE ENGINE: Industrial 15-second Telemetry Persistence
+  useEffect(() => {
+    const cloudPulse = setInterval(async () => {
+      const currentData = sensorDataRef.current;
+      if (!currentData || !user?.email) return;
+
+      try {
+        setCloudSyncStatus('Syncing...');
+        const telemetryRef = collection(db, "farmers", user.email, "telemetry");
+        
+        // 🛡️ BULLETPROOF IST OVERRIDE (UTC + 5:30)
+        const now = new Date();
+        const istDate = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+        const istTime = istDate.getUTCDate().toString().padStart(2, '0') + "/" + 
+                       (istDate.getUTCMonth() + 1).toString().padStart(2, '0') + "/" + 
+                        istDate.getUTCFullYear() + ", " + 
+                        istDate.getUTCHours().toString().padStart(2, '0') + ":" + 
+                        istDate.getUTCMinutes().toString().padStart(2, '0') + ":" + 
+                        istDate.getUTCSeconds().toString().padStart(2, '0') + " IST";
+
+        await addDoc(telemetryRef, {
+          ...currentData,
+          timestamp: Date.now(),
+          localTime: istTime,
+          gps: currentGPS?.lat ? { lat: currentGPS.lat, lng: currentGPS.lng, acc: currentGPS.accuracy, city: currentGPS.city } : null,
+          node: 'unified_snapshot',
+          isGuest: !!user.isGuest,
+          email: user.email, // 🆔 Investigator Identity
+          projectName: farmInfo?.projectName || 'Industrial', // 🆔 Client/Project ID
+          farmName: farmInfo?.name || 'Field A' // 🆔 Site Identifier
+        });
+        
+        setCloudSyncStatus('Active');
+        console.log("☁️ [CLOUDPULSE] 15s Cloud Sync Complete");
+      } catch (e) {
+        setCloudSyncStatus('Error');
+        console.error("Cloud Pulse Failed", e);
+      }
+    }, 15000);
+    
+    return () => clearInterval(cloudPulse);
+  }, [user?.email, currentGPS]); 
 
   // 🛰️ DYNAMIC VISION ZONE SYNC: Inherit from profile/location
   useEffect(() => {
@@ -682,7 +759,10 @@ export const AppProvider = ({ children }) => {
                 node: nodeType,
                 timestamp: Date.now(),
                 data: data, // Raw payload for deep audit
-                isGuest: !!user.isGuest
+                isGuest: !!user.isGuest,
+                email: user.email, // 🆔 Investigator Identity
+                projectName: farmInfo?.projectName || 'Industrial', // 🆔 Client/Project ID
+                farmName: farmInfo?.name || 'Field A' // 🆔 Site Identifier
               }).catch(e => console.error("Telemetry Sync Error:", e));
             }
 
@@ -919,7 +999,7 @@ export const AppProvider = ({ children }) => {
       sensorHistory: maskedSensorHistory,
       actuators, toggleActuator, isSidebarOpen, setIsSidebarOpen, ACTUATORS,
       farmHealthScore, systemHealth: maskedSystemHealth, connectivityStatus, cloudSyncStatus, profileMeta, updateProfileMeta,
-      isDataLoading, lastGlobalUpdate, mqttStatus, syncData, syncDeviceId,
+      isDataLoading, setIsDataLoading, lastGlobalUpdate, mqttStatus, syncData, syncDeviceId,
       devices, systemOverview, currentGPS,
       nodePower, toggleNodePower
     }}>

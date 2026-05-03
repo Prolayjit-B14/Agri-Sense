@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../../state/AppContext';
 import { 
   Leaf, Lock, Mail, User, 
-  ShieldCheck, Chrome, ArrowRight, Eye, EyeOff
+  ShieldCheck, Chrome, ArrowRight, Eye, EyeOff, Fingerprint
 } from 'lucide-react';
 
 const Login = () => {
@@ -15,6 +15,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [guestName, setGuestName] = useState('');
+  const [existingGuestId, setExistingGuestId] = useState('');
   const [error, setError] = useState(null);
   
   const { login, guestLogin, register, googleLogin } = useApp();
@@ -45,33 +46,28 @@ const Login = () => {
   return (
     <div style={{ 
       minHeight: '100dvh', width: '100vw', 
-      background: '#064E3B', // Dark green base
-      backgroundImage: 'url("https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80&w=2000")',
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
+      background: 'linear-gradient(135deg, #065F46 0%, #042F2E 100%)', 
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       padding: '2rem 1.5rem', fontFamily: "'Outfit', sans-serif",
       position: 'relative', overflow: 'hidden'
     }}>
-      {/* 🎭 OVERLAY FOR READABILITY - Greenish Gradient */}
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(6, 78, 59, 0.5) 0%, rgba(6, 78, 59, 0.9) 100%)', zIndex: 1 }} />
 
       <div style={{ position: 'relative', zIndex: 2, width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         
         {/* 🍃 PREMIUM LOGO SECTION */}
         <motion.div 
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
           style={{ textAlign: 'center', marginBottom: '2.5rem' }}
         >
           <div style={{ 
-            width: '80px', height: '80px', borderRadius: '24px',
+            width: '90px', height: '90px', borderRadius: '28px',
             background: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(12px)',
             border: '1px solid rgba(255, 255, 255, 0.2)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
+            display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.3)', overflow: 'hidden'
           }}>
-            <Leaf size={40} color="#10B981" strokeWidth={2.5} />
+            <img src="/src/assets/logo.png" alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
           <h1 style={{ fontSize: '2.2rem', fontWeight: 900, color: 'white', margin: 0, letterSpacing: '-0.03em', textShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>AgriSense <span style={{ color: '#10B981' }}>Pro</span></h1>
           <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem', fontWeight: 600, marginTop: '4px' }}>Smart Farm Management</p>
@@ -195,13 +191,32 @@ const Login = () => {
                 <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: '2rem' }}>
                   Please enter your name to access the monitoring dashboard.
                 </p>
-                <form onSubmit={(e) => { e.preventDefault(); if(!guestName) return setError("Name required"); guestLogin(guestName); navigate('/dashboard'); }}>
-                  <div style={{ marginBottom: '1.5rem', position: 'relative' }}>
+                <form onSubmit={async (e) => { 
+                  e.preventDefault(); 
+                  if(!guestName) return setError("Name required"); 
+                  // Normalize ID if provided (e.g., "0001" -> "guest-0001@agrisense.in")
+                  let finalId = existingGuestId?.trim();
+                  if (finalId && !finalId.includes('@')) {
+                    if (!finalId.startsWith('guest-')) finalId = `guest-${finalId.padStart(4, '0')}`;
+                    finalId = `${finalId}@agrisense.in`;
+                  }
+                  await guestLogin(guestName, finalId); 
+                  navigate('/dashboard'); 
+                }}>
+                  <div style={{ marginBottom: '1rem', position: 'relative' }}>
                     <User size={18} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
                     <input type="text" placeholder="Your Name" value={guestName} onChange={e => setGuestName(e.target.value)} autoFocus
                       style={{ width: '100%', height: '56px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', paddingLeft: '48px', color: 'white', fontSize: '0.95rem', outline: 'none' }}
                     />
                   </div>
+                  
+                  <div style={{ marginBottom: '1.5rem', position: 'relative' }}>
+                    <Fingerprint size={18} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
+                    <input type="text" placeholder="Guest ID (Optional: e.g. 0005)" value={existingGuestId} onChange={e => setExistingGuestId(e.target.value)}
+                      style={{ width: '100%', height: '56px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', paddingLeft: '48px', color: 'white', fontSize: '0.95rem', outline: 'none' }}
+                    />
+                  </div>
+
                   <button type="submit" style={{ width: '100%', height: '60px', borderRadius: '18px', background: '#10B981', border: 'none', color: 'white', fontWeight: 900, fontSize: '1rem', cursor: 'pointer' }}>
                     CONTINUE AS GUEST
                   </button>

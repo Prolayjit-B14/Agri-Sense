@@ -12,10 +12,10 @@ import {
   Tooltip, ResponsiveContainer, ComposedChart
 } from 'recharts';
 import {
-  Sprout, CloudRain, Archive, Download
+  Sprout, CloudRain, Archive, Download, FileText
 } from 'lucide-react';
 import { useApp } from '../../state/AppContext';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────
 const COLORS = {
@@ -194,6 +194,7 @@ const Pinpoint = (props) => {
 const AnalyticsHub = () => {
   const { sensorData, devices, sensorHistory, fetchHistory, farmInfo } = useApp();
   const location = useLocation();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(location.state?.tab || 'soil');
   const [timeRange, setTimeRange] = useState(TIME_RANGES[0]);
   const [isLoading, setIsLoading] = useState(false);
@@ -633,54 +634,69 @@ const AnalyticsHub = () => {
         </div>
 
         {/* 🚀 COMPACT EXPORT ACTION (Moved to Header Line) */}
-        <button
-          onClick={() => {
-            const flattened = sensorHistory.map(entry => ({
-              Timestamp: new Date(entry.timestamp).toLocaleString(),
-              Unix_ms: entry.timestamp,
-              Farm: farmInfo?.name || 'AgriSense',
-              Project: farmInfo?.projectName || 'Industrial',
-              Soil_Moisture_Pct: entry.soil?.moisture ?? '',
-              Soil_PH: entry.soil?.ph ?? '',
-              Soil_Temp_C: entry.soil?.temp ?? '',
-              Nitrogen_mg_kg: entry.soil?.npk?.n ?? '',
-              Phosphorus_mg_kg: entry.soil?.npk?.p ?? '',
-              Potassium_mg_kg: entry.soil?.npk?.k ?? '',
-              Ambient_Temp_C: entry.weather?.temp ?? '',
-              Humidity_Pct: entry.weather?.humidity ?? '',
-              Light_LUX: entry.weather?.lightIntensity ?? '',
-              Rain_Level_mm: entry.weather?.rainLevel ?? '',
-              Storage_Temp_C: entry.storage?.temp ?? '',
-              Storage_Humidity_Pct: entry.storage?.humidity ?? '',
-              Gas_MQ135_ppm: entry.storage?.mq135 ?? ''
-            }));
+        <div style={{ display: 'flex', gap: '8px', marginLeft: '12px' }}>
+          <button
+            onClick={() => navigate('/reports')}
+            title="Full Report"
+            style={{
+              width: '34px', height: '34px', borderRadius: '12px',
+              background: '#FFFFFF', border: '1px solid #E2E8F0',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
+              color: '#10B981', transition: '0.2s'
+            }}
+          >
+            <FileText size={15} color="#10B981" strokeWidth={2.5} />
+          </button>
+          
+          <button
+            onClick={() => {
+              const flattened = sensorHistory.map(entry => ({
+                Timestamp: new Date(entry.timestamp).toLocaleString(),
+                Unix_ms: entry.timestamp,
+                Farm: farmInfo?.name || 'AgriSense',
+                Project: farmInfo?.projectName || 'Industrial',
+                Soil_Moisture_Pct: entry.soil?.moisture ?? '',
+                Soil_PH: entry.soil?.ph ?? '',
+                Soil_Temp_C: entry.soil?.temp ?? '',
+                Nitrogen_mg_kg: entry.soil?.npk?.n ?? '',
+                Phosphorus_mg_kg: entry.soil?.npk?.p ?? '',
+                Potassium_mg_kg: entry.soil?.npk?.k ?? '',
+                Ambient_Temp_C: entry.weather?.temp ?? '',
+                Humidity_Pct: entry.weather?.humidity ?? '',
+                Light_LUX: entry.weather?.lightIntensity ?? '',
+                Rain_Level_mm: entry.weather?.rainLevel ?? '',
+                Storage_Temp_C: entry.storage?.temp ?? '',
+                Storage_Humidity_Pct: entry.storage?.humidity ?? '',
+                Gas_MQ135_ppm: entry.storage?.mq135 ?? ''
+              }));
 
-            const headers = Object.keys(flattened[0] || {});
-            const csvContent = [
-              headers.join(','),
-              ...flattened.map(row => headers.map(h => `"${row[h]}"`).join(','))
-            ].join('\n');
+              const headers = Object.keys(flattened[0] || {});
+              const csvContent = [
+                headers.join(','),
+                ...flattened.map(row => headers.map(h => `"${row[h]}"`).join(','))
+              ].join('\n');
 
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `AgriSense_Export_${new Date().toISOString().split('T')[0]}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
-          }}
-          title="Export CSV (Excel)"
-          style={{
-            width: '34px', height: '34px', borderRadius: '12px',
-            background: COLORS.good, border: 'none',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', boxShadow: `0 4px 12px ${COLORS.good}33`,
-            color: 'white', transition: '0.2s', flexShrink: 0,
-            marginLeft: '12px'
-          }}
-        >
-          <Download size={15} color="white" strokeWidth={2.5} />
-        </button>
+              const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `AgriSense_Export_${new Date().toISOString().split('T')[0]}.csv`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            title="Export CSV (Excel)"
+            style={{
+              width: '34px', height: '34px', borderRadius: '12px',
+              background: COLORS.good, border: 'none',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', boxShadow: `0 4px 12px ${COLORS.good}33`,
+              color: 'white', transition: '0.2s', flexShrink: 0
+            }}
+          >
+            <Download size={15} color="white" strokeWidth={2.5} />
+          </button>
+        </div>
       </div>
 
       {/* ⏱️ TIME RANGE SELECTOR */}

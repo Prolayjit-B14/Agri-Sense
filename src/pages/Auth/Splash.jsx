@@ -29,7 +29,7 @@ const Splash = () => {
     <div style={{ 
       height: '100dvh', 
       width: '100vw', 
-      background: `linear-gradient(135deg, ${COLORS.primary} 0%, #064E3B 100%)`,
+      background: 'linear-gradient(135deg, #065F46 0%, #042F2E 100%)',
       display: 'flex', 
       flexDirection: 'column', 
       alignItems: 'center', 

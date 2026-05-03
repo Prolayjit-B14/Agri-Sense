@@ -196,13 +196,13 @@ const WeatherBars = ({ color }) => (
   </div>
 );
 
-const InsightsCard = ({ sensorData, sensorHistory }) => {
+const InsightsCard = ({ sensorData, sensorHistory, navigate }) => {
   const getInsights = () => {
     const list = [];
     if (!sensorData || !sensorHistory || sensorHistory.length < 1) {
       return [
         { text: 'Waiting for hardware sync...', icon: Activity, color: '#94A3B8', bg: '#F1F5F9' },
-        { text: 'Diagnostic engine starting', icon: RefreshCw, color: '#94A3B8', bg: '#F1F5F9' }
+        { text: 'Checking farm systems', icon: RefreshCw, color: '#94A3B8', bg: '#F1F5F9' }
       ];
     }
 
@@ -297,7 +297,7 @@ const InsightsCard = ({ sensorData, sensorHistory }) => {
         }}>
           <BarChart3 size={18} color="#10B981" strokeWidth={2.5} />
         </div>
-        <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: COLORS.textMain }}>Today's Insights</h3>
+        <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: COLORS.textMain }}>Today's Summary</h3>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -313,6 +313,20 @@ const InsightsCard = ({ sensorData, sensorHistory }) => {
           </div>
         ))}
       </div>
+
+      <motion.button
+        whileTap={{ scale: 0.95 }}
+        onClick={() => navigate('/reports')} 
+        style={{
+          width: '100%', marginTop: '1.5rem', padding: '12px', borderRadius: '16px',
+          background: '#FFFFFF', border: '1px solid #ECFDF5',
+          color: '#10B981', fontSize: '0.75rem', fontWeight: 900,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+          boxShadow: '0 4px 12px rgba(16, 185, 129, 0.05)', cursor: 'pointer'
+        }}
+      >
+        VIEW FULL REPORT <ChevronRight size={14} />
+      </motion.button>
     </motion.div>
   );
 };
@@ -458,7 +472,12 @@ const Dashboard = () => {
 
   const handleSync = () => {
     setIsSyncing(true);
-    window.location.reload();
+    syncData(); // 🚀 Perform a 'Soft Sync' to refresh MQTT and cloud links
+    
+    // Provide visual feedback for 2 seconds before resetting icon
+    setTimeout(() => {
+      setIsSyncing(false);
+    }, 2000);
   };
 
   const isPumpActive = actuators ? actuators[ACTUATORS?.PUMP] : false;
@@ -485,6 +504,21 @@ const Dashboard = () => {
             </h2>
           </div>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            {user?.email?.toLowerCase() === 'prolayjitbiswas14112004@gmail.com' && (
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate('/admin')}
+                style={{ 
+                  cursor: 'pointer', padding: '10px 18px', borderRadius: '18px', 
+                  background: 'rgba(220, 38, 38, 0.1)', backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(220, 38, 38, 0.2)',
+                  boxShadow: '0 8px 25px rgba(220, 38, 38, 0.05)', display: 'flex', alignItems: 'center', gap: '10px'
+                }}
+              >
+                <ShieldCheck size={18} color="#dc2626" />
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#dc2626', letterSpacing: '0.05em' }}>ADMIN</span>
+              </motion.button>
+            )}
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={handleSync}
@@ -505,7 +539,7 @@ const Dashboard = () => {
 
         <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '6px', color: COLORS.textMuted, fontSize: '0.85rem', fontWeight: 600 }}>
           <MapPin size={15} color={COLORS.primary} />
-          <span>{currentGPS?.city || (user?.location?.includes(',') ? 'Field Zone A' : user?.location) || 'Set farm location'}</span>
+          <span>{currentGPS?.city || (typeof user?.location === 'string' && user.location.includes(',') ? 'Field Zone A' : user?.location) || 'Set farm location'}</span>
         </div>
       </section>
 
@@ -555,7 +589,7 @@ const Dashboard = () => {
         ACTUATORS={ACTUATORS}
       />
 
-      <InsightsCard sensorData={sensorData} sensorHistory={sensorHistory} />
+      <InsightsCard sensorData={sensorData} sensorHistory={sensorHistory} navigate={navigate} />
 
       <footer style={{ textAlign: 'center', marginTop: '1.5rem', paddingBottom: '10px' }}>
         <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#CBD5E1', textTransform: 'uppercase', letterSpacing: '0.08em' }}>

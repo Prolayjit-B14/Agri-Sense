@@ -17,13 +17,10 @@ export const MASTER_CONFIG = {
   
   // 🔐 AUTHORIZED INVESTIGATORS
   AUTHORIZED_USERS: [
-    { email: "farmer@test.com", password: "PASSWORD_HERE", name: "Lead Farmer" },
-    { email: "prolayjitbiswas14112004@gmail.com", password: "PASSWORD_HERE", name: "Prolayjit Biswas" },
-    { email: "ankaanbhowmik11@gmail.com", password: "PASSWORD_HERE", name: "Ankan Bhowmik" },
-    { email: "bubun15072006@gmail.com", password: "PASSWORD_HERE", name: "Arghya Roy" }
+    { email: "prolayjitbiswas14112004@gmail.com", password: "Prolay2004", name: "Prolayjit Biswas" }
   ],
-  LOGIN_EMAIL: "farmer@test.com", // Fallback for Login UI
-  LOGIN_PASSWORD: "PASSWORD_HERE",     // Fallback for Login UI
+  LOGIN_EMAIL: "prolayjitbiswas14112004@gmail.com", // Fallback for Login UI
+  LOGIN_PASSWORD: "Prolay2004",     // Fallback for Login UI
   
   // 📡 OPERATION MODE
   USE_MOCK_DATA: false, // Set to true for demo, false for ESP32 hardware

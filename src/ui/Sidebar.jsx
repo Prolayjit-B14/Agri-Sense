@@ -6,7 +6,8 @@ import {
   CloudRain, Archive, FlaskConical, Camera,
   Sparkles, BarChart2, Network, Bell,
   Sprout, Droplets, FileText, ShieldCheck,
-  ChevronLeft, Leaf, User, PieChart, LayoutDashboard
+  ChevronLeft, ChevronRight, Leaf, User, PieChart, LayoutDashboard,
+  ArrowRight
 } from 'lucide-react';
 import { useApp } from '../state/AppContext';
 
@@ -23,27 +24,31 @@ const Sidebar = () => {
     {
       title: 'FIELD',
       links: [
-        { name: 'Soil Monitoring',     path: '/soil-monitoring',        icon: Sprout,        color: '#10B981' },
-        { name: 'Weather Station',     path: '/weather',                icon: CloudRain,     color: '#F97316' },
-        { name: 'Storage Hub',         path: '/storage-hub',            icon: Archive,       color: '#8B5CF6' },
+        { name: 'Soil Monitor',        path: '/soil-monitoring',        icon: Sprout,        color: '#10B981' },
         { name: 'Irrigation Control',  path: '/irrigation',             icon: Droplets,      color: '#3B82F6' },
+        { name: 'Weather Station',     path: '/weather',                icon: CloudRain,     color: '#F97316' },
+        { name: 'Storage Area',        path: '/storage-hub',            icon: Archive,       color: '#8B5CF6' },
       ]
     },
     {
       title: 'INSIGHTS',
       links: [
         { name: 'Soil Test',           path: '/precision-soil-testing', icon: FlaskConical,  color: '#a855f7' },
-        { name: 'Analysis Hub',        path: '/analytics',              icon: PieChart,      color: '#6366f1' },
+        { name: 'Farm Advisor',        path: '/crop-advisor',           icon: Sparkles,      color: '#f59e0b' },
         { name: 'Farm Report',         path: '/reports',                icon: FileText,      color: '#ec4899' },
+        { name: 'Analytics Hub',       path: '/analytics',              icon: PieChart,      color: '#6366f1' },
       ]
     },
     {
       title: 'SYSTEM',
       links: [
+        { name: 'Camera View',         path: '/camera',                 icon: Camera,        color: '#A855F7' },
         { name: 'Device Management',   path: '/device-area',            icon: Network,       color: '#64748b' },
-        { name: 'Camera Feed',         path: '/camera',                 icon: Camera,        color: '#A855F7' },
-        { name: 'Alerts',              path: '/alerts',                 icon: Bell,          color: '#eab308' },
         { name: 'My Account',          path: '/account',                icon: User,          color: '#8b5cf6' },
+        { name: 'Alerts',              path: '/alerts',                 icon: Bell,          color: '#eab308' },
+        ...(user?.email?.toLowerCase() === 'prolayjitbiswas14112004@gmail.com' ? [
+          { name: 'Admin Panel',       path: '/admin',                  icon: ShieldCheck,   color: '#dc2626' }
+        ] : [])
       ]
     }
   ];
@@ -91,19 +96,19 @@ const Sidebar = () => {
             onClick={close}
             style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer', color: '#94a3b8' }}
           >
-            <ChevronLeft size={18} />
+            <ArrowRight size={18} style={{ transform: 'rotate(180deg)' }} />
           </motion.button>
         </div>
 
         {/* ── NAVIGATION ── */}
-        <div style={{ flex: 1, overflowY: 'hidden', padding: '5px 0 10px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '10px 0 0' }}>
           {sidebarGroups.map((group, gi) => (
-            <div key={gi} style={{ marginBottom: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 18px', marginBottom: '4px' }}>
+            <div key={gi} style={{ marginBottom: '28px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 18px', marginBottom: '10px' }}>
                 <span style={{ fontSize: '0.6rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '0.05em' }}>{group.title}</span>
                 <div style={{ flex: 1, height: '1px', background: '#f1f5f9' }} />
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {group.links.map((link, li) => {
                   const NavIcon = link.icon;
                   const isActive = location.pathname === link.path;
@@ -113,8 +118,8 @@ const Sidebar = () => {
                       to={link.path} 
                       onClick={close}
                       style={{
-                        display: 'flex', alignItems: 'center', gap: '10px',
-                        padding: '6px 18px',
+                        display: 'flex', alignItems: 'center', gap: '14px',
+                        padding: '12px 18px',
                         textDecoration: 'none',
                         background: isActive ? `${link.color}10` : 'transparent',
                         borderLeft: isActive ? `3px solid ${link.color}` : '3px solid transparent',
@@ -122,7 +127,7 @@ const Sidebar = () => {
                       }}
                     >
                       <div style={{ 
-                        width: '32px', height: '32px', borderRadius: '8px', 
+                        width: '36px', height: '36px', borderRadius: '12px', 
                         background: isActive ? 'transparent' : `${link.color}08`,
                         display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 
                       }}>
@@ -145,14 +150,17 @@ const Sidebar = () => {
 
         {/* ── FOOTER ── */}
         <div style={{ padding: '12px 18px', borderTop: '1px solid #f8fafc' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
-            <Leaf size={18} color="#22c55e" fill="#22c55e" fillOpacity={0.1} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+            <div style={{ width: '20px', height: '20px', borderRadius: '5px', overflow: 'hidden' }}>
+              <img src="/src/assets/logo.png" alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
             <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#10B981', letterSpacing: '0.02em' }}>
               AGRISENSE <span style={{ color: '#1f2937' }}>PRO</span>
             </div>
           </div>
-          <div style={{ fontSize: '0.6rem', color: '#94a3b8', fontWeight: 600, marginLeft: '26px' }}>
-            v17.2.6
+          
+          <div style={{ fontSize: '0.6rem', color: '#94a3b8', fontWeight: 600, marginLeft: '28px' }}>
+            v{farmInfo?.version || '17.4.9'}
           </div>
         </div>
       </motion.div>

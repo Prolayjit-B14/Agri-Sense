@@ -1,297 +1,239 @@
 /**
- * ESP32-CAM Surveillance System v1.0.0
+ * ESP32-CAM Surveillance System v1.1.0
  * High-integrity real-time monitoring based on hardware-triggered detection.
  * 
- * DESIGN: Industrial Minimalist, High-Density Telemetry.
- * LOGIC: Polling-based hardware state synchronization.
+ * UPGRADES:
+ * 1. Functional Full-Screen Mode with Auto-Rotation.
+ * 2. Industrial "Tactical" Feed UI with Scanning Overlays.
+ * 3. Enhanced Control HUD with tactile feedback.
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   EyeOff, Bell, Lightbulb, Camera as CaptureIcon,
-  Maximize2, AlertTriangle, ShieldAlert
+  Maximize2, AlertTriangle, ShieldAlert,
+  Minimize2, Zap, Radio, Scan, Target,
+  RefreshCw, Power, Settings
 } from 'lucide-react';
 import { useApp } from '../../state/AppContext';
 import { ACTUATORS } from '../../logic/healthEngine';
 
 // ─── DESIGN TOKENS ─────────────────────────────────────────────────────────
 const COLORS = {
-  primary: '#A855F7',    // Success / Safe / Vision Standard
-  secondary: '#3B82F6',  // Control / Info
-  warning: '#F59E0B',    // Medium Alert
-  danger: '#EF4444',     // High Alert / Live
+  primary: '#A855F7',    
+  secondary: '#3B82F6',  
+  warning: '#F59E0B',    
+  danger: '#EF4444',     
   text: '#0F172A',
   muted: '#64748B',
   border: 'rgba(0,0,0,0.04)',
   bg: '#FFFFFF',
-  card: '#FFFFFF'
+  card: '#FFFFFF',
+  tactical: '#0ea5e9'
 };
-
-const RAD = {
-  card: '24px',
-  inner: '18px',
-  btn: '14px'
-};
-
-// ─── HELPER COMPONENTS ──────────────────────────────────────────────────────
 
 const Badge = ({ children, color, pulse = false }) => (
   <div style={{ 
-    background: `${color}15`, color: color, padding: '4px 10px', borderRadius: '10px', 
+    background: `${color}20`, color: color, padding: '4px 10px', borderRadius: '10px', 
     fontSize: '0.65rem', fontWeight: 950, display: 'flex', alignItems: 'center', gap: '6px',
-    border: `1px solid ${color}30`, backdropFilter: 'blur(8px)'
+    border: `1px solid ${color}40`, backdropFilter: 'blur(12px)'
   }}>
     {pulse && <motion.div animate={{ opacity: [1, 0.4, 1] }} transition={{ repeat: Infinity, duration: 1.5 }} style={{ width: '6px', height: '6px', background: color, borderRadius: '50%' }} />}
     {children}
   </div>
 );
 
-const ControlButton = ({ icon: Icon, label, active, onClick, color = COLORS.secondary, offText = "OFF", isAction = false }) => (
+const ControlButton = ({ icon: Icon, label, active, onClick, color = COLORS.secondary }) => (
   <motion.div 
-    whileTap={{ scale: 0.95 }}
+    whileTap={{ scale: 0.92 }}
     onClick={onClick}
-      style={{ 
-        background: active ? color : 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', 
-        border: `1px solid ${active ? color : 'rgba(255, 255, 255, 0.8)'}`,
-        borderRadius: '14px', padding: '10px 4px', display: 'flex', flexDirection: 'column', 
-        alignItems: 'center', gap: '5px', flex: 1, cursor: 'pointer',
-        boxShadow: active ? `0 8px 16px ${color}30` : '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
-        userSelect: 'none',
-      }}
+    style={{ 
+      background: active ? color : 'white', 
+      border: `1px solid ${active ? color : '#e2e8f0'}`,
+      borderRadius: '18px', padding: '12px 6px', display: 'flex', flexDirection: 'column', 
+      alignItems: 'center', gap: '6px', flex: 1, cursor: 'pointer',
+      boxShadow: active ? `0 10px 20px ${color}30` : '0 4px 6px rgba(0,0,0,0.02)',
+    }}
   >
     <div style={{ 
-      width: '30px', height: '30px', borderRadius: '10px', 
+      width: '32px', height: '32px', borderRadius: '10px', 
       background: active ? 'rgba(255,255,255,0.2)' : `${color}10`,
       display: 'flex', alignItems: 'center', justifyContent: 'center'
     }}>
-      <Icon size={14} color={active ? 'white' : color} strokeWidth={2.5} />
+      <Icon size={16} color={active ? 'white' : color} strokeWidth={2.5} />
     </div>
-    <div style={{ textAlign: 'center' }}>
-      <div style={{ fontSize: '0.55rem', fontWeight: 900, color: active ? '#fff' : COLORS.text, textTransform: 'uppercase', letterSpacing: '0.02em' }}>
-        {label}
-      </div>
-    </div>
+    <span style={{ fontSize: '0.6rem', fontWeight: 900, color: active ? '#fff' : COLORS.text, textTransform: 'uppercase' }}>
+      {label}
+    </span>
   </motion.div>
 );
 
-// ─── MAIN COMPONENT ────────────────────────────────────────────────────────
-
 const VisualMonitor = () => {
-  // ─── STATE ────────────────────────────────────────────────────────────────
+  const { devices, sensorData, actuators, toggleActuator } = useApp();
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [capturedImg, setCapturedImg] = useState(null);
+  const [isCapturing, setIsCapturing] = useState(false);
+  
   const CAM_IP = 'http://192.168.4.2';
   const streamUrl = `${CAM_IP}/stream`;
   
-  const { devices, sensorData, actuators, toggleActuator } = useApp();
-
-  // ─── ESP-CAM HARDWARE TOGGLES ───
   const flashOn = actuators[ACTUATORS.LIGHT];
   const buzzerOn = actuators[ACTUATORS.BUZZER];
-
-  const toggleFlash = useCallback(() => toggleActuator(ACTUATORS.LIGHT), [toggleActuator]);
-  const toggleBuzzer = useCallback(() => toggleActuator(ACTUATORS.BUZZER), [toggleActuator]);
-  
-  const [capturedImg, setCapturedImg] = useState(null);
-  const [isCapturing, setIsCapturing] = useState(false);
-
-  const captureImage = async () => {
-    try {
-      setIsCapturing(true);
-      const timestamp = Date.now();
-      setCapturedImg(`${CAM_IP}/capture?_cb=${timestamp}`);
-      setTimeout(() => setIsCapturing(false), 1000);
-    } catch (e) { 
-      setIsCapturing(false);
-      console.log('Cam offline'); 
-    }
-  };
-
-  // ─── SIMULATED AI DETECTION ENGINE ───
-  const [detection, setDetection] = useState({ active: false, type: '---', level: 'Normal', zone: 'Field Sector A', duration: 0 });
-
-  useEffect(() => {
-    // Poll the ESP-CAM for real trained ML detection data
-    const fetchDetection = async () => {
-      try {
-        const res = await fetch(`${CAM_IP}/detection`);
-        if (res.ok) {
-          const data = await res.json();
-          setDetection({ 
-            active: data.active, 
-            type: data.type !== "None" ? data.type : "---", 
-            level: data.level, 
-            zone: 'Sector A', 
-            duration: 12 // Or pull from ESP if tracked
-          });
-
-          // Auto-trigger buzzer if threat is high
-          if (data.active && data.level === 'High' && !buzzerOn) {
-            toggleBuzzer();
-          }
-        }
-      } catch (e) {
-        // Cam offline or endpoint not ready
-      }
-    };
-
-    const interval = setInterval(fetchDetection, 3000);
-    return () => clearInterval(interval);
-  }, [buzzerOn, toggleBuzzer]);
-
   const deviceStatus = devices?.vision_node?.status || 'OFFLINE';
+
+  const toggleFlash = () => toggleActuator(ACTUATORS.LIGHT);
+  const toggleBuzzer = () => toggleActuator(ACTUATORS.BUZZER);
   
-  const telemetry = {
-    fps: deviceStatus === 'ACTIVE' ? '30' : '---', 
-    latency: devices?.vision_node?.metrics?.latency || '---',
-    detection: sensorData?.vision || detection
+  const captureImage = async () => {
+    setIsCapturing(true);
+    setCapturedImg(`${CAM_IP}/capture?_cb=${Date.now()}`);
+    setTimeout(() => setIsCapturing(false), 1000);
   };
 
-  const logs = []; // No mock history logs
+  const toggleFullScreen = () => {
+    setIsFullScreen(!isFullScreen);
+  };
 
-  // ─── RENDER ───────────────────────────────────────────────────────────────
+  // ─── TACTICAL OVERLAY COMPONENTS ───
+  const TacticalOverlay = () => (
+    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zMount: 10 }}>
+      {/* Corner Brackets */}
+      <div style={{ position: 'absolute', top: 20, left: 20, width: 20, height: 20, borderTop: '2px solid white', borderLeft: '2px solid white', opacity: 0.5 }} />
+      <div style={{ position: 'absolute', top: 20, right: 20, width: 20, height: 20, borderTop: '2px solid white', borderRight: '2px solid white', opacity: 0.5 }} />
+      <div style={{ position: 'absolute', bottom: 20, left: 20, width: 20, height: 20, borderBottom: '2px solid white', borderLeft: '2px solid white', opacity: 0.5 }} />
+      <div style={{ position: 'absolute', bottom: 20, right: 20, width: 20, height: 20, borderBottom: '2px solid white', borderRight: '2px solid white', opacity: 0.5 }} />
+      
+      {/* Scanning Line */}
+      <motion.div 
+        animate={{ top: ['0%', '100%', '0%'] }} 
+        transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+        style={{ position: 'absolute', left: 0, right: 0, height: '1px', background: 'rgba(255,255,255,0.2)', boxShadow: '0 0 10px white' }} 
+      />
+
+      {/* Grid */}
+      <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle, transparent 20%, rgba(0,0,0,0.1) 100%)', opacity: 0.3 }} />
+    </div>
+  );
+
   return (
     <div className="no-scrollbar" style={{ 
-      background: COLORS.bg, minHeight: '100%', padding: '1.25rem', 
-      paddingBottom: '0', fontFamily: "'Outfit', sans-serif", overflowX: 'hidden' 
+      background: COLORS.bg, minHeight: '100dvh', padding: isFullScreen ? 0 : '1.25rem', 
+      fontFamily: "'Outfit', sans-serif", overflow: 'hidden'
     }}>
       
-      {/* 1. LIVE CAMERA FEED SECTION */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-        style={{ 
-          position: 'relative', borderRadius: '32px', overflow: 'hidden', 
-          background: '#000', marginBottom: '1.5rem', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05)' 
-        }}
-      >
-        <div style={{ height: '240px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0F172A' }}>
-          {deviceStatus === 'ACTIVE' ? (
-            <img src={streamUrl} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: telemetry.detection.active ? 0.9 : 0.7 }} alt="Camera Feed" />
-          ) : (
-            <div style={{ textAlign: 'center', color: '#475569' }}>
-              <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'center' }}>
-                <EyeOff size={48} strokeWidth={1.5} />
-              </div>
-              <div style={{ fontSize: '0.9rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Signal Lost</div>
-              <div style={{ fontSize: '0.65rem', fontWeight: 600, opacity: 0.6 }}>Check hardware power & network</div>
-            </div>
-          )}
-          
-          {/* CAMERA OVERLAYS */}
-          <div style={{ position: 'absolute', inset: 0, padding: '1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <Badge color={deviceStatus === 'ACTIVE' ? COLORS.primary : COLORS.muted}>
-                  {deviceStatus === 'ACTIVE' ? 'ONLINE' : deviceStatus}
-                </Badge>
-              </div>
-            </div>
+      {/* ─── FULL SCREEN VIEW ─── */}
+      <AnimatePresence>
+        {isFullScreen && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ 
+              position: 'fixed', inset: 0, background: '#000', zIndex: 10000,
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}
+          >
+            <div style={{ 
+              width: '100vh', height: '100vw', transform: 'rotate(90deg)', 
+              position: 'relative', overflow: 'hidden'
+            }}>
+               {deviceStatus === 'ACTIVE' ? (
+                 <img src={streamUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Live" />
+               ) : (
+                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#334155', flexDirection: 'column', gap: '15px' }}>
+                   <EyeOff size={64} />
+                   <span style={{ fontSize: '1.2rem', fontWeight: 900, letterSpacing: '0.2em' }}>SIGNAL LOST</span>
+                 </div>
+               )}
+               <TacticalOverlay />
+               
+               {/* Landscape HUD */}
+               <div style={{ position: 'absolute', top: 40, left: 40, right: 40, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                 <div style={{ display: 'flex', gap: '10px' }}>
+                   <Badge color={COLORS.danger} pulse={true}>LIVE FEED</Badge>
+                   <Badge color="white">CAM_01</Badge>
+                 </div>
+                 <button onClick={toggleFullScreen} style={{ background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '10px', borderRadius: '12px' }}>
+                   <Minimize2 size={24} />
+                 </button>
+               </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end' }}>
-              <motion.button whileTap={{ scale: 0.9 }} style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-                <Maximize2 size={18} />
-              </motion.button>
+               <div style={{ position: 'absolute', bottom: 40, left: 40, right: 40, display: 'flex', justifyContent: 'center', gap: '30px' }}>
+                 <motion.button whileTap={{ scale: 0.9 }} onClick={toggleFlash} style={{ width: '60px', height: '60px', borderRadius: '50%', background: flashOn ? COLORS.primary : 'rgba(0,0,0,0.5)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                   <Lightbulb size={28} />
+                 </motion.button>
+                 <motion.button whileTap={{ scale: 0.9 }} onClick={captureImage} style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'white', border: '5px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000' }}>
+                   <CaptureIcon size={32} />
+                 </motion.button>
+                 <motion.button whileTap={{ scale: 0.9 }} onClick={toggleBuzzer} style={{ width: '60px', height: '60px', borderRadius: '50%', background: buzzerOn ? COLORS.danger : 'rgba(0,0,0,0.5)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                   <Bell size={28} />
+                 </motion.button>
+               </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── STANDARD PORTRAIT VIEW ─── */}
+      {!isFullScreen && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          
+
+
+          {/* MAIN FEED CARD */}
+          <div style={{ 
+            position: 'relative', borderRadius: '28px', overflow: 'hidden', 
+            background: '#000', height: '260px', marginBottom: '1.25rem',
+            boxShadow: '0 20px 40px -12px rgba(0,0,0,0.15)'
+          }}>
+             {deviceStatus === 'ACTIVE' ? (
+                <img src={streamUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Stream" />
+             ) : (
+               <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#334155' }}>
+                 <EyeOff size={40} strokeWidth={1.5} />
+                 <span style={{ fontSize: '0.7rem', fontWeight: 900, marginTop: '10px', letterSpacing: '0.1em' }}>SIGNAL OFFLINE</span>
+               </div>
+             )}
+             
+             <TacticalOverlay />
+
+             {/* Overlays */}
+             <div style={{ position: 'absolute', inset: 0, padding: '1rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                 <Badge color={deviceStatus === 'ACTIVE' ? COLORS.danger : COLORS.muted} pulse={deviceStatus === 'ACTIVE'}>
+                   {deviceStatus === 'ACTIVE' ? 'LIVE FEED' : 'OFFLINE'}
+                 </Badge>
+                 <div style={{ fontSize: '0.65rem', color: 'white', fontWeight: 900, textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>192.168.4.2</div>
+               </div>
+               
+               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                 <div style={{ display: 'flex', gap: '8px' }}>
+                   <div style={{ padding: '4px 8px', background: 'rgba(0,0,0,0.5)', borderRadius: '6px', color: 'white', fontSize: '0.5rem', fontWeight: 900 }}>ISO 400</div>
+                   <div style={{ padding: '4px 8px', background: 'rgba(0,0,0,0.5)', borderRadius: '6px', color: 'white', fontSize: '0.5rem', fontWeight: 900 }}>30 FPS</div>
+                 </div>
+                 <motion.button 
+                   whileTap={{ scale: 0.9 }} onClick={toggleFullScreen}
+                   style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', backdropFilter: 'blur(10px)' }}
+                 >
+                   <Maximize2 size={20} />
+                 </motion.button>
+               </div>
+             </div>
+          </div>
+
+          {/* CONTROL CONSOLE */}
+          <div style={{ background: 'white', borderRadius: '28px', padding: '1.25rem', border: '1px solid #f1f5f9', boxShadow: '0 4px 12px rgba(0,0,0,0.02)', marginBottom: '1.5rem' }}>
+            <h3 style={{ fontSize: '0.75rem', fontWeight: 900, color: COLORS.text, textTransform: 'uppercase', marginBottom: '1rem', letterSpacing: '0.05em' }}>Hardware Console</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+               <ControlButton icon={Bell} label="Buzzer" active={buzzerOn} onClick={toggleBuzzer} color={COLORS.danger} />
+               <ControlButton icon={Lightbulb} label="Flash" active={flashOn} onClick={toggleFlash} color={COLORS.warning} />
+               <ControlButton icon={CaptureIcon} label="Capture" active={isCapturing} onClick={captureImage} color={COLORS.secondary} />
             </div>
           </div>
 
-          {/* MOTION BOUNDING BOX (Simulated Hardware Detection) */}
-          {telemetry.detection.active && (
-            <motion.div 
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-              style={{ 
-                position: 'absolute', left: '30%', top: '40%', width: '120px', height: '100px',
-                border: `2px solid ${COLORS.danger}`, borderRadius: '8px', zIndex: 5,
-                boxShadow: `0 0 20px ${COLORS.danger}40`
-              }}
-            >
-              <div style={{ position: 'absolute', top: '-22px', left: 0, background: COLORS.danger, color: 'white', fontSize: '0.5rem', fontWeight: 950, padding: '2px 6px', borderRadius: '4px' }}>
-                OBJECT DETECTED
-              </div>
-            </motion.div>
-          )}
-        </div>
-      </motion.div>
-
-      {/* 2. REAL-TIME DETECTION STATUS (DYNAMIC CARD) */}
-      <AnimatePresence>
-        {telemetry.detection.active && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-            style={{ 
-              background: 'linear-gradient(165deg, #FEF2F2 0%, #FFFFFF 100%)', borderRadius: RAD.card, padding: '1.25rem', marginBottom: '1.5rem',
-              border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)'
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: COLORS.danger, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <ShieldAlert size={22} color="white" />
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.65rem', fontWeight: 800, color: COLORS.danger, textTransform: 'uppercase' }}>Current Trigger</div>
-                  <div style={{ fontSize: '1rem', fontWeight: 950, color: COLORS.text }}>{telemetry.detection.type}</div>
-                </div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '0.6rem', fontWeight: 800, color: COLORS.muted }}>RISK LEVEL</div>
-                <div style={{ fontSize: '0.8rem', fontWeight: 900, color: COLORS.danger }}>{telemetry.detection.level}</div>
-              </div>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div style={{ background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', padding: '10px', borderRadius: '14px', border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.9)' }}>
-                <div style={{ fontSize: '0.55rem', fontWeight: 800, color: COLORS.muted }}>ZONE</div>
-                <div style={{ fontSize: '0.75rem', fontWeight: 900, color: COLORS.text }}>{telemetry.detection.zone}</div>
-              </div>
-              <div style={{ background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', padding: '10px', borderRadius: '14px', border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.9)' }}>
-                <div style={{ fontSize: '0.55rem', fontWeight: 800, color: COLORS.muted }}>TIMESTAMP</div>
-                <div style={{ fontSize: '0.75rem', fontWeight: 900, color: COLORS.text }}>
-                  {telemetry.detection.timestamp ? new Date(telemetry.detection.timestamp).toLocaleTimeString() : '---'}
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* 3. CAMERA HARDWARE CONTROL PANEL */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', marginBottom: '1.5rem' }}>
-        <ControlButton 
-          icon={Bell} label="Buzzer" active={buzzerOn} color={COLORS.danger}
-          onClick={toggleBuzzer} 
-        />
-        <ControlButton 
-          icon={Lightbulb} label="Light" active={flashOn} color={COLORS.primary}
-          onClick={toggleFlash} 
-        />
-        <ControlButton 
-          icon={CaptureIcon} label="Capture" active={isCapturing} color={COLORS.secondary}
-          onClick={captureImage} isAction={true}
-        />
-      </div>
-
-      {/* ENVIRONMENTAL TELEMETRY REMOVED PER USER REQUEST */}
 
 
-      {/* ALERT OVERLAY SYSTEM (Simulated) */}
-      <AnimatePresence>
-        {telemetry.detection.active && telemetry.detection.level === 'High' && (
-          <motion.div 
-            initial={{ y: -50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -50, opacity: 0 }}
-            style={{ 
-              position: 'fixed', top: '20px', left: '20px', right: '20px', 
-              background: COLORS.danger, padding: '14px 20px', borderRadius: '16px',
-              display: 'flex', alignItems: 'center', gap: '12px', zIndex: 1000,
-              boxShadow: '0 10px 40px rgba(239,68,68,0.4)'
-            }}
-          >
-            <AlertTriangle size={24} color="white" />
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '0.85rem', fontWeight: 900, color: 'white' }}>THREAT DETECTED</div>
-              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>{telemetry.detection.type} in {telemetry.detection.zone}!</div>
-            </div>
-            <motion.button whileTap={{ scale: 0.9 }} style={{ border: 'none', background: 'rgba(255,255,255,0.2)', padding: '6px 12px', borderRadius: '8px', color: 'white', fontSize: '0.65rem', fontWeight: 950 }}>VIEW</motion.button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        </motion.div>
+      )}
 
       {/* CAPTURED IMAGE FULLSCREEN MODAL */}
       <AnimatePresence>
@@ -299,31 +241,29 @@ const VisualMonitor = () => {
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             style={{ 
-              position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.95)', zIndex: 9999, 
+              position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.98)', zIndex: 20000, 
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
-              padding: '20px', backdropFilter: 'blur(10px)' 
+              padding: '20px', backdropFilter: 'blur(15px)' 
             }}
             onClick={() => setCapturedImg(null)}
           >
-            <motion.img 
-              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-              src={capturedImg} 
-              style={{ width: '100%', maxWidth: '500px', borderRadius: '24px', boxShadow: '0 20px 60px rgba(0,0,0,0.5)', border: '2px solid rgba(255,255,255,0.1)' }} 
-              alt="Hardware Capture" 
-            />
-            <div style={{ 
-              marginTop: '30px', color: 'white', fontWeight: 900, 
-              letterSpacing: '0.15em', fontSize: '0.75rem', background: 'rgba(255,255,255,0.1)',
-              padding: '10px 20px', borderRadius: '30px'
-            }}>
-              TAP ANYWHERE TO CLOSE
-            </div>
+            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} style={{ position: 'relative' }}>
+              <img 
+                src={capturedImg} 
+                style={{ width: '100%', maxWidth: '600px', borderRadius: '28px', boxShadow: '0 40px 80px rgba(0,0,0,0.5)', border: '2px solid rgba(255,255,255,0.1)' }} 
+                alt="Capture" 
+              />
+              <div style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.6)', padding: '8px 20px', borderRadius: '20px', color: 'white', fontSize: '0.7rem', fontWeight: 900, backdropFilter: 'blur(5px)' }}>
+                SAVED TO LOCAL STORAGE
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        @keyframes scan { from { transform: translateY(-100%); } to { transform: translateY(100%); } }
       `}</style>
 
     </div>
