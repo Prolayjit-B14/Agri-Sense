@@ -167,25 +167,8 @@ const AlertCenter = () => {
   return (
     <div style={{ padding: '1.5rem', paddingBottom: '100px', background: COLORS.bg, fontFamily: "'Outfit', sans-serif" }}>
       
-      {/* 1. ACTIONS HEADER (Streamlined) */}
-      <section style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
-          <motion.button 
-            whileTap={{ scale: 0.95 }}
-            onClick={clearAll} 
-            style={{ 
-              background: 'rgba(239, 68, 68, 0.08)', border: 'none', 
-              padding: '8px 14px', borderRadius: '12px',
-              display: 'flex', alignItems: 'center', gap: '8px', color: COLORS.critical,
-              cursor: 'pointer', transition: '0.2s'
-            }}
-          >
-            <span style={{ fontSize: '0.65rem', fontWeight: 950, letterSpacing: '0.05em' }}>CLEAR ALL</span>
-            <Trash2 size={15} strokeWidth={2.5} />
-          </motion.button>
-      </section>
-
-      {/* 2. FILTERS */}
-      <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginBottom: '1.8rem', paddingBottom: '8px' }} className="no-scrollbar">
+      {/* 1. FILTERS */}
+      <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginBottom: '1.25rem', paddingBottom: '8px' }} className="no-scrollbar">
         {[
           { id: 'all', label: 'All', icon: Bell, color: COLORS.text },
           { id: 'critical', label: 'Critical', icon: Zap, color: COLORS.critical },
@@ -214,6 +197,23 @@ const AlertCenter = () => {
           );
         })}
       </div>
+
+      {/* 2. ACTIONS (Now below filters) */}
+      <section style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+          <motion.button 
+            whileTap={{ scale: 0.95 }}
+            onClick={clearAll} 
+            style={{ 
+              background: 'rgba(239, 68, 68, 0.08)', border: 'none', 
+              padding: '8px 14px', borderRadius: '12px',
+              display: 'flex', alignItems: 'center', gap: '8px', color: COLORS.critical,
+              cursor: 'pointer', transition: '0.2s'
+            }}
+          >
+            <span style={{ fontSize: '0.65rem', fontWeight: 950, letterSpacing: '0.05em' }}>CLEAR ALL</span>
+            <Trash2 size={15} strokeWidth={2.5} />
+          </motion.button>
+      </section>
 
       {/* 3. ALERTS LIST */}
       <div style={{ minHeight: '400px' }}>

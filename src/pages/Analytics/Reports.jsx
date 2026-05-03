@@ -53,7 +53,7 @@ const ReportPage = memo(({ title, subtitle, color = T.emerald, children, activeP
       background: 'white', 
       boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)', 
       position: 'relative', 
-      padding: '1.25rem', boxSizing: 'border-box',
+      padding: '0.85rem', boxSizing: 'border-box',
       display: 'flex', flexDirection: 'column', flexShrink: 0,
       borderRadius: '2px',
       border: '1px solid rgba(0,0,0,0.05)'
@@ -62,7 +62,7 @@ const ReportPage = memo(({ title, subtitle, color = T.emerald, children, activeP
     <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: color }} />
     
     {/* Page Header */}
-    <div style={{ borderBottom: '1.5px solid #F1F5F9', paddingBottom: '1rem', marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+    <div style={{ borderBottom: '1px solid #F1F5F9', paddingBottom: '0.5rem', marginBottom: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: T.slate, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Sparkles size={16} color="white" />
@@ -88,7 +88,7 @@ const ReportPage = memo(({ title, subtitle, color = T.emerald, children, activeP
     </div>
 
     {/* Page Footer */}
-    <div style={{ borderTop: '1.5px solid #F1F5F9', paddingTop: '1rem', marginTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: '0.5rem', marginTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
         <Shield size={12} color={T.slateMuted} />
         <span style={{ fontSize: '0.5rem', fontWeight: 900, color: T.slateMuted, letterSpacing: '0.02em' }}>ENCRYPTED VERIFICATION LINK</span>
@@ -120,46 +120,46 @@ const Reports = () => {
 
   return (
     <div style={{ 
-      padding: '1.25rem', paddingBottom: '90px', background: T.bg, height: '100dvh', 
+      padding: '0.8rem 1rem', paddingBottom: '85px', background: T.bg, height: '100dvh', 
       display: 'flex', flexDirection: 'column', boxSizing: 'border-box',
       fontFamily: "'Outfit', sans-serif", overflow: 'hidden'
     }}>
       
       {/* ─── STATUS HEADER / CTA ─── */}
-      <section style={{ marginBottom: '1rem', flexShrink: 0 }}>
+      <section style={{ marginBottom: '0.5rem', flexShrink: 0 }}>
         <div style={{ 
-          background: T.cardBg, padding: '0.85rem 1rem', borderRadius: '24px', 
+          background: T.cardBg, padding: '0.65rem 0.85rem', borderRadius: '20px', 
           border: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', 
           justifyContent: 'space-between', boxShadow: T.shadow 
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{ 
-              width: '36px', height: '36px', borderRadius: '12px', 
+              width: '32px', height: '32px', borderRadius: '10px', 
               background: genStep === 5 ? `${T.emerald}15` : '#F1F5F9', 
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               border: `1px solid ${genStep === 5 ? `${T.emerald}20` : 'transparent'}`
             }}>
-               {genStep === 5 ? <FileCheck color={T.emerald} size={18} strokeWidth={2.5} /> : React.cloneElement(steps[genStep].icon, { size: 18, color: genStep === 0 ? T.slateMuted : T.emerald })}
+               {genStep === 5 ? <FileCheck color={T.emerald} size={16} strokeWidth={2.5} /> : React.cloneElement(steps[genStep].icon, { size: 16, color: genStep === 0 ? T.slateMuted : T.emerald })}
             </div>
             <div>
-              <p style={{ margin: 0, fontSize: '0.55rem', fontWeight: 900, color: T.slateMuted, textTransform: 'uppercase', letterSpacing: '0.08em', lineHeight: 1 }}>STATUS</p>
-              <h3 style={{ margin: '2px 0 0 0', fontSize: '0.8rem', fontWeight: 950, color: T.slate, lineHeight: 1 }}>{steps[genStep].label}</h3>
+              <p style={{ margin: 0, fontSize: '0.5rem', fontWeight: 900, color: T.slateMuted, textTransform: 'uppercase', letterSpacing: '0.08em', lineHeight: 1 }}>STATUS</p>
+              <h3 style={{ margin: '1px 0 0 0', fontSize: '0.75rem', fontWeight: 950, color: T.slate, lineHeight: 1 }}>{steps[genStep].label}</h3>
             </div>
           </div>
           
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '6px' }}>
             {genStep === 0 && (
                <motion.button 
                  whileTap={{ scale: 0.95 }}
                  onClick={handleGenerate} 
                  style={{ 
-                   padding: '0 16px', height: '36px', borderRadius: '12px', 
+                   padding: '0 12px', height: '32px', borderRadius: '10px', 
                    background: T.emerald, color: 'white', border: 'none', 
-                   fontSize: '0.65rem', fontWeight: 900, cursor: 'pointer',
+                   fontSize: '0.6rem', fontWeight: 900, cursor: 'pointer',
                    boxShadow: `0 8px 16px ${T.emerald}30`
                  }}
                >
-                 START BUILD
+                 START
                </motion.button>
             )}
             {genStep === 5 && (
@@ -168,8 +168,8 @@ const Reports = () => {
                    whileTap={{ scale: 0.95 }}
                    onClick={() => setGenStep(0)} 
                    style={{ 
-                     padding: '0 12px', height: '36px', background: 'white', color: T.slate, 
-                     borderRadius: '12px', border: '1px solid #E2E8F0', fontSize: '0.6rem', fontWeight: 800 
+                     padding: '0 10px', height: '32px', background: 'white', color: T.slate, 
+                     borderRadius: '10px', border: '1px solid #E2E8F0', fontSize: '0.55rem', fontWeight: 800 
                    }}
                  >
                    RESET
@@ -177,9 +177,9 @@ const Reports = () => {
                  <motion.button 
                    whileTap={{ scale: 0.95 }}
                    style={{ 
-                     padding: '0 16px', height: '36px', borderRadius: '12px', 
+                     padding: '0 12px', height: '32px', borderRadius: '10px', 
                      background: T.emerald, color: 'white', border: 'none', 
-                     fontSize: '0.65rem', fontWeight: 900, boxShadow: `0 8px 16px ${T.emerald}30`
+                     fontSize: '0.6rem', fontWeight: 900, boxShadow: `0 8px 16px ${T.emerald}30`
                    }}
                  >
                    EXPORT
@@ -199,9 +199,9 @@ const Reports = () => {
       }}>
         {genStep === 5 && (
           <div style={{ 
-            height: '48px', background: 'white', borderBottom: '1.5px solid #E2E8F0', 
+            height: '40px', background: 'white', borderBottom: '1.5px solid #E2E8F0', 
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
-            padding: '0 1.25rem', flexShrink: 0 
+            padding: '0 1rem', flexShrink: 0 
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <FileText size={16} color={T.emerald} />
@@ -215,7 +215,7 @@ const Reports = () => {
           </div>
         )}
 
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', overflow: 'hidden', position: 'relative' }}>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.75rem', overflow: 'hidden', position: 'relative' }}>
           <AnimatePresence mode="wait">
             {genStep === 0 && (
               <motion.div key="ready" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ textAlign: 'center', color: T.slateMuted }}>
@@ -245,10 +245,10 @@ const Reports = () => {
                   {/* ... (children content same as before) */}
                   {activePage === 1 && (
                     <>
-                      <div style={{ width: '100%', height: '42%', borderRadius: '10px', overflow: 'hidden', border: '1px solid #F1F5F9', marginBottom: '0.5rem' }}>
+                      <div style={{ width: '100%', height: '35%', borderRadius: '8px', overflow: 'hidden', border: '1px solid #F1F5F9', marginBottom: '0.4rem' }}>
                         <img src={FarmMap} alt="Map" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px' }}>
                         <DataCard label="Stability" value="98.4%" status="Nominal" />
                         <DataCard label="Nodes" value="12 ACT" status="Global" />
                         <DataCard label="Latency" value="14ms" status="Direct" />
@@ -261,7 +261,7 @@ const Reports = () => {
                     </>
                   )}
                   {activePage === 2 && (
-                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
                       <DataCard label="Moisture" value={`${sensorData?.soil?.moisture || 42}%`} status="Field A" />
                       <DataCard label="pH Level" value={`${sensorData?.soil?.ph || 6.8}`} status="Calibration" />
                       <DataCard label="Nitrogen" value={`${sensorData?.soil?.npk?.n || 140}ppm`} status="Optimal" />
@@ -272,14 +272,14 @@ const Reports = () => {
                     </div>
                   )}
                   {activePage >= 3 && (
-                     <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '6px' }}>
+                     <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '4px' }}>
                         {[1,2,3,4,5].map(i => (
-                          <div key={i} style={{ padding: '0.5rem 0.75rem', background: '#F8FAFC', borderRadius: '10px', border: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div key={i} style={{ padding: '0.4rem 0.6rem', background: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div>
-                              <div style={{ fontSize: '0.4rem', fontWeight: 900, color: T.slateMuted, textTransform: 'uppercase' }}>NODE_ID_00{activePage}{i}</div>
-                              <div style={{ fontSize: '0.65rem', fontWeight: 950, color: T.slate }}>Forensic Link Verified</div>
+                              <div style={{ fontSize: '0.35rem', fontWeight: 900, color: T.slateMuted, textTransform: 'uppercase' }}>NODE_ID_00{activePage}{i}</div>
+                              <div style={{ fontSize: '0.6rem', fontWeight: 950, color: T.slate }}>Forensic Link Verified</div>
                             </div>
-                            <ShieldCheck size={14} color={T.emerald} />
+                            <ShieldCheck size={12} color={T.emerald} />
                           </div>
                         ))}
                      </div>
