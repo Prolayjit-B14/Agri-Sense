@@ -13,7 +13,7 @@ export const MASTER_CONFIG = {
   FARM_NAME: "Master Field",
   TAGLINE: "Smart Agriculture Command Center",
   FOOTER_CREDIT: "by Prolayjit Biswas",
-  VERSION: "19.1.0_ULTRA_STABLE",
+  VERSION: "19.1.1_ULTRA_PREMIUM",
   
   // 🔐 AUTHORIZED INVESTIGATORS
   AUTHORIZED_USERS: [
@@ -31,7 +31,7 @@ export const MASTER_CONFIG = {
   FIELD_TOPIC_COMMANDS: "agrisense/agrisense_pro/master_field/commands",
   
   // 🖼️ ASSETS
-  DEFAULT_PROFILE_PHOTO: "https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&q=80&w=100",
+  DEFAULT_PROFILE_PHOTO: "",
   
   // 🗺️ MAP & WEATHER (Optional External APIs)
   OPENWEATHER_API_KEY: import.meta.env.VITE_OPENWEATHER_API_KEY || "", 

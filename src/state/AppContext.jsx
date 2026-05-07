@@ -69,14 +69,14 @@ export const AppProvider = ({ children }) => {
         name: MASTER_CONFIG.FARM_NAME,
         projectName: MASTER_CONFIG.PROJECT_NAME,
         tagline: MASTER_CONFIG.TAGLINE,
-        version: "17.1.0"
+        version: MASTER_CONFIG.VERSION
       };
     } catch (e) {
       return {
         name: MASTER_CONFIG.FARM_NAME,
         projectName: MASTER_CONFIG.PROJECT_NAME,
         tagline: MASTER_CONFIG.TAGLINE,
-        version: "17.1.0"
+        version: MASTER_CONFIG.VERSION
       };
     }
   });

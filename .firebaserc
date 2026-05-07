@@ -1,15 +1,12 @@
 {
   "projects": {
-    "default": "agri-sense-a2333"
+    "default": "agri-sense-pb"
   },
   "targets": {
-    "agri-sense-a2333": {
+    "agri-sense-pb": {
       "hosting": {
-        "agri-sense-a2333": [
-          "agri-sense-a2333"
-        ],
-        "agri-sense-pro": [
-          "agri-sense-pro"
+        "agri-sense-pb": [
+          "agri-sense-pb"
         ]
       }
     }

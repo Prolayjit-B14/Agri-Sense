@@ -7,7 +7,7 @@ import {
   Search, ShieldCheck, Activity,
   Mail, Calendar, ExternalLink,
   Cpu, Database, Zap, Clock,
-  Globe, Fingerprint, Server,
+  Globe, Fingerprint, Server, User,
   Terminal, BarChart3, Radio, AlertCircle
 } from 'lucide-react';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
@@ -180,7 +180,7 @@ const AdminDashboard = () => {
               </div>
             ) : (
               filteredFarmers.map((farmer, i) => (
-                <FarmerRow key={farmer.email} farmer={farmer} index={i} />
+                <FarmerRow key={farmer.id || farmer.email || `farmer-${i}`} farmer={farmer} index={i} />
               ))
             )}
           </AnimatePresence>
@@ -205,75 +205,91 @@ const StatCard = ({ label, value, icon: Icon, color }) => (
     }}>
       <Icon size={20} color={color} />
     </div>
-    <div style={{ fontSize: '1.6rem', fontWeight: 900, color: COLORS.accent, lineHeight: 1 }}>{value}</div>
+    <div style={{ fontSize: '1.6rem', fontWeight: 900, color: COLORS.accent, lineHeight: 1 }}>{value || 0}</div>
     <div style={{ fontSize: '0.65rem', fontWeight: 800, color: COLORS.textMuted, textTransform: 'uppercase', marginTop: '6px', letterSpacing: '0.05em' }}>{label}</div>
   </motion.div>
 );
 
-const FarmerRow = ({ farmer, index }) => (
-  <motion.div 
-    initial={{ opacity: 0, x: -20 }}
-    animate={{ opacity: 1, x: 0 }}
-    transition={{ delay: index * 0.05 }}
-    style={{ 
-      background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '24px', padding: '16px 20px',
-      border: '1px solid rgba(255, 255, 255, 0.8)', display: 'flex', alignItems: 'center',
-      justifyContent: 'space-between', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
-      marginBottom: '8px'
-    }}
-  >
-    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-      <div style={{ position: 'relative' }}>
-        <div style={{ width: '52px', height: '52px', borderRadius: '16px', background: `${COLORS.primary}10`, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${COLORS.primary}20` }}>
-          <User size={24} color={COLORS.primary} strokeWidth={2.5} />
+const FarmerRow = ({ farmer, index }) => {
+  const safeLocation = farmer.location || 'Unknown Location';
+  const locationDisplay = safeLocation.includes('•') ? safeLocation.split('•')[1] : safeLocation;
+
+  const getSafeTime = (time) => {
+    if (!time) return '---';
+    try {
+      const d = new Date(time);
+      if (isNaN(d.getTime())) return '---';
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      return '---';
+    }
+  };
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.05 }}
+      style={{ 
+        background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '24px', padding: '16px 20px',
+        border: '1px solid rgba(255, 255, 255, 0.8)', display: 'flex', alignItems: 'center',
+        justifyContent: 'space-between', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
+        marginBottom: '8px'
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{ position: 'relative' }}>
+          <div style={{ width: '52px', height: '52px', borderRadius: '16px', background: `${COLORS.primary}10`, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${COLORS.primary}20` }}>
+            <User size={24} color={COLORS.primary} strokeWidth={2.5} />
+          </div>
+          <div style={{ 
+            position: 'absolute', bottom: '-4px', right: '-4px',
+            padding: '4px', borderRadius: '6px', background: farmer.isGuest ? '#F1F5F9' : '#ECFDF5',
+            border: '2px solid white'
+          }}>
+            {farmer.isGuest ? <Terminal size={10} color="#64748B" /> : <Globe size={10} color={COLORS.primary} />}
+          </div>
         </div>
-        <div style={{ 
-          position: 'absolute', bottom: '-4px', right: '-4px',
-          padding: '4px', borderRadius: '6px', background: farmer.isGuest ? '#F1F5F9' : '#ECFDF5',
-          border: '2px solid white'
-        }}>
-          {farmer.isGuest ? <Terminal size={10} color="#64748B" /> : <Globe size={10} color={COLORS.primary} />}
+
+        <div>
+          <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: COLORS.accent }}>{farmer.name || 'System Operator'}</h4>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+            {farmer.email?.toLowerCase() === 'prolayjitbiswas14112004@gmail.com' ? (
+              <span style={{ 
+                fontSize: '0.55rem', fontWeight: 900, padding: '2px 8px', borderRadius: '4px',
+                background: 'rgba(16, 185, 129, 0.1)', color: '#10B981',
+                textTransform: 'uppercase'
+              }}>
+                ADMINISTRATOR
+              </span>
+            ) : (
+              <span style={{ 
+                fontSize: '0.55rem', fontWeight: 900, padding: '2px 8px', borderRadius: '4px',
+                background: farmer.isGuest ? '#F1F5F9' : '#ECFDF5', color: farmer.isGuest ? '#64748B' : COLORS.primary,
+                textTransform: 'uppercase'
+              }}>
+                {farmer.isGuest ? 'GUEST SESSION' : 'REGISTERED UNIT'}
+              </span>
+            )}
+            <span style={{ fontSize: '0.65rem', color: COLORS.textMuted, fontWeight: 600 }}>{farmer.email || 'No Email Recorded'}</span>
+          </div>
         </div>
       </div>
 
-      <div>
-        <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: COLORS.accent }}>{farmer.name || 'System Operator'}</h4>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-          {farmer.email?.toLowerCase() === 'prolayjitbiswas14112004@gmail.com' ? (
-            <span style={{ 
-              fontSize: '0.55rem', fontWeight: 900, padding: '2px 8px', borderRadius: '4px',
-              background: 'rgba(16, 185, 129, 0.1)', color: '#10B981',
-              textTransform: 'uppercase'
-            }}>
-              ADMINISTRATOR
-            </span>
-          ) : (
-            <span style={{ 
-              fontSize: '0.55rem', fontWeight: 900, padding: '2px 8px', borderRadius: '4px',
-              background: farmer.isGuest ? '#F1F5F9' : '#ECFDF5', color: farmer.isGuest ? '#64748B' : COLORS.primary,
-              textTransform: 'uppercase'
-            }}>
-              {farmer.isGuest ? 'GUEST SESSION' : 'REGISTERED UNIT'}
-            </span>
-          )}
-          <span style={{ fontSize: '0.65rem', color: COLORS.textMuted, fontWeight: 600 }}>{farmer.email}</span>
+      <div style={{ textAlign: 'right' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', marginBottom: '4px' }}>
+          <Clock size={12} color={COLORS.textMuted} />
+          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: COLORS.accent }}>
+            {getSafeTime(farmer.lastLogin)}
+          </span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
+          <MapPin size={10} color={COLORS.primary} />
+          <span style={{ fontSize: '0.65rem', fontWeight: 600, color: COLORS.textMuted }}>{locationDisplay}</span>
         </div>
       </div>
-    </div>
-
-    <div style={{ textAlign: 'right' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', marginBottom: '4px' }}>
-        <Clock size={12} color={COLORS.textMuted} />
-        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: COLORS.accent }}>
-          {farmer.lastLogin ? new Date(farmer.lastLogin).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '---'}
-        </span>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
-        <MapPin size={10} color={COLORS.primary} />
-        <span style={{ fontSize: '0.65rem', fontWeight: 600, color: COLORS.textMuted }}>{farmer.location?.split('•')[1] || farmer.location || 'Unknown'}</span>
-      </div>
-    </div>
-  </motion.div>
-);
+    </motion.div>
+  );
+};
 
 export default AdminDashboard;

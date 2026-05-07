@@ -445,19 +445,50 @@ const InsightsCard = React.memo(({ sensorData, sensorHistory, navigate }) => {
 }, (prev, next) => prev.sensorData === next.sensorData && prev.sensorHistory === next.sensorHistory);
 
 const WelcomeHeader = React.memo(() => {
-  const { user } = useApp();
+  const { user, currentGPS } = useApp();
   const [time] = React.useState(new Date());
   const h = time.getHours();
   const greeting = h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : h < 21 ? 'Good Evening' : 'Good Night';
   const firstName = (user?.name || user?.email || 'Farmer').split(' ')[0].split('@')[0];
   
   return (
-    <>
-      <div style={{ height: '4px' }} />
-      <div style={{ fontSize: '2rem', fontWeight: 950, color: 'var(--text-main)', letterSpacing: '-0.04em', lineHeight: 1.1 }}>
-        {firstName}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)', letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.8 }}>
+          {greeting}
+        </span>
+        <motion.span 
+          animate={{ rotate: [0, 20, 0, 20, 0] }}
+          transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 3 }}
+          style={{ fontSize: '0.9rem', display: 'inline-block', originX: '70%', originY: '70%' }}
+        >
+          👋
+        </motion.span>
+        <div style={{ width: '12px', height: '1px', background: 'var(--primary)', opacity: 0.3 }} />
       </div>
-    </>
+      
+      <h1 style={{ fontSize: '2.4rem', fontWeight: 950, color: 'var(--text-main)', letterSpacing: '-0.04em', margin: '0 0 8px 0', lineHeight: 1 }}>
+        {firstName}
+      </h1>
+
+      <motion.div 
+        initial={{ opacity: 0, x: -10 }}
+        animate={{ opacity: 1, x: 0 }}
+        style={{ 
+          display: 'inline-flex', alignItems: 'center', gap: '8px', 
+          background: 'rgba(16, 185, 129, 0.08)', 
+          padding: '6px 14px', borderRadius: '40px',
+          border: '1px solid rgba(16, 185, 129, 0.1)',
+          backdropFilter: 'blur(10px)',
+          alignSelf: 'flex-start'
+        }}
+      >
+        <MapPin size={14} color="var(--primary)" fill="var(--primary-soft)" />
+        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary)', letterSpacing: '0.01em' }}>
+          {currentGPS?.city || 'Locating Field...'}
+        </span>
+      </motion.div>
+    </div>
   );
 });
 
@@ -484,14 +515,8 @@ const Dashboard = () => {
       style={{ padding: '1.25rem', paddingBottom: '140px' }}
     >
       {/* Header Section */}
-      <motion.section variants={itemFadeUp} style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-        <div>
-          <WelcomeHeader />
-          <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--primary)', fontSize: '0.9rem', fontWeight: 800 }}>
-            <MapPin size={16} fill="var(--primary-soft)" />
-            <span>{currentGPS?.city || 'Locating Field...'}</span>
-          </div>
-        </div>
+      <motion.section variants={itemFadeUp} style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <WelcomeHeader />
 
         <div style={{ display: 'flex', gap: '10px' }}>
           {user?.email?.toLowerCase() === 'prolayjitbiswas14112004@gmail.com' && (

@@ -45,10 +45,10 @@ const Login = () => {
 
   return (
     <div style={{ 
-      minHeight: '100dvh', width: '100vw', 
+      height: '100dvh', width: '100vw', 
       background: 'linear-gradient(135deg, #065F46 0%, #042F2E 100%)', 
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      padding: '2rem 1.5rem', fontFamily: "'Outfit', sans-serif",
+      padding: '1rem', fontFamily: "'Outfit', sans-serif",
       position: 'relative', overflow: 'hidden'
     }}>
 
@@ -58,18 +58,19 @@ const Login = () => {
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          style={{ textAlign: 'center', marginBottom: '2.5rem' }}
+          style={{ textAlign: 'center', marginBottom: '1.5rem' }}
         >
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 900, color: 'white', margin: 0, letterSpacing: '-0.04em', textShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>AgriSense <span style={{ color: '#10B981' }}>Pro</span></h1>
-          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.95rem', fontWeight: 600, marginTop: '8px', letterSpacing: '0.02em' }}>SMART FARM COMMAND CENTER</p>
+          <h1 style={{ fontSize: '2.2rem', fontWeight: 900, color: 'white', margin: 0, letterSpacing: '-0.04em', textShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>AgriSense <span style={{ color: '#10B981' }}>Pro</span></h1>
         </motion.div>
 
         {/* 🃏 CRYSTAL AUTH CARD */}
         <motion.div 
           layout
+          initial={false}
+          transition={{ type: 'spring', stiffness: 350, damping: 35 }}
           style={{ 
             width: '100%', background: 'rgba(255, 255, 255, 0.08)', backdropFilter: 'blur(24px)',
-            borderRadius: '32px', padding: '2.5rem 2rem',
+            borderRadius: '28px', padding: '2rem 1.75rem',
             boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', border: '1px solid rgba(255, 255, 255, 0.15)'
           }}
         >
@@ -88,44 +89,38 @@ const Login = () => {
 
                 <form onSubmit={handleManualLogin}>
                   {isSignUp && (
-                    <div style={{ marginBottom: '1rem', position: 'relative' }}>
+                    <div style={{ marginBottom: '0.75rem', position: 'relative' }}>
                       <User size={18} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
                       <input type="text" placeholder="Full Name" value={fullName} onChange={e => setFullName(e.target.value)}
-                        style={{ width: '100%', height: '56px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', paddingLeft: '48px', color: 'white', fontSize: '0.95rem', outline: 'none', transition: '0.3s' }}
-                        onFocus={(e) => e.target.style.borderColor = '#10B981'}
-                        onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                        style={{ width: '100%', height: '50px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', paddingLeft: '48px', color: 'white', fontSize: '0.9rem', outline: 'none' }}
                       />
                     </div>
                   )}
-                  <div style={{ marginBottom: '1rem', position: 'relative' }}>
+                  <div style={{ marginBottom: '0.75rem', position: 'relative' }}>
                     <Mail size={18} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
                     <input type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)}
-                      style={{ width: '100%', height: '56px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', paddingLeft: '48px', color: 'white', fontSize: '0.95rem', outline: 'none', transition: '0.3s' }}
-                      onFocus={(e) => e.target.style.borderColor = '#10B981'}
-                      onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                      style={{ width: '100%', height: '50px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', paddingLeft: '48px', color: 'white', fontSize: '0.9rem', outline: 'none' }}
                     />
                   </div>
-                  <div style={{ marginBottom: '2rem', position: 'relative' }}>
+                  <div style={{ marginBottom: '1.25rem', position: 'relative' }}>
                     <Lock size={18} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
                     <input type={showPassword ? "text" : "password"} placeholder="Password" value={password} onChange={e => setPassword(e.target.value)}
-                      style={{ width: '100%', height: '56px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', paddingLeft: '48px', paddingRight: '48px', color: 'white', fontSize: '0.95rem', outline: 'none', transition: '0.3s' }}
-                      onFocus={(e) => e.target.style.borderColor = '#10B981'}
-                      onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                      style={{ width: '100%', height: '50px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', paddingLeft: '48px', paddingRight: '48px', color: 'white', fontSize: '0.9rem', outline: 'none' }}
                     />
                     <div onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', color: 'rgba(255,255,255,0.4)' }}>
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </div>
                   </div>
 
                   <motion.button 
-                    whileHover={{ scale: 1.02, background: '#059669' }}
+                    whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     type="submit" 
                     style={{ 
-                      width: '100%', height: '60px', borderRadius: '18px', background: '#10B981', border: 'none', 
-                      color: 'white', fontWeight: 900, fontSize: '1rem', cursor: 'pointer', 
-                      boxShadow: '0 12px 24px rgba(16, 185, 129, 0.3)', marginBottom: '1.5rem',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'
+                      width: '100%', height: '54px', borderRadius: '16px', background: '#10B981', border: 'none', 
+                      color: 'white', fontWeight: 900, fontSize: '0.95rem', cursor: 'pointer', 
+                      boxShadow: '0 8px 16px rgba(16, 185, 129, 0.2)', marginBottom: '1.25rem',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
                     }}
                   >
                     {isSignUp ? 'Sign Up' : 'Sign In'}
@@ -143,26 +138,26 @@ const Login = () => {
                   whileHover={{ background: 'rgba(255,255,255,0.1)' }}
                   onClick={handleGoogleLogin}
                   style={{ 
-                    width: '100%', height: '56px', borderRadius: '16px', background: 'transparent', 
+                    width: '100%', height: '50px', borderRadius: '14px', background: 'transparent', 
                     border: '1px solid rgba(255,255,255,0.15)', color: 'white', fontWeight: 700, 
-                    fontSize: '0.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', 
-                    justifyContent: 'center', gap: '12px', marginBottom: '0.75rem' 
+                    fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', 
+                    justifyContent: 'center', gap: '10px', marginBottom: '0.5rem' 
                   }}
                 >
-                  <Chrome size={20} /> Google
+                  <Chrome size={18} /> Google
                 </motion.button>
 
                 <motion.button 
                   whileHover={{ background: 'rgba(255,255,255,0.05)' }}
                   onClick={() => setIsGuestMode(true)}
                   style={{ 
-                    width: '100%', height: '56px', borderRadius: '16px', background: 'transparent', 
+                    width: '100%', height: '48px', borderRadius: '14px', background: 'transparent', 
                     border: '1px solid rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)', fontWeight: 800, 
-                    fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', 
+                    fontSize: '0.7rem', cursor: 'pointer', display: 'flex', alignItems: 'center', 
                     justifyContent: 'center', gap: '8px' 
                   }}
                 >
-                  <User size={16} /> ENTER AS GUEST
+                  <User size={14} /> ENTER AS GUEST
                 </motion.button>
 
                 <div style={{ textAlign: 'center', fontSize: '0.85rem', marginTop: '2rem' }}>
@@ -223,9 +218,12 @@ const Login = () => {
       </div>
 
       {/* 🛡️ SECURITY BADGE */}
-      <div style={{ position: 'absolute', bottom: '2rem', display: 'flex', alignItems: 'center', gap: '10px', opacity: 0.4 }}>
-        <ShieldCheck size={16} color="#10B981" />
-        <span style={{ color: 'white', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.15em' }}>SECURE AGRI-SENSE CONNECTION</span>
+      <div style={{ 
+        position: 'absolute', bottom: '1.5rem', 
+        display: 'flex', alignItems: 'center', gap: '10px', opacity: 0.35 
+      }}>
+        <ShieldCheck size={14} color="#10B981" />
+        <span style={{ color: 'white', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.15em' }}>SECURE AGRI-SENSE CONNECTION</span>
       </div>
 
     </div>

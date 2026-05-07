@@ -37,7 +37,7 @@ const NotificationDot = React.memo(() => {
 });
 
 const TopBar = ({ title }) => {
-  const { setIsSidebarOpen } = useApp();
+  const { user, setIsSidebarOpen } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -102,9 +102,26 @@ const TopBar = ({ title }) => {
         <motion.div 
           whileTap={{ scale: 0.95 }}
           onClick={() => navigate('/account')}
-          style={{ cursor: 'pointer', padding: '8px', background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', border: '1px solid rgba(255, 255, 255, 0.8)', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.02), inset 0 1px 1px rgba(255,255,255,0.9)' }}
+          style={{ 
+            cursor: 'pointer', width: '38px', height: '38px', 
+            borderRadius: '12px', overflow: 'hidden',
+            background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', 
+            border: '1px solid rgba(255, 255, 255, 0.8)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.02), inset 0 1px 1px rgba(255,255,255,0.9)' 
+          }}
         >
-          <User size={20} color="#64748b" strokeWidth={2} />
+          {user?.photoURL && !user.photoURL.includes('unsplash.com') ? (
+            <img 
+              src={user.photoURL} 
+              alt="Profile" 
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+            />
+          ) : (
+            <span style={{ fontSize: '1rem', fontWeight: 900, color: '#10B981' }}>
+              {(user?.name || user?.displayName || user?.email || 'A').charAt(0).toUpperCase()}
+            </span>
+          )}
         </motion.div>
       </div>
     </header>

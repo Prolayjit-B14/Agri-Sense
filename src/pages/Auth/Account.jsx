@@ -82,7 +82,7 @@ const Account = () => {
     email: user?.email || '',
     phone: user?.phone || '',
     location: user?.location || '',
-    photo: user?.photo || user?.photoURL || 'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&q=80&w=200'
+    photo: user?.photo || user?.photoURL || ''
   });
 
   const [codename, setCodename] = useState(farmInfo?.projectName || '');
@@ -103,7 +103,7 @@ const Account = () => {
         email: user.email || '',
         phone: user.phone || '',
         location: user.location || '',
-        photo: user.photo || user.photoURL || 'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&q=80&w=200'
+        photo: user.photo || user.photoURL || ''
       });
     }
   }, [user, isSaving]);
@@ -223,8 +223,20 @@ const Account = () => {
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px', position: 'relative', zIndex: 1 }}>
           <div style={{ position: 'relative' }} onClick={handleImageUpload}>
-            <div style={{ width: '80px', height: '80px', borderRadius: '28px', border: `2px solid ${COLORS.primary}20`, overflow: 'hidden', background: 'white', boxShadow: '0 10px 20px rgba(0,0,0,0.05)' }}>
-              <img src={formData.photo} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: isUploading ? 0.4 : 1 }} alt="P" />
+            <div style={{ 
+              width: '80px', height: '80px', borderRadius: '28px', 
+              border: `2px solid ${COLORS.primary}20`, overflow: 'hidden', 
+              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', 
+              boxShadow: '0 10px 20px rgba(0,0,0,0.05)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}>
+              {formData.photo && !formData.photo.includes('unsplash.com') ? (
+                <img src={formData.photo} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: isUploading ? 0.4 : 1 }} alt="Profile" />
+              ) : (
+                <span style={{ fontSize: '2rem', fontWeight: 900, color: 'white' }}>
+                  {(user?.name || user?.displayName || user?.email || 'A').charAt(0).toUpperCase()}
+                </span>
+              )}
               {isUploading && (
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.6)' }}>
                   <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} style={{ width: '20px', height: '20px', border: `2px solid ${COLORS.primary}`, borderTopColor: 'transparent', borderRadius: '50%' }} />
