@@ -151,18 +151,22 @@ const Sidebar = () => {
         </div>
 
         {/* ── FOOTER ── */}
-        <div style={{ padding: '12px 18px', borderTop: '1px solid #f8fafc' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-            <div style={{ width: '20px', height: '20px', borderRadius: '5px', overflow: 'hidden' }}>
-              <img src="/src/assets/logo.png" alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <div style={{ padding: '20px 24px', borderTop: '1px solid rgba(0,0,0,0.03)', background: 'rgba(0,0,0,0.01)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+            <div style={{ position: 'relative', width: '24px', height: '24px' }}>
+              <div style={{ position: 'absolute', inset: 0, background: '#10B981', borderRadius: '6px', rotate: '45deg', opacity: 0.2 }} />
+              <img src="/src/assets/logo.png" alt="Logo" style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'contain', zIndex: 1 }} />
             </div>
-            <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#10B981', letterSpacing: '0.02em' }}>
-              AGRISENSE <span style={{ color: '#1f2937' }}>PRO</span>
+            <div style={{ fontSize: '0.85rem', fontWeight: 950, color: '#0F172A', letterSpacing: '-0.02em' }}>
+              AGRISENSE <span style={{ color: '#10B981' }}>PRO</span>
             </div>
           </div>
           
-          <div style={{ fontSize: '0.6rem', color: '#94a3b8', fontWeight: 600, marginLeft: '28px' }}>
-            v{farmInfo?.version || '17.4.9'}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginLeft: '34px' }}>
+            <div style={{ fontSize: '0.6rem', color: '#94A3B8', fontWeight: 900, letterSpacing: '0.1em' }}>
+              v{farmInfo?.version || '18.0.0'}
+            </div>
+            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: isLive ? '#10B981' : '#EF4444', boxShadow: isLive ? '0 0 10px #10B981' : 'none' }} />
           </div>
         </div>
       </motion.div>

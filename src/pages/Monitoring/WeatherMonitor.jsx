@@ -6,8 +6,8 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { 
   CloudRain, Sun, Wind, Thermometer, Droplets,
-  Navigation, Activity, Gauge, Eye,
   Sunrise, Sunset, LineChart, Umbrella, CloudSun,
+  AlignLeft, AlignCenter, BarChart3, List, Layout, Rows, Columns,
   ChevronRight, Cloud, Zap, ArrowUp, ArrowDown, Minus
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -280,31 +280,27 @@ const WeatherMonitoring = () => {
 
       {/* Regional Data Grid */}
       <motion.section variants={itemFadeUp} style={{ marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
-          <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(59, 130, 246, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Navigation size={18} color="#3B82F6" strokeWidth={2.5} />
-          </div>
-          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: 'var(--text-main)' }}>Regional Intelligence</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1rem' }}>
+          <div style={{ width: '4px', height: '18px', background: '#3B82F6', borderRadius: '2px' }} />
+          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '0.02em' }}>Regional Intelligence</h3>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
-           <RegionalMetric label="AQI"    value={apiWeather?.aqi || '--'} icon={Activity} color="#10B981" />
-           <RegionalMetric label="Clouds" value={apiWeather?.clouds ? `${apiWeather.clouds}%` : '--'} icon={Cloud} color="#64748B" />
-           <RegionalMetric label="Wind"   value={apiWeather?.windSpeed || '--'} icon={Wind} color="#F59E0B" />
-           <RegionalMetric label="Feels"  value={`${apiWeather?.feelsLike || '--'}°`} icon={Thermometer} color="#EF4444" />
-           <RegionalMetric label="Press"  value={apiWeather?.pressure || '--'} icon={Gauge} color="#8B5CF6" />
-           <RegionalMetric label="Visib"  value={apiWeather?.visibility || '--'} icon={Eye} color="#10B981" />
-           <RegionalMetric label="UV"     value={apiWeather?.uvIndex || '--'} icon={Zap} color="#F97316" />
+           <RegionalMetric label="AQI"    value={apiWeather?.aqi || '--'} icon={BarChart3} color="#10B981" />
+           <RegionalMetric label="Clouds" value={apiWeather?.clouds ? `${apiWeather.clouds}%` : '--'} icon={Rows} color="#64748B" />
+           <RegionalMetric label="Wind"   value={apiWeather?.windSpeed || '--'} icon={AlignLeft} color="#F59E0B" />
+           <RegionalMetric label="Feels"  value={`${apiWeather?.feelsLike || '--'}°`} icon={Columns} color="#EF4444" />
+           <RegionalMetric label="Press"  value={apiWeather?.pressure || '--'} icon={List} color="#8B5CF6" />
+           <RegionalMetric label="Visib"  value={apiWeather?.visibility || '--'} icon={Layout} color="#10B981" />
+           <RegionalMetric label="UV"     value={apiWeather?.uvIndex || '--'} icon={AlignCenter} color="#F97316" />
            <RegionalMetric label="Set"    value={apiWeather?.sunset || '--'} icon={Sunset} color="#3B82F6" />
         </div>
       </motion.section>
 
       {/* 5-Day Forecast */}
       <motion.section variants={itemFadeUp} style={{ marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
-          <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'var(--primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <LineChart size={18} color="var(--primary)" strokeWidth={2.5} />
-          </div>
-          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: 'var(--text-main)' }}>5-Day Forecast</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1rem' }}>
+          <div style={{ width: '4px', height: '18px', background: 'var(--primary)', borderRadius: '2px' }} />
+          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '0.02em' }}>5-Day Forecast</h3>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {(apiForecast || []).map((day, idx) => (

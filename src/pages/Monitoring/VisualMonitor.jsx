@@ -14,6 +14,8 @@ import { useApp } from '../../state/AppContext';
 import { useTelemetry } from '../../state/TelemetryContext';
 import { ACTUATORS } from '../../logic/healthEngine';
 
+import { ScreenOrientation } from '@capacitor/screen-orientation';
+
 // ─── ANIMATION CONFIGS ──────────────────────────────────────────────────────
 const springConfig = { type: "spring", stiffness: 300, damping: 30 };
 const staggerContainer = {
@@ -85,6 +87,26 @@ const VisualMonitor = () => {
   const toggleFlash = () => toggleActuator(ACTUATORS.LIGHT);
   const toggleBuzzer = () => toggleActuator(ACTUATORS.BUZZER);
 
+  // 🔄 FULL SCREEN HANDLER (Landscape Lock)
+  const enterFullScreen = async () => {
+    try {
+      await ScreenOrientation.lock({ orientation: 'landscape' });
+      setIsFullScreen(true);
+    } catch (e) {
+      console.warn("Landscape lock failed, falling back to CSS", e);
+      setIsFullScreen(true); // Still show fullscreen
+    }
+  };
+
+  const exitFullScreen = async () => {
+    try {
+      await ScreenOrientation.unlock();
+      setIsFullScreen(false);
+    } catch (e) {
+      setIsFullScreen(false);
+    }
+  };
+
   // 🤖 Hide Bot in FullScreen
   useEffect(() => {
     if (isFullScreen) document.body.classList.add('hide-bot');
@@ -129,7 +151,7 @@ const VisualMonitor = () => {
       <AnimatePresence>
         {isFullScreen && (
           <motion.div 
-            initial={{ opacity: 0, backgroundColor: '#000' }} 
+            initial={{ opacity: 0 }} 
             animate={{ opacity: 1 }} 
             exit={{ opacity: 0 }}
             style={{ 
@@ -138,78 +160,67 @@ const VisualMonitor = () => {
               overflow: 'hidden'
             }}
           >
-            {/* 🔄 ADAPTIVE LANDSCAPE CONTAINER */}
-            <div style={{ 
-              width: '100dvh', height: '100dvw', transform: 'rotate(90deg)', 
-              position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: '#000'
-            }}>
-               {deviceStatus === 'ACTIVE' ? (
-                 <img 
-                    src={streamUrl} 
+             {deviceStatus === 'ACTIVE' ? (
+               <img 
+                  src={streamUrl} 
+                  style={{ 
+                    width: '100%', 
+                    height: '100%', 
+                    objectFit: 'cover', 
+                    background: '#000' 
+                  }} 
+                  alt="Live" 
+                />
+             ) : (
+               <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', flexDirection: 'column', gap: '15px', background: '#0a0a0a' }}>
+                 <EyeOff size={64} strokeWidth={2.5} />
+                 <span style={{ fontSize: '1.2rem', fontWeight: 950, letterSpacing: '0.2em' }}>SIGNAL LOST</span>
+               </div>
+             )}
+             
+             <TacticalOverlay />
+             
+             {/* IMMERSIVE UI OVERLAY */}
+             <div style={{ position: 'absolute', top: 'env(safe-area-inset-top, 20px)', left: '2rem', right: '2rem', display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start' }}>
+               <motion.button 
+                 whileHover={{ scale: 1.1 }}
+                 whileTap={{ scale: 0.85 }} 
+                 onClick={exitFullScreen} 
+                 style={{ 
+                   background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.3)', 
+                   color: 'white', padding: '14px', borderRadius: '22px', backdropFilter: 'blur(20px)' 
+                 }}
+               >
+                 <Minimize2 size={24} />
+               </motion.button>
+             </div>
+
+             <div style={{ position: 'absolute', bottom: 'env(safe-area-inset-bottom, 2rem)', left: '2rem', right: '2rem', display: 'flex', justifyContent: 'center', gap: '4rem', alignItems: 'center' }}>
+               <motion.button whileTap={{ scale: 0.9 }} onClick={toggleFlash} style={{ width: '72px', height: '72px', borderRadius: '50%', background: flashOn ? '#3B82F6' : 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', backdropFilter: 'blur(20px)' }}>
+                 <Lightbulb size={30} />
+               </motion.button>
+               
+               <div style={{ position: 'relative' }}>
+                  <motion.button 
+                    whileTap={{ scale: 0.9 }} 
+                    onClick={captureImage} 
                     style={{ 
-                      width: '100%', 
-                      height: '100%', 
-                      objectFit: 'cover', // 🚀 ZOOM TO FILL as requested
-                      background: '#000' 
-                    }} 
-                    alt="Live" 
-                  />
-               ) : (
-                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', flexDirection: 'column', gap: '15px', background: '#0a0a0a' }}>
-                   <EyeOff size={64} strokeWidth={2.5} />
-                   <span style={{ fontSize: '1.2rem', fontWeight: 950, letterSpacing: '0.2em' }}>SIGNAL LOST</span>
-                 </div>
-               )}
-               
-               <TacticalOverlay />
-               
-               {/* IMMERSIVE UI OVERLAY */}
-               <div style={{ position: 'absolute', top: '2rem', left: '2rem', right: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                   <Badge color="#7C3AED" pulse={true}>UHD SURVEILLANCE • ACTIVE</Badge>
-                   <div style={{ fontSize: '0.7rem', fontWeight: 900, color: 'rgba(255,255,255,0.8)', letterSpacing: '0.1em', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>ENC_ID: {Math.random().toString(16).slice(2,8).toUpperCase()}</div>
-                 </div>
-                 <motion.button 
-                   whileHover={{ scale: 1.1 }}
-                   whileTap={{ scale: 0.85 }} 
-                   onClick={() => setIsFullScreen(false)} 
-                   style={{ 
-                     background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.3)', 
-                     color: 'white', padding: '14px', borderRadius: '22px', backdropFilter: 'blur(20px)' 
-                   }}
-                 >
-                   <Minimize2 size={24} />
-                 </motion.button>
+                      width: '96px', height: '96px', borderRadius: '50%', background: 'white', 
+                      border: '8px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', 
+                      justifyContent: 'center', color: '#000', boxShadow: '0 0 50px rgba(255,255,255,0.3)'
+                    }}
+                  >
+                    <CaptureIcon size={40} />
+                  </motion.button>
+                  {isCapturing && (
+                    <motion.div initial={{ scale: 1.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ position: 'absolute', inset: -15, border: '4px solid white', borderRadius: '50%' }} />
+                  )}
                </div>
 
-               <div style={{ position: 'absolute', bottom: '3rem', left: '2rem', right: '2rem', display: 'flex', justifyContent: 'center', gap: '4rem', alignItems: 'center' }}>
-                 <motion.button whileTap={{ scale: 0.9 }} onClick={toggleFlash} style={{ width: '72px', height: '72px', borderRadius: '50%', background: flashOn ? '#3B82F6' : 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', backdropFilter: 'blur(20px)' }}>
-                   <Lightbulb size={30} />
-                 </motion.button>
-                 
-                 <div style={{ position: 'relative' }}>
-                    <motion.button 
-                      whileTap={{ scale: 0.9 }} 
-                      onClick={captureImage} 
-                      style={{ 
-                        width: '96px', height: '96px', borderRadius: '50%', background: 'white', 
-                        border: '8px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', 
-                        justifyContent: 'center', color: '#000', boxShadow: '0 0 50px rgba(255,255,255,0.3)'
-                      }}
-                    >
-                      <CaptureIcon size={40} />
-                    </motion.button>
-                    {isCapturing && (
-                      <motion.div initial={{ scale: 1.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ position: 'absolute', inset: -15, border: '4px solid white', borderRadius: '50%' }} />
-                    )}
-                 </div>
-
-                 <motion.button whileTap={{ scale: 0.9 }} onClick={toggleBuzzer} style={{ width: '72px', height: '72px', borderRadius: '50%', background: buzzerOn ? 'var(--danger)' : 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', backdropFilter: 'blur(20px)' }}>
-                   <Bell size={30} />
-                 </motion.button>
-               </div>
-            </div>
+               <motion.button whileTap={{ scale: 0.9 }} onClick={toggleBuzzer} style={{ width: '72px', height: '72px', borderRadius: '50%', background: buzzerOn ? 'var(--danger)' : 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', backdropFilter: 'blur(20px)' }}>
+                 <Bell size={30} />
+               </motion.button>
+             </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -245,21 +256,13 @@ const VisualMonitor = () => {
                  <Badge color={deviceStatus === 'ACTIVE' ? '#7C3AED' : 'var(--text-muted)'} pulse={deviceStatus === 'ACTIVE'}>
                    {deviceStatus === 'ACTIVE' ? 'LIVE' : 'OFFLINE'}
                  </Badge>
-                 <div style={{ textAlign: 'right', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
-                    <div style={{ fontSize: '0.65rem', color: 'white', fontWeight: 950, letterSpacing: '0.05em' }}>CAM_SATELLITE_LINK</div>
-                    <div style={{ fontSize: '0.5rem', color: 'rgba(255,255,255,0.6)', fontWeight: 900 }}>192.168.4.2</div>
-                 </div>
                </div>
                
-               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                 <div style={{ display: 'flex', gap: '8px' }}>
-                   <div style={{ padding: '6px 10px', background: 'rgba(0,0,0,0.6)', borderRadius: '10px', color: 'white', fontSize: '0.5rem', fontWeight: 950, border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)' }}>FHD</div>
-                   <div style={{ padding: '6px 10px', background: 'rgba(0,0,0,0.6)', borderRadius: '10px', color: 'white', fontSize: '0.5rem', fontWeight: 950, border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)' }}>60 FPS</div>
-                 </div>
+               <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end' }}>
                  <motion.button 
                    whileHover={{ scale: 1.1 }}
                    whileTap={{ scale: 0.9 }} 
-                   onClick={() => setIsFullScreen(true)}
+                   onClick={enterFullScreen}
                    style={{ 
                      width: '48px', height: '48px', borderRadius: '16px', 
                      background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', 
@@ -280,10 +283,8 @@ const VisualMonitor = () => {
               border: '1px solid var(--glass-stroke)', boxShadow: 'var(--shadow-sm)', marginBottom: '1.5rem' 
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.25rem' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'var(--primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Cpu size={18} color="var(--primary)" strokeWidth={2.5} />
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.25rem' }}>
+              <div style={{ width: '4px', height: '18px', background: 'var(--primary)', borderRadius: '2px' }} />
               <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: 'var(--text-main)' }}>Tactical Console</h3>
             </div>
             <div style={{ display: 'flex', gap: '12px' }}>

@@ -35,7 +35,7 @@ export const AppProvider = ({ children }) => {
     } catch (e) { return null; }
   });
 
-  const [currentGPS, setCurrentGPS] = useState({ lat: null, lng: null, accuracy: null, city: 'Locating...' });
+  const [currentGPS, setCurrentGPS] = useState({ lat: null, lng: null, accuracy: null, city: 'Scanning for Field...' });
   const [isDataLoading, setIsDataLoading] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [apiWeather, setApiWeather] = useState(INITIAL_API_WEATHER);
@@ -299,8 +299,8 @@ export const AppProvider = ({ children }) => {
       
       // Use API Key from Config or Environment
       const API_KEY = MASTER_CONFIG.OPENWEATHER_API_KEY;
-      if (!API_KEY || API_KEY === "YOUR_OPENWEATHER_API_KEY") {
-        console.warn("🛰️ [WEATHER ENGINE]: Waiting for API Key to enable live regional data.");
+      if (!API_KEY) {
+        console.warn("🛰️ [WEATHER ENGINE]: Awaiting API Key.");
         setApiWeather(prev => ({ 
           ...prev, 
           city: currentGPS.city || 'Agri Hub', 

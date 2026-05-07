@@ -8,14 +8,18 @@ import {
 } from 'lucide-react';
 
 const AgriSenseLogo = () => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 2L2 7l10 5 10-5-10-5z" fill="#059669" fillOpacity="0.2" />
-      <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M12 7v6" stroke="white" strokeWidth="2" strokeLinecap="round" />
-      <path d="M9 10l3 3 3-3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-    <span style={{ fontSize: '1.25rem', fontWeight: 950, color: '#1e293b', letterSpacing: '-0.04em', background: 'linear-gradient(135deg, #059669, #10b981)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Agri Sense</span>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+    <div style={{ position: 'relative', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', borderRadius: '10px', rotate: '45deg', opacity: 0.15 }} />
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: 'relative', zIndex: 1 }}>
+        <path d="M12 2L2 7l10 5 10-5-10-5z" fill="#059669" fillOpacity="0.2" />
+        <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M12 7v6" stroke="#10B981" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    </div>
+    <span style={{ fontSize: '1.2rem', fontWeight: 950, color: '#0F172A', letterSpacing: '-0.04em' }}>
+      AgriSense <span style={{ color: '#10B981' }}>Pro</span>
+    </span>
   </div>
 );
 

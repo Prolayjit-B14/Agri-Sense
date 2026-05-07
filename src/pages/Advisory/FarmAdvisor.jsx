@@ -761,50 +761,7 @@ const FarmAdvisor = () => {
             </div>
           </div>
 
-          {/* 4. INDUSTRIAL METRICS ROW: REAL DATA LOGIC */}
-          <div style={{ 
-            display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: DESIGN.gap 
-          }}>
-            {[
-              { 
-                id: 'Confidence', 
-                val: brain.isOffline ? 0 : brain.confidence, 
-                label: brain.isOffline ? 'Syncing...' : (brain.confidence > 85 ? 'High' : 'Moderate'),
-                color: '#6366F1'
-              },
-              { 
-                id: 'Match Score', 
-                val: brain.isOffline ? 0 : brain.matchScore, 
-                label: brain.isOffline ? 'Waiting...' : (brain.matchScore > 80 ? 'Ideal' : (brain.matchScore > 50 ? 'Fair' : 'Low')),
-                color: COLORS.secondary 
-              },
-              { 
-                id: 'Suitability', 
-                val: brain.isOffline ? 0 : brain.suitabilityScore, 
-                label: brain.isOffline ? 'Pending' : (brain.suitabilityScore > 65 ? 'Optimal' : 'Risky'),
-                color: brain.summary.color 
-              }
-            ].map((m, i) => (
-              <div key={i} style={{ 
-                background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '16px', padding: '12px',
-                border: '1px solid rgba(255, 255, 255, 0.8)', display: 'flex', flexDirection: 'column', gap: '6px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.02), inset 0 1px 1px rgba(255,255,255,0.9)'
-              }}>
-                <span style={{ fontSize: '0.6rem', fontWeight: 900, color: '#94A3B8', letterSpacing: '0.04em' }}>{m.id}</span>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '1rem', fontWeight: 950, color: '#1E293B' }}>{m.val > 0 ? `${m.val}%` : '--'}</span>
-                  <span style={{ fontSize: '0.6rem', fontWeight: 850, color: m.val > 0 ? m.color : '#94A3B8' }}>{m.label}</span>
-                </div>
-                <div style={{ width: '100%', height: '4px', background: '#E2E8F0', borderRadius: '10px', overflow: 'hidden' }}>
-                  <motion.div 
-                    initial={{ width: 0 }} animate={{ width: `${m.val}%` }}
-                    transition={{ duration: 1, ease: 'easeOut' }}
-                    style={{ height: '100%', background: m.val > 0 ? m.color : '#CBD5E1' }} 
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
+          {/* END HERO CARD CONTENT */}
         </motion.div>
       </div>
 

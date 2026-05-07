@@ -36,10 +36,10 @@ export const MASTER_CONFIG = {
   // 🗺️ MAP & WEATHER (Optional External APIs)
   OPENWEATHER_API_KEY: import.meta.env.VITE_OPENWEATHER_API_KEY || "", 
   GEMINI_API_KEY: import.meta.env.VITE_GEMINI_API_KEY || "",
-  WEATHER_CITY: import.meta.env.VITE_WEATHER_CITY || "Kalyani",
+  WEATHER_CITY: import.meta.env.VITE_WEATHER_CITY || "",
   
-  MAP_LAT: parseFloat(import.meta.env.VITE_MAP_LAT) || 22.975,
-  MAP_LNG: parseFloat(import.meta.env.VITE_MAP_LNG) || 88.434,
+  MAP_LAT: parseFloat(import.meta.env.VITE_MAP_LAT) || null,
+  MAP_LNG: parseFloat(import.meta.env.VITE_MAP_LNG) || null,
   MAP_ZOOM: 15,
   
   

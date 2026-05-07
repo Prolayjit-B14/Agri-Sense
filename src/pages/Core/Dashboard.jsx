@@ -452,14 +452,12 @@ const WelcomeHeader = React.memo(() => {
   const firstName = (user?.name || user?.email || 'Farmer').split(' ')[0].split('@')[0];
   
   return (
-    <div>
-      <h1 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-muted)', margin: 0, letterSpacing: '0.02em' }}>
-        {greeting.toUpperCase()}
-      </h1>
+    <>
+      <div style={{ height: '4px' }} />
       <div style={{ fontSize: '2rem', fontWeight: 950, color: 'var(--text-main)', letterSpacing: '-0.04em', lineHeight: 1.1 }}>
         {firstName}
       </div>
-    </div>
+    </>
   );
 });
 
