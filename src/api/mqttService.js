@@ -13,7 +13,9 @@ const MQTT_CONFIG = {
   host: MASTER_CONFIG.MQTT_BROKER,
   port: MASTER_CONFIG.MQTT_WSS_PORT,
   protocol: 'wss',
-  path: '/mqtt'
+  path: '/mqtt',
+  username: MASTER_CONFIG.MQTT_USER,
+  password: MASTER_CONFIG.MQTT_PASS
 };
 
 class MqttService {
@@ -21,6 +23,7 @@ class MqttService {
     this.client = null;
     this.onMessage = null;
     this.onStatus = null;
+    this.url = `${MQTT_CONFIG.protocol}://${MQTT_CONFIG.host}:${MQTT_CONFIG.port}${MQTT_CONFIG.path}`;
   }
 
   connect(primaryId, secondaryId, onMessageCallback, onStatusCallback) {
@@ -29,62 +32,58 @@ class MqttService {
       this.client = null;
     }
     
-    // Both IDs required — acts like username + password for the hardware
-    this.primaryId   = (primaryId   || 'innovatex').trim().toLowerCase().replace(/\s+/g, '_');
-    this.secondaryId = (secondaryId || 'semicolon').trim().toLowerCase().replace(/\s+/g, '_');
+    const normalize = (val, fallback) => (val || fallback).trim().toLowerCase().replace(/[\s-]+/g, '_');
+    
+    this.primaryId   = normalize(primaryId, 'agrisense_pro');
+    this.secondaryId = normalize(secondaryId, 'master_field');
     this.onMessage   = onMessageCallback;
     this.onStatus    = onStatusCallback;
 
     const pairedTopic = `agrisense/${this.primaryId}/${this.secondaryId}/#`;
-    console.log(`🔐 MQTT: Pairing with [${pairedTopic}]`);
     this.onStatus?.('connecting');
 
     try {
-      this.client = connect(`wss://${MQTT_CONFIG.host}:${MQTT_CONFIG.port}${MQTT_CONFIG.path}`, {
+      this.client = connect(this.url, {
         reconnectPeriod: 3000,
         connectTimeout: 30 * 1000,
         keepalive: 60,
         clientId: 'agrisense_web_' + Math.random().toString(16).slice(2, 10),
-        clean: true
+        username: MQTT_CONFIG.username,
+        password: MQTT_CONFIG.password,
+        clean: true,
+        rejectUnauthorized: false 
       });
 
       this.client.on('connect', () => {
-        console.log('✅ MQTT: Cloud Bridge Established');
         this.onStatus?.('connected');
         this.client.subscribe(pairedTopic, (err) => {
-          if (!err) console.log(`🔐 MQTT: Authenticated & Subscribed to [${pairedTopic}]`);
-          else console.error('❌ MQTT: Subscription Failed', err);
+          if (err) console.error('[MQTT_ERROR] ❌ Subscription Failed', err);
         });
       });
 
       this.client.on('message', (topic, message) => {
+        const rawData = message.toString();
         try {
-          const rawData = message.toString();
           const parsedData = JSON.parse(rawData);
-          console.log(`📥 MQTT [${topic}]:`, parsedData);
           if (this.onMessage) this.onMessage(topic, parsedData);
         } catch (e) {
-          console.warn('⚠️ MQTT: Received malformed JSON on', topic);
+          // Quietly ignore malformed JSON in production
         }
       });
 
       this.client.on('error', (err) => {
-        console.error('❌ MQTT: Connection Error', err);
         this.onStatus?.('error');
       });
 
       this.client.on('close', () => {
-        console.warn('🔌 MQTT: Connection Closed');
         this.onStatus?.('disconnected');
       });
       
       this.client.on('reconnect', () => {
-        console.log('🔄 MQTT: Attempting Reconnection...');
         this.onStatus?.('reconnecting');
       });
 
     } catch (err) {
-      console.error('💥 MQTT: Critical Failure', err);
       this.onStatus?.('error');
     }
   }
@@ -94,7 +93,6 @@ class MqttService {
       const topic = `agrisense/${this.primaryId}/${this.secondaryId}/commands`;
       const message = JSON.stringify(action);
       this.client.publish(topic, message);
-      console.log(`🕹️ MQTT: Command Published [${topic}]:`, action);
     }
   }
 
@@ -106,7 +104,6 @@ class MqttService {
   }
 
   refresh() {
-    console.log("🔄 MQTT: Manual Refresh Triggered");
     const oldCb = this.onMessage;
     const oldSt = this.onStatus;
     this.disconnect();

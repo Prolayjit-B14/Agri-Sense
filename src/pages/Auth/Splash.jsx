@@ -47,28 +47,6 @@ const Splash = () => {
         transform: 'translateY(-2rem)' // Slight upward shift for visual balance
       }}>
         
-        {/* LOGO CONTAINER - Soft rounded square with subtle depth */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-          style={{ 
-            width: '110px', 
-            height: '110px', 
-            borderRadius: '28px', 
-            background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            backdropFilter: 'blur(12px)', 
-            border: '1px solid rgba(255, 255, 255, 0.8)',
-            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)', 
-            marginBottom: '2.5rem'
-          }}
-        >
-          <Leaf size={52} color={COLORS.primary} strokeWidth={1.5} />
-        </motion.div>
-
         {/* BRANDING - Clean and professional typography */}
         <motion.div 
           initial={{ opacity: 0, y: 10 }}

@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../../state/AppContext';
+import { useTelemetry } from '../../state/TelemetryContext';
 import { 
   AlertTriangle, Bell, Info, 
   CheckCircle2, Clock, Filter, 
@@ -8,7 +9,6 @@ import {
   Zap, Droplets, Thermometer, WifiOff
 } from 'lucide-react';
 
-// ─── DESIGN TOKENS ────────────────────────────────────────────────────────
 const COLORS = {
   critical: '#EF4444',
   warning: '#F59E0B',
@@ -17,8 +17,19 @@ const COLORS = {
   text: '#0F172A',
   subtext: '#64748B',
   bg: '#FFFFFF',
-  cardBg: '#FFFFFF',
-  border: 'rgba(0, 0, 0, 0.04)',
+  border: 'rgba(0, 0, 0, 0.05)'
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.1 }
+  }
+};
+const itemFadeUp = {
+  hidden: { opacity: 0, y: 15 },
+  visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 30 } }
 };
 
 // ─── SUB-COMPONENTS ───────────────────────────────────────────────────────
@@ -107,7 +118,7 @@ const AlertCard = ({ alert, onDismiss }) => {
 // ─── MAIN SCREEN ──────────────────────────────────────────────────────────
 
 const AlertCenter = () => {
-  const { sensorData, systemOverview, devices } = useApp();
+  const { sensorData, systemOverview, devices } = useTelemetry();
   const [filter, setFilter] = useState('all');
   const [dismissedAlerts, setDismissedAlerts] = useState(new Set());
 
@@ -165,7 +176,12 @@ const AlertCenter = () => {
   const clearAll = () => setDismissedAlerts(new Set(generatedAlerts.map(a => a.id)));
 
   return (
-    <div style={{ padding: '1.5rem', paddingBottom: '100px', background: COLORS.bg, fontFamily: "'Outfit', sans-serif" }}>
+    <motion.div 
+      variants={staggerContainer}
+      initial="hidden"
+      animate="visible"
+      style={{ padding: '1.5rem', paddingBottom: '140px', background: COLORS.bg, fontFamily: "'Outfit', sans-serif" }}
+    >
       
       {/* 1. FILTERS */}
       <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginBottom: '1.25rem', paddingBottom: '8px' }} className="no-scrollbar">
@@ -250,7 +266,7 @@ const AlertCenter = () => {
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
-    </div>
+    </motion.div>
   );
 };
 

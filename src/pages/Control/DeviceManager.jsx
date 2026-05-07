@@ -11,9 +11,10 @@ import {
   Camera, Wifi, WifiOff, BellRing, Lightbulb,
   Monitor, Zap, Signal, Thermometer, FlaskConical,
   Wind, Sun, Waves, Flame, RefreshCw, ExternalLink,
-  ChevronDown, MapPin, ShieldCheck, Check, Settings2
+  ChevronDown, MapPin, ShieldCheck, Check, Settings2, CloudSun, Database, Gauge
 } from 'lucide-react';
 import { useApp } from '../../state/AppContext';
+import { useTelemetry } from '../../state/TelemetryContext';
 import { ACTUATORS } from '../../logic/healthEngine';
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
@@ -92,7 +93,9 @@ const NodeCard = ({ icon: Icon, label, color, isOnline, sensors, actuators, togg
   <motion.div
     whileHover={{ y: -2 }}
     style={{
-      background: `linear-gradient(165deg, ${color}10 0%, #FFFFFF 100%)`,
+      background: isOnline 
+        ? `linear-gradient(165deg, ${color}10 0%, #FFFFFF 100%)` 
+        : 'linear-gradient(165deg, #F8FAFC 0%, #F1F5F9 100%)',
       borderRadius: '24px',
       padding: '16px',
       boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
@@ -115,9 +118,9 @@ const NodeCard = ({ icon: Icon, label, color, isOnline, sensors, actuators, togg
           alignItems: 'center',
           justifyContent: 'center'
         }}>
-          <Icon size={20} color={color} strokeWidth={2} />
+          <Icon size={20} color={isOnline ? color : T.muted} strokeWidth={2} />
         </div>
-        <span style={{ fontSize: '0.9rem', fontWeight: 800, color: T.text }}>{label}</span>
+        <span style={{ fontSize: '0.9rem', fontWeight: 800, color: isOnline ? T.text : T.muted }}>{label}</span>
       </div>
       
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -159,22 +162,34 @@ const NodeCard = ({ icon: Icon, label, color, isOnline, sensors, actuators, togg
 
 // ─── NETWORK HEALTH CARD ──────────────────────────────────────────────────────
 const NetworkHealthCard = ({ activeCount, totalCount, mqttStatus }) => {
-  const pct = (activeCount / totalCount) * 100;
   const isConnected = mqttStatus === 'connected';
+  const displayCount = isConnected ? activeCount : 0;
+  const pct = (displayCount / totalCount) * 100;
+  
+  const statusMap = {
+    connected:    { color: T.primary, bg: '#ECFDF5', text: 'MQTT CONNECTED' },
+    connecting:   { color: T.warning, bg: '#FFFBEB', text: 'CONNECTING...' },
+    reconnecting: { color: T.warning, bg: '#FFFBEB', text: 'RECONNECTING...' },
+    error:        { color: T.danger,  bg: '#FEF2F2', text: 'CONNECTION ERROR' },
+    disconnected: { color: T.danger,  bg: '#FEF2F2', text: 'DISCONNECTED' }
+  };
+
+  const current = statusMap[mqttStatus] || statusMap.disconnected;
 
   return (
     <div style={{
-      background: isConnected ? 'linear-gradient(165deg, #ECFDF5 0%, #FFFFFF 100%)' : 'linear-gradient(165deg, #FEF2F2 0%, #FFFFFF 100%)',
+      background: `linear-gradient(165deg, ${current.bg} 0%, #FFFFFF 100%)`,
       borderRadius: '24px',
       padding: '16px',
       position: 'relative',
       overflow: 'hidden',
       boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
-      border: '1px solid rgba(255, 255, 255, 0.8)'
+      border: '1px solid rgba(255, 255, 255, 0.8)',
+      transition: 'all 0.5s ease'
     }}>
       {/* Wavy Background Decoration */}
       <svg style={{ position: 'absolute', right: 0, bottom: 0, width: '60%', height: '100%', opacity: 0.1, zIndex: 0 }} viewBox="0 0 200 200">
-        <path fill={T.primary} d="M40,-62.1C53.3,-54.5,66.7,-45.2,74.1,-32.7C81.5,-20.3,82.8,-4.7,79.1,9.6C75.4,23.9,66.7,36.9,55.5,47.1C44.4,57.3,30.8,64.7,16.5,68.9C2.2,73.1,-12.8,74.1,-26.1,69.5C-39.4,65,-51,54.9,-60.7,42.8C-70.4,30.7,-78.2,16.6,-80.1,1.9C-82,-12.8,-78.1,-28.1,-68.8,-39.8C-59.5,-51.5,-44.8,-59.6,-30.9,-66.8C-17,-74,-3.8,-80.3,10,-86.1C23.8,-91.9,40,-74.6,40,-62.1Z" transform="translate(100 100)" />
+        <path fill={current.color} d="M40,-62.1C53.3,-54.5,66.7,-45.2,74.1,-32.7C81.5,-20.3,82.8,-4.7,79.1,9.6C75.4,23.9,66.7,36.9,55.5,47.1C44.4,57.3,30.8,64.7,16.5,68.9C2.2,73.1,-12.8,74.1,-26.1,69.5C-39.4,65,-51,54.9,-60.7,42.8C-70.4,30.7,-78.2,16.6,-80.1,1.9C-82,-12.8,-78.1,-28.1,-68.8,-39.8C-59.5,-51.5,-44.8,-59.6,-30.9,-66.8C-17,-74,-3.8,-80.3,10,-86.1C23.8,-91.9,40,-74.6,40,-62.1Z" transform="translate(100 100)" />
       </svg>
 
       <div style={{ position: 'relative', zIndex: 1 }}>
@@ -184,27 +199,30 @@ const NetworkHealthCard = ({ activeCount, totalCount, mqttStatus }) => {
               Network Health
             </p>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginTop: '8px' }}>
-              <h2 style={{ margin: 0, fontSize: '2.5rem', fontWeight: 950, color: T.primary, letterSpacing: '-0.02em' }}>
-                {activeCount}
+              <h2 style={{ margin: 0, fontSize: '2.5rem', fontWeight: 950, color: current.color, letterSpacing: '-0.02em', transition: 'color 0.5s ease' }}>
+                {displayCount}
               </h2>
               <span style={{ fontSize: '1.5rem', fontWeight: 800, color: T.muted }}>/ {totalCount}</span>
             </div>
-            <p style={{ margin: '4px 0 0', fontSize: '0.9rem', fontWeight: 700, color: T.text }}>Devices Active</p>
+            <p style={{ margin: '4px 0 0', fontSize: '0.9rem', fontWeight: 700, color: T.text }}>
+              {isConnected ? 'Devices Active' : 'Nodes Unreachable'}
+            </p>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '12px' }}>
             <div style={{
               padding: '6px 12px',
               borderRadius: '20px',
-              background: isConnected ? `${T.primary}15` : `${T.danger}15`,
-              border: `1px solid ${isConnected ? `${T.primary}25` : `${T.danger}25`}`,
+              background: `${current.color}15`,
+              border: `1px solid ${current.color}25`,
               display: 'flex',
               alignItems: 'center',
-              gap: '6px'
+              gap: '6px',
+              transition: 'all 0.5s ease'
             }}>
-              <Wifi size={14} color={isConnected ? T.primary : T.danger} />
-              <span style={{ fontSize: '0.65rem', fontWeight: 900, color: isConnected ? T.primary : T.danger, letterSpacing: '0.04em' }}>
-                {isConnected ? 'MQTT CONNECTED' : 'DISCONNECTED'}
+              <Wifi size={14} color={current.color} />
+              <span style={{ fontSize: '0.65rem', fontWeight: 900, color: current.color, letterSpacing: '0.04em' }}>
+                {current.text}
               </span>
             </div>
             
@@ -212,13 +230,14 @@ const NetworkHealthCard = ({ activeCount, totalCount, mqttStatus }) => {
               width: '64px',
               height: '64px',
               borderRadius: '20px',
-              background: `${T.primary}15`,
+              background: `${current.color}15`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: `0 8px 16px ${T.primary}10`
+              boxShadow: `0 8px 16px ${current.color}10`,
+              transition: 'all 0.5s ease'
             }}>
-              <ShieldCheck size={32} color={T.primary} strokeWidth={2.5} />
+              <ShieldCheck size={32} color={current.color} strokeWidth={2.5} />
             </div>
           </div>
         </div>
@@ -229,7 +248,7 @@ const NetworkHealthCard = ({ activeCount, totalCount, mqttStatus }) => {
               initial={{ width: 0 }}
               animate={{ width: `${pct}%` }}
               transition={{ duration: 1, ease: 'easeOut' }}
-              style={{ height: '100%', background: T.primary, borderRadius: '4px' }}
+              style={{ height: '100%', background: current.color, borderRadius: '4px' }}
             />
           </div>
         </div>
@@ -250,7 +269,9 @@ const VisionCard = ({ isOnline, detection }) => {
 
   return (
     <div style={{
-      background: 'linear-gradient(165deg, #F5F3FF 0%, #FFFFFF 100%)',
+      background: isOnline 
+        ? 'linear-gradient(165deg, #F5F3FF 0%, #FFFFFF 100%)' 
+        : 'linear-gradient(165deg, #F8FAFC 0%, #F1F5F9 100%)',
       borderRadius: '24px',
       padding: '16px',
       boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
@@ -263,7 +284,7 @@ const VisionCard = ({ isOnline, detection }) => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${T.accent}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Camera size={20} color="#A855F7" />
+            <Camera size={20} color="#7C3AED" />
           </div>
           <span style={{ fontSize: '0.9rem', fontWeight: 800, color: T.text }}>Vision Node</span>
         </div>
@@ -342,11 +363,11 @@ const VisionCard = ({ isOnline, detection }) => {
 // ─── NODE POWER PANEL ────────────────────────────────────────────────────────
 const NodePowerPanel = ({ nodePower, toggleNodePower, devices }) => {
   const nodes = [
-    { id: 'soil',    nodeId: 'soil_node',    label: 'Soil',    icon: Sprout,    color: '#10B981' },
-    { id: 'weather', nodeId: 'weather_node', label: 'Weather', icon: CloudRain, color: '#F97316' },
-    { id: 'water',   nodeId: 'water_node',   label: 'Irrig',   icon: Droplets,  color: '#3B82F6' },
-    { id: 'storage', nodeId: 'storage_node', label: 'Storage', icon: Archive,   color: '#8B5CF6' },
-    { id: 'vision',  nodeId: 'vision_node',  label: 'Vision',  icon: Camera,    color: '#A855F7' },
+    { id: 'soil',    nodeId: 'soil_node',    label: 'Soil',    icon: Sprout,    color: '#8B5E3C' },
+    { id: 'weather', nodeId: 'weather_node', label: 'Weather', icon: CloudSun,  color: '#3B82F6' },
+    { id: 'water',   nodeId: 'water_node',   label: 'Irrig',   icon: Waves,     color: '#06D6A0' },
+    { id: 'storage', nodeId: 'storage_node', label: 'Storage', icon: Database,  color: '#64748B' },
+    { id: 'vision',  nodeId: 'vision_node',  label: 'Vision',  icon: Camera,    color: '#7C3AED' },
   ];
 
   return (
@@ -495,10 +516,8 @@ const ControlPanel = ({ actuators, toggleActuator, sensorData }) => {
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 const DeviceManager = () => {
-  const { 
-    sensorData = {}, actuators = {}, toggleActuator, mqttStatus, devices = {},
-    nodePower = {}, toggleNodePower 
-  } = useApp();
+  const { actuators, toggleActuator, nodePower, toggleNodePower } = useApp();
+  const { sensorData, mqttStatus, devices, rawDevices } = useTelemetry();
 
   const soilOnline    = devices['soil_node']?.status    === 'ACTIVE' && nodePower.soil;
   const weatherOnline = devices['weather_node']?.status === 'ACTIVE' && nodePower.weather;
@@ -515,41 +534,50 @@ const DeviceManager = () => {
   const f = (val) => (val != null && !isNaN(val) ? Number(val).toFixed(1) : '---');
 
   const soilSensors = [
-    { label: 'Mois', value: (sd && sd.moisture) ? `${f(sd.moisture)}%` : '---', icon: Droplets, iconColor: T.secondary },
-    { label: 'pH',   value: (sd && sd.ph) ? f(sd.ph) : '---', icon: FlaskConical, iconColor: T.accent },
-    { label: 'Temp', value: (sd && sd.temp) ? `${f(sd.temp)}°C` : '---', icon: Thermometer, iconColor: T.danger },
-    { label: 'NPK',  value: (sd && sd.npk && sd.npk.n) ? `${f(sd.npk.n)}` : '---', icon: Sprout, iconColor: T.primary },
+    { label: 'Mois', value: (sd && sd.moisture != null) ? `${f(sd.moisture)}%` : '---', icon: Droplets, iconColor: T.secondary },
+    { label: 'pH',   value: (sd && sd.ph != null) ? f(sd.ph) : '---', icon: FlaskConical, iconColor: T.accent },
+    { label: 'Temp', value: (sd && sd.temp != null) ? `${f(sd.temp)}°C` : '---', icon: Thermometer, iconColor: T.danger },
+    { label: 'NPK',  value: (sd && sd.npk && sd.npk.n != null) ? `${f(sd.npk.n)}` : '---', icon: Sprout, iconColor: T.primary },
   ];
 
   const weatherSensors = [
-    { label: 'Temp',  value: (wd && wd.temp) ? `${f(wd.temp)}°C` : '---', icon: Thermometer, iconColor: T.danger },
-    { label: 'Hum',   value: (wd && wd.humidity) ? `${f(wd.humidity)}%` : '---', icon: Droplets, iconColor: T.secondary },
-    { label: 'Rain',  value: (wd && wd.rainLevel) ? `${f(wd.rainLevel)} mm` : '---', icon: CloudRain, iconColor: T.secondary },
-    { label: 'Light', value: (wd && wd.lightIntensity) ? `${f(wd.lightIntensity)} lx` : '---', icon: Sun, iconColor: T.warning },
+    { label: 'Temp',  value: (wd && wd.temp != null) ? `${f(wd.temp)}°C` : '---', icon: Thermometer, iconColor: T.danger },
+    { label: 'Hum',   value: (wd && wd.humidity != null) ? `${f(wd.humidity)}%` : '---', icon: Droplets, iconColor: T.secondary },
+    { label: 'Rain',  value: (wd && wd.rainLevel != null) ? `${f(wd.rainLevel)} mm` : '---', icon: CloudRain, iconColor: T.secondary },
+    { label: 'Light', value: (wd && wd.lightIntensity != null) ? `${f(wd.lightIntensity)} lx` : '---', icon: Sun, iconColor: T.warning },
   ];
 
   const irrigSensors = [
-    { label: 'Lvl', value: (id && id.level) ? `${f(id.level)}%` : '---', icon: Waves, iconColor: T.secondary },
+    { label: 'Lvl', value: (id && id.level != null) ? `${f(id.level)}%` : '---', icon: Waves, iconColor: T.secondary },
+    { label: 'Flow', value: (id && id.flow != null) ? `${f(id.flow)} L/min` : '---', icon: Gauge, iconColor: T.secondary },
   ];
 
   const storageSensors = [
-    { label: 'Temp', value: (st && st.temp) ? `${f(st.temp)}°C` : '---', icon: Thermometer, iconColor: T.danger },
-    { label: 'Hum',  value: (st && st.humidity) ? `${f(st.humidity)}%` : '---', icon: Droplets, iconColor: T.secondary },
-    { label: 'Gas',  value: (st && st.mq135) ? `${f(st.mq135)} ppm` : '---', icon: Flame, iconColor: T.warning },
+    { label: 'Temp', value: (st && st.temp != null) ? `${f(st.temp)}°C` : '---', icon: Thermometer, iconColor: T.danger },
+    { label: 'Hum',  value: (st && st.humidity != null) ? `${f(st.humidity)}%` : '---', icon: Droplets, iconColor: T.secondary },
+    { label: 'Gas',  value: (st && st.mq135 != null) ? `${f(st.mq135)} ppm` : '---', icon: Flame, iconColor: T.warning },
   ];
 
   const activeCount = [soilOnline, weatherOnline, waterOnline, storageOnline, visionOnline].filter(Boolean).length;
 
   return (
-    <div style={{
-      padding: '16px',
-      background: T.bg,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '12px',
-      paddingBottom: '0px',
-      fontFamily: "'Outfit', sans-serif"
-    }}>
+    <motion.div 
+      variants={{
+        hidden: { opacity: 0 },
+        visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.1 } }
+      }}
+      initial="hidden"
+      animate="visible"
+      style={{
+        padding: '16px',
+        background: T.bg,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+        paddingBottom: '140px',
+        fontFamily: "'Outfit', sans-serif"
+      }}
+    >
       
       <NetworkHealthCard
         activeCount={activeCount}
@@ -557,13 +585,13 @@ const DeviceManager = () => {
         mqttStatus={mqttStatus}
       />
 
-      <NodePowerPanel nodePower={nodePower} toggleNodePower={toggleNodePower} devices={devices} />
+      <NodePowerPanel nodePower={nodePower} toggleNodePower={toggleNodePower} devices={rawDevices} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginTop: '4px' }}>
-        <NodeCard icon={Sprout} label="Soil Node" color="#10B981" isOnline={soilOnline} sensors={soilSensors} />
-        <NodeCard icon={CloudRain} label="Weather Node" color="#F97316" isOnline={weatherOnline} sensors={weatherSensors} />
-        <NodeCard icon={Droplets} label="Irrigation Node" color="#3B82F6" isOnline={waterOnline} sensors={irrigSensors} />
-        <NodeCard icon={Archive} label="Storage Node" color="#8B5CF6" isOnline={storageOnline} sensors={storageSensors} />
+        <NodeCard icon={Sprout} label="Soil Node" color="#8B5E3C" isOnline={soilOnline} sensors={soilSensors} />
+        <NodeCard icon={CloudSun} label="Weather Node" color="#3B82F6" isOnline={weatherOnline} sensors={weatherSensors} />
+        <NodeCard icon={Waves} label="Irrigation Node" color="#06D6A0" isOnline={waterOnline} sensors={irrigSensors} />
+        <NodeCard icon={Database} label="Storage Node" color="#64748B" isOnline={storageOnline} sensors={storageSensors} />
         <VisionCard isOnline={visionOnline} detection={sensorData?.vision} />
       </div>
 
@@ -572,7 +600,7 @@ const DeviceManager = () => {
         toggleActuator={toggleActuator} 
         sensorData={sensorData} 
       />
-    </div>
+    </motion.div>
   );
 };
 

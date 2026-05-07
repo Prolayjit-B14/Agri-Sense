@@ -127,11 +127,9 @@ export const calculateOverallHealth = (systemHealth, devices = {}) => {
       const deviceKey = `${nodeType === 'water' ? 'water' : nodeType}_node`;
       const device = devices[deviceKey];
       
-      // 3. Inclusion Logic: Count if Device is Active OR if we have valid non-zero data
-      const isDeviceOnline = device && (device.status === 'ACTIVE' || device.status === 'PARTIAL');
-      const hasRecentData = score > 0; // If score > 0, it means we have some data point
-      
-      return isDeviceOnline || hasRecentData;
+      // 3. Inclusion Logic: ONLY count if Device is explicitly ACTIVE or PARTIAL
+      // This prevents disabled nodes from skewing the overall health average.
+      return device && (device.status === 'ACTIVE' || device.status === 'PARTIAL');
     })
     .map(([, score]) => score);
 

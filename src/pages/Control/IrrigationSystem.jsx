@@ -1,96 +1,108 @@
+/**
+ * AgriSense Pro v18.0.0 "Ultra-Premium" Irrigation Control
+ */
+
 import React, { useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
-  Droplets, Power, Activity, 
-  Waves, ChevronRight, Clock, Minus, Zap
+  Droplets, Power, Waves, ChevronRight, Gauge
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../state/AppContext';
+import { useTelemetry } from '../../state/TelemetryContext';
 
-// ─── DESIGN TOKENS (UNIFIED) ───────────────────────────────────────────────
-
-const COLORS = {
-  primary: '#3B82F6',
-  secondary: '#10B981',
-  warning: '#F59E0B',
-  critical: '#EF4444',
-  offline: '#94A3B8',
-  bg: '#FFFFFF',
-  text: '#1E293B',
-  subtext: '#64748B',
-  white: '#FFFFFF',
-  border: '#E2E8F0'
+// ─── ANIMATION CONFIGS ──────────────────────────────────────────────────────
+const springConfig = { type: 'spring', stiffness: 300, damping: 30 };
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.1 }
+  }
 };
-
-const GRADIENTS = {
-  optimal: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
-  moderate: 'linear-gradient(135deg, #FFD54F 0%, #FBC02D 100%)',
-  low: 'linear-gradient(135deg, #EF5350 0%, #D32F2F 100%)',
-  critical: 'linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)',
-  offline: 'linear-gradient(135deg, #94A3B8 0%, #64748B 100%)'
+const itemFadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: springConfig }
 };
 
 const TANK_CAPACITY = 6000;
 
-// ─── SUB-COMPONENTS (UNIFIED SYSTEM) ───────────────────────────────────────
+// ─── DIAGNOSTIC CARD ────────────────────────────────────────────────────────
 
-const DiagnosticCard = ({ label, value, icon: Icon, color, statusText = '', range, unit }) => {
-  const isOffline = value === null || value === undefined || value === '---';
-  const safeStatus = (statusText || '').toLowerCase();
-  
-  const isOptimal = safeStatus.includes('optimal') || safeStatus.includes('stable') || safeStatus.includes('active') || safeStatus.includes('efficient');
-  const isModerate = safeStatus.includes('moderate') || safeStatus.includes('variable');
-  const isCritical = safeStatus.includes('critical') || safeStatus.includes('low') || safeStatus.includes('offline');
-  
-  const stateColor = isOffline ? COLORS.offline : (isOptimal ? COLORS.primary : (isModerate ? COLORS.warning : COLORS.critical));
-  const cardBg = isOffline ? 'linear-gradient(165deg, #F8FAFC 0%, #F1F5F9 100%)' : (isOptimal ? 'linear-gradient(165deg, #F0F9FF 0%, #FFFFFF 100%)' : (isModerate ? 'linear-gradient(165deg, #FFFBEB 0%, #FFFFFF 100%)' : 'linear-gradient(165deg, #FEF2F2 0%, #FFFFFF 100%)'));
+const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, range, unit }) => {
+  const isOffline = value === null || value === undefined;
+  const systemColor = isOffline ? '#94A3B8' : color;
+
+  const numVal = parseFloat(value);
+  const health = isOffline ? 'offline'
+    : (numVal >= min && numVal <= max) ? 'optimal'
+    : (numVal >= min - (max - min) * 0.15 && numVal <= max + (max - min) * 0.15) ? 'warning'
+    : 'critical';
+
+  const statusMap = {
+    optimal:  { dot: '#22C55E' },
+    warning:  { dot: '#F59E0B' },
+    critical: { dot: '#EF4444' },
+    offline:  { dot: '#CBD5E1' }
+  };
+
+  const { dot: dotColor } = statusMap[health];
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
+      variants={itemFadeUp}
+      whileTap={{ scale: 0.97 }}
       style={{
-        background: cardBg, borderRadius: '24px', padding: '1.25rem 1rem',
-        border: '1px solid rgba(255, 255, 255, 0.8)',
-        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
-        position: 'relative', height: '185px',
-        display: 'flex', flexDirection: 'column',
-        justifyContent: 'space-between', overflow: 'hidden'
+        borderRadius: 'var(--radius-xl)',
+        border: '1px solid ' + (isOffline ? '#E2E8F0' : systemColor + '30'),
+        boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        minHeight: '170px'
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: '0.85rem', fontWeight: 800, color: COLORS.subtext, textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.8 }}>{label}</span>
-        <Icon size={18} color={isOffline ? COLORS.offline : color} />
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
-        <h2 style={{ 
-          margin: 0, 
-          fontSize: isOffline ? '1.5rem' : '2.5rem', 
-          fontWeight: 800, 
-          color: isOffline ? '#CBD5E1' : COLORS.text, 
-          letterSpacing: isOffline ? '0.05em' : '-0.04em', 
-          lineHeight: 1 
+      <div style={{
+        background: isOffline ? '#F1F5F9' : systemColor + '15',
+        padding: '0.9rem 1rem 0.8rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        gap: '12px'
+      }}>
+        <div style={{
+          width: '40px', height: '40px', borderRadius: '12px', flexShrink: 0,
+          background: isOffline ? 'rgba(0,0,0,0.06)' : systemColor + '25',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: 'none',
+          border: isOffline ? 'none' : '1px solid ' + systemColor + '35'
         }}>
-          {isOffline ? 'OFFLINE' : value}<span style={{ fontSize: '1rem', opacity: 0.3, marginLeft: '2px' }}>{isOffline ? '' : unit}</span>
-        </h2>
-        {!isOffline && (
-          <div style={{ 
-            marginTop: '10px', padding: '6px 22px', borderRadius: '100px', 
-            background: stateColor, color: 'white', fontSize: '0.65rem', fontWeight: 800,
-            textTransform: 'uppercase', letterSpacing: '0.12em'
-          }}>
-            {statusText}
-          </div>
-        )}
+          <Icon size={21} color={isOffline ? '#94A3B8' : systemColor} strokeWidth={2.5} />
+        </div>
+        <span style={{
+          fontSize: '0.8rem', fontWeight: 900,
+          color: isOffline ? '#94A3B8' : systemColor,
+          letterSpacing: '0.02em', textTransform: 'uppercase', lineHeight: 1.2
+        }}>
+          {label}
+        </span>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '12px' }}>
-        <div style={{ textAlign: 'left' }}>
-          <p style={{ margin: 0, fontSize: '0.55rem', fontWeight: 800, color: COLORS.subtext, opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>SYSTEM STATUS</p>
-          <p style={{ margin: '2px 0 0 0', fontSize: '0.75rem', fontWeight: 800, color: COLORS.subtext }}>{range}</p>
-        </div>
-        <div style={{ opacity: 0.3 }}>
-          <Activity size={16} color={COLORS.subtext} />
+      <div style={{
+        background: '#FFFFFF',
+        flex: 1, display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        padding: '0.5rem 1rem 0.8rem'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+          <span style={{
+            fontSize: '2.8rem', fontWeight: 950,
+            color: isOffline ? '#CBD5E1' : 'var(--text-main)',
+            letterSpacing: '-0.06em', lineHeight: 1, textAlign: 'center'
+          }}>
+            {isOffline ? '--' : value}
+          </span>
+          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#94A3B8' }}>{unit}</span>
         </div>
       </div>
     </motion.div>
@@ -99,13 +111,15 @@ const DiagnosticCard = ({ label, value, icon: Icon, color, statusText = '', rang
 
 // ─── MAIN COMPONENT ────────────────────────────────────────────────────────
 
-const IrrigationControl = () => {
+const IrrigationSystem = () => {
   const navigate = useNavigate();
-  const { sensorData, actuators, ACTUATORS, toggleActuator, systemHealth, lastGlobalUpdate } = useApp();
+  const { actuators, ACTUATORS, toggleActuator } = useApp();
+  const { sensorData, systemHealth } = useTelemetry();
 
   const water = sensorData?.water || {};
   const isPumpActive = actuators ? actuators[ACTUATORS?.PUMP] : false;
   const healthScore = systemHealth.water;
+  
   const stats = useMemo(() => {
     const safeNum = (val) => (val !== null && val !== undefined && !isNaN(parseFloat(val))) ? parseFloat(val) : null;
     const level = safeNum(water.level);
@@ -116,81 +130,150 @@ const IrrigationControl = () => {
   const isOnline = stats.level !== null;
 
   const heroConfig = useMemo(() => {
-    if (!isOnline || healthScore === null) return { label: 'TANK OFFLINE', status: 'Offline', gradient: GRADIENTS.offline, iconColor: COLORS.offline, message: 'Check water level sensor connectivity.', bg: '#F1F5F9', border: '#E2E8F0' };
-    
-    if (healthScore >= 75) return { label: 'WATER RESERVE', status: 'Optimal', gradient: GRADIENTS.optimal, iconColor: COLORS.primary, message: 'Adequate supply for scheduled irrigation.', bg: '#DBEAFE', border: 'rgba(14, 165, 233, 0.1)' };
-    if (healthScore >= 35) return { label: 'WATER RESERVE', status: 'Moderate', gradient: GRADIENTS.moderate, iconColor: COLORS.warning, message: 'Reserves are decreasing. Monitor consumption.', bg: '#FEF3C7', border: 'rgba(245, 158, 11, 0.1)' };
-    return { label: 'WATER RESERVE', status: 'Low', gradient: GRADIENTS.low, iconColor: COLORS.critical, message: 'Water reserves below safe threshold!', bg: '#FEE2E2', border: 'rgba(239, 68, 68, 0.1)' };
+    const mainColor = '#06D6A0';
+    if (!isOnline) return { label: 'Node Offline', status: 'Standby', color: '#64748B', bg: '#F8FAFC' };
+    if (healthScore >= 75) return { label: 'Optimal Reserve', status: 'Stable', color: mainColor, bg: mainColor + '08' };
+    if (healthScore >= 35) return { label: 'Low Reserve', status: 'Caution', color: mainColor, bg: mainColor + '08' };
+    return { label: 'Critical Level', status: 'Alert', color: mainColor, bg: mainColor + '08' };
   }, [isOnline, healthScore]);
 
   return (
-    <div style={{ padding: '1.25rem', paddingBottom: '10px', background: COLORS.bg, minHeight: 'auto', fontFamily: "'Outfit', sans-serif" }}>
-      
-      {/* ─── UNIFIED HERO CARD ─── */}
+    <motion.div 
+      variants={staggerContainer}
+      initial="hidden"
+      animate="visible"
+      style={{ padding: '1.25rem', paddingBottom: '140px' }}
+    >
+      {/* Industrial Hero Card */}
       <motion.div
-        initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}
+        variants={itemFadeUp}
         style={{
-          background: `linear-gradient(165deg, ${heroConfig.bg} 0%, #FFFFFF 100%)`, borderRadius: '24px', padding: '1.75rem',
-          boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 2px rgba(255,255,255,0.9)',
-          marginBottom: '1.5rem', position: 'relative', overflow: 'hidden',
-          border: '1px solid rgba(255, 255, 255, 0.8)',
-          display: 'flex', flexDirection: 'column', gap: '1.5rem',
-          transition: 'background 0.5s ease, border 0.5s ease'
+          background: heroConfig.bg,
+          borderRadius: 'var(--radius-xl)',
+          padding: '1.75rem',
+          boxShadow: '0 10px 30px -10px ' + heroConfig.color + '30',
+          marginBottom: '1.5rem',
+          border: '1px solid ' + heroConfig.color + '25',
+          position: 'relative',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1.5rem'
         }}
       >
+        <div style={{ position: 'absolute', top: '-30px', right: '-30px', width: '150px', height: '150px', background: heroConfig.color + '10', filter: 'blur(40px)', borderRadius: '50%', pointerEvents: 'none' }} />
+
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: `${heroConfig.iconColor}10`, padding: '6px 14px', borderRadius: '100px', border: `1px solid ${heroConfig.iconColor}20` }}>
-            <motion.div animate={isOnline ? { opacity: [0.4, 1, 0.4] } : { opacity: 0.5 }} transition={{ duration: 2, repeat: Infinity }} style={{ width: '8px', height: '8px', borderRadius: '50%', background: heroConfig.iconColor }} />
-            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: heroConfig.iconColor, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{isOnline ? 'Tank Active' : 'Tank Offline'}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{
+              width: '44px', height: '44px', borderRadius: '13px',
+              background: '#FFFFFF', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+              border: '1px solid ' + heroConfig.color + '15'
+            }}>
+              <Waves size={24} color={heroConfig.color} strokeWidth={2.5} />
+            </div>
+            <div>
+              <h2 style={{ fontSize: '1.2rem', fontWeight: 950, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.02em' }}>
+                Irrigation Health Index
+              </h2>
+            </div>
+          </div>
+          <div style={{
+            padding: '6px 14px', borderRadius: '100px',
+            background: '#FFFFFF', color: heroConfig.color,
+            fontSize: '0.65rem', fontWeight: 950, display: 'flex', alignItems: 'center', gap: '8px',
+            border: `1px solid ${heroConfig.color}30`
+          }}>
+            {heroConfig.status}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', minWidth: '140px' }}>
+            <span style={{ fontSize: '5rem', fontWeight: 950, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.06em', lineHeight: 0.9 }}>
+              {(!isOnline || healthScore === null) ? '--' : Math.round(healthScore)}
+            </span>
+            <span style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-muted)', opacity: 0.6 }}>%</span>
           </div>
 
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-          <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 800, color: COLORS.subtext, textTransform: 'uppercase', letterSpacing: '0.15em', opacity: 0.6 }}>{heroConfig.label}</p>
-          <motion.h1 key={healthScore} style={{ margin: 0, fontSize: '5.5rem', fontWeight: 800, color: COLORS.text, letterSpacing: '-0.04em', lineHeight: 1 }}>
-            {(!isOnline || healthScore === null) ? '--' : healthScore}<span style={{ fontSize: '1.5rem', opacity: 0.3, marginLeft: '4px' }}>%</span>
-          </motion.h1>
-          <motion.div 
-            animate={heroConfig.status === 'Critical' ? { scale: [1, 1.05, 1], boxShadow: [`0 4px 15px ${COLORS.critical}30`, `0 4px 25px ${COLORS.critical}50`, `0 4px 15px ${COLORS.critical}30`] } : {}}
-            transition={{ duration: 2, repeat: Infinity }}
-            style={{ padding: '8px 24px', borderRadius: '100px', background: heroConfig.gradient, color: 'white', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}
-          >
-            {heroConfig.status}
-          </motion.div>
-        </div>
-
-        <div style={{ textAlign: 'center', paddingTop: '8px', borderTop: `1px solid ${COLORS.border}`, opacity: 0.8 }}>
-          <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 700, color: COLORS.subtext }}>{heroConfig.message}</p>
+          <div style={{
+            display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem',
+            padding: '1rem 1.25rem', background: 'rgba(255,255,255,0.5)',
+            borderRadius: 'var(--radius-lg)', border: '1px solid rgba(255,255,255,0.8)',
+            maxWidth: '200px'
+          }}>
+            <div>
+              <div style={{ fontSize: '0.55rem', fontWeight: 950, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+                Sensors
+              </div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                {isOnline ? '2 / 2' : '0 / 2'}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.55rem', fontWeight: 950, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+                Sync
+              </div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                Live
+              </div>
+            </div>
+          </div>
         </div>
       </motion.div>
 
-      {/* ─── PUMP CONTROL ─── */}
-      <section style={{ background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '24px', padding: '1.5rem', border: '1px solid rgba(255, 255, 255, 0.8)', marginBottom: '1.5rem', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
-            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: isPumpActive ? '#ECFDF5' : '#F0F9FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Power size={20} color={isPumpActive ? COLORS.secondary : COLORS.primary} />
-            </div>
-            <div>
-              <p style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: COLORS.text }}>Master Pump Control</p>
-              <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 800, color: isPumpActive ? COLORS.secondary : COLORS.subtext }}>{isPumpActive ? 'Currently Active' : 'Standby Mode'}</p>
-            </div>
+      {/* Industrial Pump Commander */}
+      <motion.section 
+        variants={itemFadeUp}
+        style={{ 
+          background: (isPumpActive && isOnline) ? '#0F172A' : '#FFFFFF', 
+          borderRadius: '24px', padding: '1.5rem', 
+          border: '1px solid rgba(0,0,0,0.05)', 
+          marginBottom: '1.5rem', 
+          boxShadow: 'var(--shadow-md)',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+        }}
+      >
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <div style={{ 
+            width: '48px', height: '48px', borderRadius: '14px', 
+            background: (isPumpActive && isOnline) ? 'rgba(16, 185, 129, 0.1)' : '#F1F5F9', 
+            display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}>
+            <Power size={22} color={(isPumpActive && isOnline) ? '#10B981' : '#64748B'} strokeWidth={2.5} />
           </div>
-          <div onClick={() => toggleActuator(ACTUATORS.PUMP)} style={{ width: '54px', height: '28px', background: isPumpActive ? COLORS.secondary : '#E2E8F0', borderRadius: '20px', padding: '2px', cursor: 'pointer', transition: '0.3s' }}>
-            <motion.div animate={{ x: isPumpActive ? 26 : 0 }} style={{ width: '24px', height: '24px', background: 'white', borderRadius: '50%', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} />
+          <div>
+            <p style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: (isPumpActive && isOnline) ? 'white' : 'var(--text-main)' }}>Master Pump Control</p>
+            <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 800, color: (isPumpActive && isOnline) ? '#10B981' : 'var(--text-muted)', textTransform: 'uppercase' }}>
+              {isPumpActive ? 'Flow Active' : 'System Ready'}
+            </p>
           </div>
         </div>
-      </section>
+        
+        <motion.button 
+          whileTap={{ scale: 0.95 }}
+          onClick={() => isOnline && toggleActuator(ACTUATORS.PUMP)} 
+          style={{ 
+            padding: '10px 20px', 
+            background: (isPumpActive && isOnline) ? '#10B981' : '#0F172A', 
+            borderRadius: '12px', border: 'none',
+            color: 'white',
+            fontSize: '0.75rem', fontWeight: 950, cursor: isOnline ? 'pointer' : 'default'
+          }}
+        >
+          {isPumpActive ? 'SHUTDOWN' : 'START PUMP'}
+        </motion.button>
+      </motion.section>
 
-      {/* ─── UNIFIED SENSOR GRID ─── */}
+      {/* Diagnostic Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-        <DiagnosticCard label="Volume" value={stats.liters} unit="L" icon={Droplets} color={COLORS.primary} statusText={stats.level === null ? 'Offline' : (stats.level > 30 ? 'Stable' : 'Low')} range="2k-6k L" />
-        <DiagnosticCard label="Efficiency" value={isOnline ? healthScore : null} unit="%" icon={Zap} color={COLORS.secondary} statusText={isOnline ? (healthScore > 80 ? 'Optimal' : 'Variable') : 'Offline'} range="90-100 %" />
+        <DiagnosticCard label="Reservoir Level" value={stats.level} unit="%" min={30} max={100} icon={Waves} color="#00C2FF" />
+        <DiagnosticCard label="Hydraulic Flow" value={isOnline ? (water.flow || 0).toFixed(1) : null} unit="L/min" min={isPumpActive ? 0.1 : 0} max={50} icon={Gauge} color="#06D6A0" />
       </div>
 
-    </div>
+    </motion.div>
   );
 };
 
-export default IrrigationControl;
+export default IrrigationSystem;

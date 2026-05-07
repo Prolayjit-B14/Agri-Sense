@@ -1,208 +1,317 @@
 /**
- * AgriSense Pro v17.1.0 Dashboard
- * High-level overview of farm health, core metrics, and active controls.
+ * AgriSense Pro v18.0.0 "Ultra-Premium" Dashboard
+ * Redesigned for flagship-level mobile experience with cinematic motion.
  */
 
 // ─── IMPORTS ────────────────────────────────────────────────────────────────
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
-  Sprout, Droplets, CloudRain, Archive,
+  Sprout, Waves, CloudSun, Database, CloudRain, Droplets,
   MapPin, Activity, Power, ChevronRight,
   ShieldCheck, RefreshCw, Camera, WifiOff,
   BellRing, Lightbulb, Wifi, ArrowUp, ArrowDown,
-  CheckCircle, BarChart3
+  CheckCircle, BarChart3, Zap, Navigation
 } from 'lucide-react';
 
 // Context & Utils
 import { useApp } from '../../state/AppContext';
+import { useTelemetry } from '../../state/TelemetryContext';
 import { getHealthColor } from '../../logic/healthEngine';
 
-// ─── DESIGN TOKENS ─────────────────────────────────────────────────────────
-const COLORS = {
-  primary: '#10B981',
-  primaryDark: '#059669',
-  secondary: '#0EA5E9',
-  background: '#FFFFFF',
-  cardBg: '#FFFFFF',
-  textMain: '#0F172A',
-  textMuted: '#64748B',
-  border: 'rgba(0, 0, 0, 0.04)',
+// ─── ANIMATION CONFIGS ──────────────────────────────────────────────────────
+const springConfig = { type: "spring", stiffness: 300, damping: 30 };
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08, delayChildren: 0.05 }
+  }
+};
+const itemFadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: springConfig }
 };
 
 // ─── SUB-COMPONENTS ────────────────────────────────────────────────────────
-const StatusBadge = ({ status }) => {
-  const isActive = status && status !== 'OFFLINE';
-  return (
-    <div style={{ 
-      display: 'flex', alignItems: 'center', gap: '6px', 
-      background: isActive ? '#ECFDF5' : '#FEF2F2', 
-      padding: '6px 12px', borderRadius: '12px',
-      border: `1px solid ${isActive ? '#10B98130' : '#EF444430'}`,
-      transition: '0.3s'
-    }}>
-      <motion.div 
-        animate={{ opacity: [1, 0.5, 1] }} 
-        transition={{ duration: 2, repeat: Infinity }}
-        style={{ width: '6px', height: '6px', borderRadius: '50%', background: isActive ? '#10B981' : '#EF4444' }} 
-      />
-      <span style={{ fontSize: '0.65rem', fontWeight: 900, color: isActive ? '#059669' : '#B91C1C', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
-        System {isActive ? 'Active' : 'Offline'}
-      </span>
-    </div>
-  );
-};
 
 /**
- * HealthOverview: Circular progress and system status dots
+ * HealthOverview: Cinematic Hero Card
  */
-/**
- * HealthOverview: Premium hero card with circular status and system node grid
- */
-const HealthOverview = ({ score, systemHealth }) => {
-  const { devices } = useApp();
-  const isOffline = score === null || score === 0;
-  const healthColor = isOffline ? '#EF4444' : getHealthColor(score);
-
+const HealthOverview = React.memo(({ score, systemHealth, devices }) => {
+  const activeNodesCount = ['soil_node', 'water_node', 'weather_node', 'storage_node', 'vision_node']
+    .filter(id => devices?.[id]?.status === 'ACTIVE' || devices?.[id]?.status === 'PARTIAL').length;
+    
+  const isOffline = score === null || score === 0 || activeNodesCount === 0;
+  const healthColor = isOffline ? '#94A3B8' : getHealthColor(score);
   const visionOnline = devices?.vision_node?.status === 'ACTIVE' || devices?.vision_node?.status === 'PARTIAL';
-  const activeNodesCount = Object.values(devices || {})
-    .filter(d => d && d.device_id && d.device_id.endsWith('_node') && d.status === 'ACTIVE').length
-    + (visionOnline ? 1 : 0);
+  
   const totalNodesCount = 5;
 
   const systems = [
-    { label: 'Soil',       icon: Sprout,    color: '#10B981', active: systemHealth?.soil      != null },
-    { label: 'Weather',    icon: CloudRain, color: '#F97316', active: systemHealth?.weather   != null },
-    { label: 'Irrigation', icon: Droplets,  color: '#3B82F6', active: systemHealth?.water     != null },
-    { label: 'Storage',    icon: Archive,   color: '#8B5CF6', active: systemHealth?.storage   != null },
-    { label: 'Vision',     icon: Camera,    color: '#A855F7', active: visionOnline },
+    { label: 'Soil', icon: Sprout, color: '#8B5E3C', active: systemHealth?.soil != null },
+    { label: 'Weather', icon: CloudSun, color: '#3B82F6', active: systemHealth?.weather != null },
+    { label: 'Irrigation', icon: Waves, color: '#06D6A0', active: systemHealth?.water != null },
+    { label: 'Storage', icon: Database, color: '#64748B', active: systemHealth?.storage != null },
+    { label: 'Vision', icon: Camera, color: '#7C3AED', active: visionOnline },
   ];
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+      variants={itemFadeUp}
       style={{
-        background: isOffline ? 'linear-gradient(165deg, #F8FAFC 0%, #F1F5F9 100%)' : 'linear-gradient(165deg, #ECFDF5 0%, #FFFFFF 100%)', borderRadius: '24px', padding: '1rem',
-        border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
-        marginBottom: '1.5rem', display: 'flex', gap: '0.75rem', alignItems: 'center',
+        background: isOffline 
+          ? 'linear-gradient(165deg, #f8fafc 0%, #f1f5f9 100%)' 
+          : `linear-gradient(165deg, ${healthColor}15 0%, #ffffff 100%)`,
+        borderRadius: 'var(--radius-xl)', 
+        padding: '1.5rem',
+        border: '1px solid var(--glass-stroke)',
+        boxShadow: 'var(--shadow-premium)',
+        marginBottom: '1.5rem',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1.5rem',
+        position: 'relative',
         overflow: 'hidden'
       }}
     >
-      {/* Left: Circular Progress Area (Compacted) */}
-      <div style={{ position: 'relative', width: '100px', height: '100px', flexShrink: 0 }}>
-        <svg width="100" height="100" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="44" fill="none" stroke="#F1F5F9" strokeWidth="6" />
-          <motion.circle
-            cx="50" cy="50" r="44" fill="none"
-            stroke={healthColor}
-            strokeWidth="8" strokeLinecap="round"
-            strokeDasharray="276"
-            initial={{ strokeDashoffset: 276 }}
-            animate={{ strokeDashoffset: 276 - (276 * (isOffline ? 20 : score || 0) / 100) }}
-            transition={{ duration: 1.5, ease: "easeOut" }}
-            transform="rotate(-90 50 50)"
-          />
-        </svg>
-        <div style={{ 
-          position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', 
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          textAlign: 'center'
-        }}>
-          {isOffline && <WifiOff size={18} color="#EF4444" style={{ marginBottom: '2px' }} />}
-          <div style={{ 
-            fontSize: '0.75rem', fontWeight: 900, color: healthColor, 
-            textTransform: 'uppercase', letterSpacing: '0.05em', lineHeight: 1 
-          }}>
-            {isOffline ? 'OFF' : (score >= 80 ? 'OPT' : 'OK')}
+      <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: `${healthColor}10`, filter: 'blur(40px)', borderRadius: '50%' }} />
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ position: 'relative', width: '90px', height: '90px', flexShrink: 0 }}>
+          <svg width="90" height="90" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(0,0,0,0.03)" strokeWidth="8" />
+            <motion.circle
+              cx="50" cy="50" r="44" fill="none" stroke={healthColor} strokeWidth="10" strokeLinecap="round" strokeDasharray="276"
+              initial={{ strokeDashoffset: 276 }}
+              animate={{ strokeDashoffset: 276 - (276 * (isOffline ? 0 : score || 0) / 100) }}
+              transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
+              transform="rotate(-90 50 50)"
+            />
+          </svg>
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '-0.05em' }}>
+              {isOffline ? '--' : Math.round(score)}%
+            </span>
           </div>
-          <div style={{ fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain, marginTop: '1px' }}>
-            {isOffline ? `0/${totalNodesCount}` : `${Math.round(score)}%`}
+        </div>
+
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
+              {isOffline ? 'System Offline' : 'Operational Status'}
+            </span>
           </div>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--text-main)', margin: 0 }}>
+            {isOffline ? 'Critical Fault' : (score >= 80 ? 'Excellent' : 'Stable Growth')}
+          </h2>
+          <p style={{ margin: '4px 0 0', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+            {activeNodesCount} of {totalNodesCount} nodes broadcasting
+          </p>
         </div>
       </div>
-
-      {/* Right: Status Text and Icon Grid */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: COLORS.textMain, letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {isOffline ? 'System Offline' : 'Operational'}
-        </h2>
-        <p style={{ margin: '1px 0 0', fontSize: '0.75rem', fontWeight: 600, color: COLORS.textMuted }}>
-          {activeNodesCount} of {totalNodesCount} nodes active
-        </p>
-        
-        {/* Node Icon Row (Compacted) */}
-        <div style={{ display: 'flex', gap: '4px', marginTop: '12px' }}>
-          {systems.map((s) => {
-            const Icon = s.icon;
-            return (
-              <div key={s.label} style={{ textAlign: 'center', flex: 1 }}>
-                <div style={{
-                  height: '34px', borderRadius: '10px',
-                  background: 'white', border: '1px solid rgba(0,0,0,0.06)',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  marginBottom: '2px'
-                }}>
-                  <Icon size={14} color={s.active ? s.color : '#CBD5E1'} strokeWidth={2.5} />
-                </div>
-                <div style={{ fontSize: '0.45rem', fontWeight: 900, color: COLORS.textMuted, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
-                  {s.label.substring(0, 4)}
-                </div>
+      
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px', paddingTop: '1rem', borderTop: '1px solid rgba(0,0,0,0.03)' }}>
+        {systems.map((s) => {
+          const Icon = s.icon;
+          const isActive = s.active && !isOffline;
+          return (
+            <div key={s.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+              <div style={{
+                width: '100%', height: '40px', borderRadius: '14px', background: isActive ? `${s.color}10` : 'rgba(0,0,0,0.02)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', border: isActive ? `1px solid ${s.color}20` : '1px solid transparent'
+              }}>
+                <Icon size={18} color={isActive ? s.color : '#94A3B8'} strokeWidth={2.5} />
               </div>
-            );
-          })}
-        </div>
+              <span style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--text-muted)' }}>{s.label}</span>
+            </div>
+          );
+        })}
       </div>
     </motion.div>
   );
-};
+});
 
-/**
- * Sparkline: Smooth wavy SVG path with a soft glow/shadow
- */
-const Sparkline = ({ color, height = 28, width = 75 }) => {
+const SensorCard = React.memo(({ title, icon: Icon, color, status, score, onClick, nodeType }) => {
+  const isConnected = status === 'CONNECTED' || status === 'ACTIVE' || status === 'PARTIAL';
+  const systemColor = !isConnected ? '#94A3B8' : ({ soil: '#8B5E3C', irrigation: '#06D6A0', water: '#06D6A0', weather: '#3B82F6', storage: '#64748B', vision: '#7C3AED' }[nodeType] || color);
+  const healthColor = !isConnected ? '#E2E8F0' : (score >= 80 ? '#10B981' : score >= 50 ? '#F59E0B' : '#EF4444');
+
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} 25`} style={{ overflow: 'visible', filter: `drop-shadow(0 4px 4px ${color}30)` }}>
-      <motion.path
-        d={`M 0,18 C 10,12 15,22 25,14 S 40,8 55,18 S 65,12 75,18`}
-        fill="none"
-        stroke={color}
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        initial={{ pathLength: 0 }}
-        animate={{ pathLength: 1 }}
-        transition={{ duration: 2.5, ease: "easeInOut" }}
-      />
-    </svg>
+    <motion.div
+      variants={itemFadeUp}
+      whileTap={{ scale: 0.96 }}
+      onClick={onClick}
+      style={{
+        background: isConnected 
+          ? `linear-gradient(165deg, #ffffff 0%, ${systemColor}08 50%, ${systemColor}12 100%)` 
+          : 'linear-gradient(165deg, #f8fafc 0%, #f1f5f9 100%)',
+        borderRadius: 'var(--radius-xl)', padding: '1.25rem',
+        border: '1px solid var(--glass-stroke)', boxShadow: 'var(--shadow-md)',
+        cursor: 'pointer', position: 'relative', overflow: 'hidden',
+        display: 'flex', flexDirection: 'column', gap: '1rem'
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ 
+          width: '44px', height: '44px', borderRadius: '14px', 
+          background: isConnected ? `${systemColor}12` : 'rgba(0,0,0,0.03)', 
+          display: 'flex', alignItems: 'center', justifyContent: 'center', 
+          border: isConnected ? `1px solid ${systemColor}20` : '1px solid transparent'
+        }}>
+          <Icon size={22} color={systemColor} strokeWidth={2.5} />
+        </div>
+        <div style={{ fontSize: '0.8rem', color: isConnected ? 'var(--text-muted)' : '#94A3B8', fontWeight: 700 }}>{title}</div>
+      </div>
+
+      <div>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+          <span style={{ fontSize: '1.8rem', fontWeight: 950, color: isConnected ? 'var(--text-main)' : '#94A3B8', letterSpacing: '-0.05em' }}>
+            {score != null && isConnected ? Math.round(score) : '--'}
+          </span>
+          <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#94A3B8' }}>%</span>
+        </div>
+      </div>
+
+      {/* Progress Bar Mini */}
+      <div style={{ width: '100%', height: '6px', background: 'rgba(0,0,0,0.03)', borderRadius: '3px', overflow: 'hidden' }}>
+        <motion.div 
+          initial={{ width: 0 }}
+          animate={{ width: isConnected ? `${score || 0}%` : '0%' }}
+          transition={{ duration: 1, delay: 0.2 }}
+          style={{ height: '100%', background: healthColor, borderRadius: '3px' }} 
+        />
+      </div>
+    </motion.div>
   );
-};
+});
 
-/**
- * WeatherBars: Mini bar chart for the weather card
- */
-const WeatherBars = ({ color }) => (
-  <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', height: '24px' }}>
-    {[6, 12, 18, 24].map((h, i) => (
-      <motion.div
-        key={i}
-        initial={{ height: 0 }}
-        animate={{ height: `${h}px` }}
-        transition={{ delay: i * 0.1, duration: 0.5 }}
-        style={{ width: '6px', background: `${color}40`, borderRadius: '2px' }}
-      />
-    ))}
-  </div>
-);
+const CamCard = React.memo(({ isOnline, onClick }) => (
+  <motion.div
+    variants={itemFadeUp}
+    whileTap={{ scale: 0.98 }}
+    onClick={onClick}
+    style={{
+      background: 'var(--bg-card)', borderRadius: 'var(--radius-xl)', padding: '0.75rem',
+      border: '1px solid var(--glass-stroke)', boxShadow: 'var(--shadow-md)',
+      cursor: 'pointer', position: 'relative', overflow: 'hidden',
+      height: '220px', width: '100%'
+    }}
+  >
+    <div style={{ position: 'relative', borderRadius: 'calc(var(--radius-xl) - 8px)', overflow: 'hidden', height: '100%', background: '#0F172A' }}>
+      {isOnline ? (
+        <motion.img 
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          src="http://192.168.4.2:81/stream" 
+          alt="Field" 
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+          onError={(e) => { e.target.style.display = 'none'; }}
+        />
+      ) : (
+        <img src="file:///C:/Users/polu1/.gemini/antigravity/brain/f861e518-2409-4f42-a157-691898edc51a/farm_field_camera_view_1777741743015.png" alt="Field" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4 }} />
+      )}
+      
+      <div style={{ 
+        position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', 
+        background: isOnline ? 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 40%, transparent 70%, rgba(0,0,0,0.3) 100%)' : 'rgba(15, 23, 42, 0.4)', 
+        display: 'flex', alignItems: 'center', justifyContent: 'center' 
+      }}>
+        {!isOnline && (
+          <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.2)' }}>
+            <WifiOff size={24} color="#fff" />
+          </div>
+        )}
+      </div>
 
-const InsightsCard = ({ sensorData, sensorHistory, navigate }) => {
-  const getInsights = () => {
+      <div style={{ position: 'absolute', top: '16px', left: '16px', padding: '6px 12px', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(12px)', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
+        <span style={{ fontSize: '0.65rem', fontWeight: 900, color: 'white', letterSpacing: '0.05em' }}>Vision Feed</span>
+      </div>
+
+      <div style={{ position: 'absolute', bottom: '16px', right: '16px' }}>
+        <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.3)' }}>
+          <Navigation size={18} color="#fff" />
+        </div>
+      </div>
+    </div>
+  </motion.div>
+));
+
+const ControlsCard = React.memo(({ actuators, toggleActuator, ACTUATORS }) => {
+  const controls = [
+    { key: ACTUATORS?.PUMP, label: 'Pump', icon: Droplets, color: '#3B82F6', bg: '#EFF6FF' },
+    { key: ACTUATORS?.BUZZER, label: 'Siren', icon: BellRing, color: '#EF4444', bg: '#FEF2F2' },
+    { key: ACTUATORS?.LIGHT, label: 'Light', icon: Lightbulb, color: '#F59E0B', bg: '#FFFBEB' },
+  ];
+
+  return (
+    <motion.div
+      variants={itemFadeUp}
+      style={{
+        background: 'linear-gradient(165deg, #ffffff 0%, #f8fafc 100%)', 
+        borderRadius: 'var(--radius-xl)', padding: '1.25rem',
+        border: '1px solid var(--glass-stroke)', boxShadow: 'var(--shadow-md)',
+        display: 'flex', flexDirection: 'column', gap: '1rem',
+        width: '100%', boxSizing: 'border-box', marginBottom: '1.2rem'
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'var(--primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Zap size={18} color="var(--primary)" strokeWidth={2.5} />
+        </div>
+        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: 'var(--text-main)' }}>Quick Controls</h3>
+      </div>
+
+      <div style={{ display: 'flex', gap: '10px' }}>
+        {controls.map((c) => {
+          const isOn = actuators?.[c.key] ?? false;
+          return (
+            <div key={c.label} style={{ 
+              flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', 
+              padding: '16px 8px', borderRadius: '24px', border: '1px solid rgba(0,0,0,0.03)', 
+              background: isOn ? `${c.color}08` : 'rgba(0,0,0,0.01)',
+              transition: '0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+              boxShadow: isOn ? `0 4px 12px ${c.color}10` : 'none'
+            }}>
+              <div style={{ 
+                width: '46px', height: '46px', borderRadius: '16px', 
+                background: isOn ? c.color : 'rgba(0,0,0,0.04)', 
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: isOn ? `0 8px 16px ${c.color}30` : 'none',
+                transition: '0.4s'
+              }}>
+                <c.icon size={22} color={isOn ? '#fff' : '#94A3B8'} strokeWidth={2.5} />
+              </div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 800, color: isOn ? 'var(--text-main)' : '#94A3B8' }}>{c.label}</div>
+              <motion.div 
+                whileTap={{ scale: 0.9 }}
+                onClick={() => toggleActuator(c.key)} 
+                style={{ 
+                  width: '40px', height: '22px', borderRadius: '12px', 
+                  background: isOn ? c.color : '#E2E8F0', position: 'relative', cursor: 'pointer', transition: '0.3s' 
+                }}
+              >
+                <motion.div 
+                  animate={{ x: isOn ? 20 : 2 }} 
+                  transition={springConfig}
+                  style={{ position: 'absolute', top: '2px', left: 0, width: '18px', height: '18px', borderRadius: '50%', background: '#fff', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} 
+                />
+              </motion.div>
+            </div>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+});
+
+const InsightsCard = React.memo(({ sensorData, sensorHistory, navigate }) => {
+  const activeInsights = useMemo(() => {
     const list = [];
     if (!sensorData || !sensorHistory || sensorHistory.length < 1) {
       return [
-        { text: 'Waiting for hardware sync...', icon: Activity, color: '#94A3B8', bg: '#F1F5F9' },
-        { text: 'Checking farm systems', icon: RefreshCw, color: '#94A3B8', bg: '#F1F5F9' }
+        { text: 'Synchronizing intelligence...', icon: Activity, color: '#94A3B8', bg: '#F1F5F9' },
+        { text: 'Analyzing crop patterns', icon: RefreshCw, color: '#94A3B8', bg: '#F1F5F9' }
       ];
     }
 
@@ -214,14 +323,12 @@ const InsightsCard = ({ sensorData, sensorHistory, navigate }) => {
       let text = `Soil Moisture: ${Number(currM).toFixed(0)}%`;
       if (Math.abs(diff) >= 1) {
         text = diff < 0 ? `Moisture decreased by ${Math.abs(diff).toFixed(0)}%` : `Moisture increased by ${diff.toFixed(0)}%`;
-      } else {
-        text = `Soil Moisture: Stable at ${Number(currM).toFixed(0)}%`;
       }
       list.push({
         text,
         icon: diff < 0 ? ArrowDown : (diff > 0 ? ArrowUp : Sprout),
-        color: diff < 0 ? '#3B82F6' : '#10B981',
-        bg: diff < 0 ? '#EFF6FF' : '#ECFDF5'
+        color: diff < 0 ? 'var(--secondary)' : 'var(--primary)',
+        bg: diff < 0 ? 'var(--secondary-soft)' : 'var(--primary-soft)'
       });
     }
 
@@ -232,13 +339,13 @@ const InsightsCard = ({ sensorData, sensorHistory, navigate }) => {
       const diff = pastT != null ? (currT - pastT) : 0;
       let text = `Ambient Temp: ${currT.toFixed(1)}°C`;
       if (Math.abs(diff) >= 0.2) {
-        text = diff > 0 ? `Temp increased by ${diff.toFixed(1)}°C` : `Temp decreased by ${Math.abs(diff).toFixed(1)}°C`;
+        text = diff > 0 ? `Temp rose by ${diff.toFixed(1)}°C` : `Temp fell by ${Math.abs(diff).toFixed(1)}°C`;
       }
       list.push({
         text,
         icon: diff > 0 ? ArrowUp : ArrowDown,
-        color: diff > 0 ? '#EF4444' : '#0EA5E9',
-        bg: diff > 0 ? '#FEF2F2' : '#F0F9FF'
+        color: diff > 0 ? 'var(--danger)' : 'var(--secondary)',
+        bg: diff > 0 ? 'rgba(239, 68, 68, 0.08)' : 'var(--secondary-soft)'
       });
     }
 
@@ -248,8 +355,8 @@ const InsightsCard = ({ sensorData, sensorHistory, navigate }) => {
       list.push({
         text: `Irrigation Tank: ${level.toFixed(0)}% Full`,
         icon: Droplets,
-        color: '#3B82F6',
-        bg: '#EFF6FF'
+        color: 'var(--secondary)',
+        bg: 'var(--secondary-soft)'
       });
     }
 
@@ -257,346 +364,227 @@ const InsightsCard = ({ sensorData, sensorHistory, navigate }) => {
     const isDry = currM != null && currM < 35;
     const isRaining = sensorData.weather?.rainLevel > 0;
     
-    let recText = 'Optimal moisture levels';
+    let recText = 'Crop conditions optimal';
     let recIcon = CheckCircle;
-    let recColor = '#10B981';
-    let recBg = '#ECFDF5';
+    let recColor = 'var(--primary)';
+    let recBg = 'var(--primary-soft)';
 
     if (isRaining) {
-      recText = 'Raining: Irrigation suspended';
+      recText = 'Precipitation: Irrigation paused';
       recIcon = CloudRain;
-      recColor = '#3B82F6';
-      recBg = '#EFF6FF';
+      recColor = 'var(--secondary)';
+      recBg = 'var(--secondary-soft)';
     } else if (isDry) {
-      recText = 'Critical: Irrigation required';
+      recText = 'Alert: Low Soil Moisture';
       recIcon = BellRing;
-      recColor = '#F59E0B';
-      recBg = '#FFFBEB';
+      recColor = 'var(--accent)';
+      recBg = 'rgba(245, 158, 11, 0.08)';
     }
 
     list.push({ text: recText, icon: recIcon, color: recColor, bg: recBg });
 
     return list.slice(0, 4);
-  };
-
-  const activeInsights = getInsights();
+  }, [sensorData, sensorHistory]);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+      variants={itemFadeUp}
       style={{
-        background: 'linear-gradient(165deg, #ECFDF5 0%, #FFFFFF 100%)', borderRadius: '24px', padding: '1.25rem',
-        border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
-        marginBottom: '1.5rem'
+        background: 'linear-gradient(165deg, var(--primary-soft) 0%, #ffffff 100%)', 
+        borderRadius: 'var(--radius-xl)', 
+        padding: '1.5rem',
+        border: '1px solid var(--glass-stroke)', 
+        boxShadow: 'var(--shadow-lg)',
+        marginBottom: '2rem'
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.25rem' }}>
         <div style={{ 
-          width: '32px', height: '32px', borderRadius: '10px', background: '#DCFCE7', 
-          display: 'flex', alignItems: 'center', justifyContent: 'center' 
+          width: '36px', height: '36px', borderRadius: '12px', background: 'white', 
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: 'var(--shadow-sm)'
         }}>
-          <BarChart3 size={18} color="#10B981" strokeWidth={2.5} />
+          <BarChart3 size={20} color="var(--primary)" strokeWidth={2.5} />
         </div>
-        <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: COLORS.textMain }}>Today's Summary</h3>
+        <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: 'var(--text-main)' }}>Intelligence</h3>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
         {activeInsights.map((item, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <motion.div 
+            key={i} 
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 + (i * 0.1) }}
+            style={{ display: 'flex', alignItems: 'center', gap: '14px' }}
+          >
             <div style={{ 
-              width: '28px', height: '28px', borderRadius: '50%', background: item.bg,
+              width: '32px', height: '32px', borderRadius: '10px', background: item.bg,
               display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}>
-              <item.icon size={14} color={item.color} strokeWidth={3} />
+              <item.icon size={16} color={item.color} strokeWidth={3} />
             </div>
-            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#475569' }}>{item.text}</span>
-          </div>
+            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-main)' }}>{item.text}</span>
+          </motion.div>
         ))}
       </div>
 
       <motion.button
-        whileTap={{ scale: 0.95 }}
+        whileTap={{ scale: 0.98 }}
         onClick={() => navigate('/reports')} 
+        className="btn-premium"
         style={{
-          width: '100%', marginTop: '1.5rem', padding: '12px', borderRadius: '16px',
-          background: '#FFFFFF', border: '1px solid #ECFDF5',
-          color: '#10B981', fontSize: '0.75rem', fontWeight: 900,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-          boxShadow: '0 4px 12px rgba(16, 185, 129, 0.05)', cursor: 'pointer'
+          width: '100%', marginTop: '1.5rem', background: 'white', color: 'var(--primary)',
+          boxShadow: 'var(--shadow-sm)', border: '1px solid rgba(0,0,0,0.02)'
         }}
       >
-        VIEW FULL REPORT <ChevronRight size={14} />
+        ANALYSIS REPORT <ChevronRight size={16} />
       </motion.button>
     </motion.div>
   );
-};
+}, (prev, next) => prev.sensorData === next.sensorData && prev.sensorHistory === next.sensorHistory);
 
-const SensorCard = ({ title, value, icon: Icon, color, status, score, onClick, nodeType }) => {
-  const isConnected = status === 'CONNECTED' || status === 'ACTIVE' || status === 'PARTIAL';
-  const systemColor = { soil: '#10B981', irrigation: '#3B82F6', water: '#3B82F6', weather: '#F97316', storage: '#8B5CF6', vision: '#A855F7' }[nodeType] || color;
-  const healthColor = !isConnected ? '#CBD5E1' : (score >= 80 ? '#10B981' : score >= 50 ? '#F59E0B' : '#EF4444');
-
+const WelcomeHeader = React.memo(() => {
+  const { user } = useApp();
+  const [time] = React.useState(new Date());
+  const h = time.getHours();
+  const greeting = h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : h < 21 ? 'Good Evening' : 'Good Night';
+  const firstName = (user?.name || user?.email || 'Farmer').split(' ')[0].split('@')[0];
+  
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}
-      whileTap={{ scale: 0.98 }} onClick={onClick}
-      style={{
-        background: `linear-gradient(165deg, ${systemColor}10 0%, #FFFFFF 100%)`, borderRadius: '24px', padding: '1rem',
-        border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
-        cursor: 'pointer', position: 'relative', overflow: 'hidden',
-        display: 'flex', gap: '12px', height: '96px', alignItems: 'center'
-      }}
-    >
-      <div style={{ 
-        width: '52px', height: '52px', borderRadius: '16px', background: `${systemColor}08`, 
-        display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${systemColor}05`, flexShrink: 0
-      }}>
-        <Icon size={26} color={systemColor} strokeWidth={2.5} />
-      </div>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 800, marginBottom: '1px' }}>{title}</div>
-        <div style={{ fontSize: '1.8rem', fontWeight: 950, color: healthColor, letterSpacing: '-0.05em', lineHeight: 1 }}>
-          {score != null ? `${Math.round(score)}%` : '--'}
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
-// ─── CAM & CONTROLS CARDS ──────────────────────────────────────────────────
-const CamCard = ({ isOnline, onClick }) => (
-  <motion.div
-    whileTap={{ scale: 0.98 }} onClick={onClick}
-    style={{
-      background: 'linear-gradient(165deg, #F8FAFC 0%, #FFFFFF 100%)', borderRadius: '24px', padding: '1rem',
-      border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
-      cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '0',
-      height: '186px', width: '100%', boxSizing: 'border-box'
-    }}
-  >
-    <div style={{ position: 'relative', borderRadius: '18px', overflow: 'hidden', height: '100%', background: '#0F172A' }}>
-      {isOnline ? (
-        <img 
-          src="http://192.168.4.2:81/stream" 
-          alt="Field" 
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-          onError={(e) => { e.target.style.display = 'none'; }}
-        />
-      ) : (
-        <img src="file:///C:/Users/polu1/.gemini/antigravity/brain/f861e518-2409-4f42-a157-691898edc51a/farm_field_camera_view_1777741743015.png" alt="Field" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4 }} />
-      )}
-      
-      <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: isOnline ? 'transparent' : 'rgba(15, 23, 42, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        {!isOnline && (
-          <div style={{ width: '46px', height: '46px', borderRadius: '50%', background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.1)' }}>
-            <WifiOff size={20} color="#fff" />
-          </div>
-        )}
-      </div>
-
-      <div style={{ position: 'absolute', top: '12px', left: '12px', padding: '4px 8px', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: isOnline ? '#10B981' : '#EF4444' }} />
-        <span style={{ fontSize: '0.55rem', fontWeight: 800, color: 'white' }}>{isOnline ? 'LIVE FEED' : 'OFFLINE'}</span>
+    <div>
+      <h1 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-muted)', margin: 0, letterSpacing: '0.02em' }}>
+        {greeting.toUpperCase()}
+      </h1>
+      <div style={{ fontSize: '2rem', fontWeight: 950, color: 'var(--text-main)', letterSpacing: '-0.04em', lineHeight: 1.1 }}>
+        {firstName}
       </div>
     </div>
-  </motion.div>
-);
-
-const ControlsCard = ({ actuators, toggleActuator, ACTUATORS }) => {
-  const controls = [
-    { key: ACTUATORS?.PUMP, label: 'Pump', icon: Droplets, color: '#3B82F6', bg: '#EFF6FF' },
-    { key: ACTUATORS?.BUZZER, label: 'Buzz', icon: BellRing, color: '#EF4444', bg: '#FEF2F2' },
-    { key: ACTUATORS?.LIGHT, label: 'Light', icon: Lightbulb, color: '#F59E0B', bg: '#FFFBEB' },
-  ];
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-      style={{
-        background: 'linear-gradient(165deg, #F0F9FF 0%, #FFFFFF 100%)', borderRadius: '24px', padding: '1rem',
-        border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
-        display: 'flex', flexDirection: 'column', gap: '0.75rem', justifyContent: 'center',
-        width: '100%', boxSizing: 'border-box', marginBottom: '1.2rem'
-      }}
-    >
-      <div style={{ display: 'flex', gap: '8px' }}>
-        {controls.map((c) => {
-          const isOn = actuators?.[c.key] ?? false;
-          return (
-            <div key={c.label} style={{ 
-              flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', 
-              padding: '12px 4px', borderRadius: '20px', border: '1px solid #F1F5F9', background: '#FFFFFF' 
-            }}>
-              <div style={{ width: '42px', height: '42px', borderRadius: '14px', background: c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <c.icon size={20} color={c.color} strokeWidth={2.5} />
-              </div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F172A' }}>{c.label}</div>
-              <div onClick={() => toggleActuator(c.key)} style={{ 
-                width: '36px', height: '18px', borderRadius: '10px', 
-                background: isOn ? c.color : '#E2E8F0', position: 'relative', cursor: 'pointer', transition: '0.3s' 
-              }}>
-                <motion.div animate={{ x: isOn ? 18 : 2 }} style={{ position: 'absolute', top: '2px', left: 0, width: '14px', height: '14px', borderRadius: '50%', background: '#fff' }} />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </motion.div>
   );
-};
+});
 
 // ─── MAIN COMPONENT ────────────────────────────────────────────────────────
 const Dashboard = () => {
   const navigate = useNavigate();
-  const context = useApp();
-  
-  // 🛡️ CRITICAL SAFETY GATE: Prevent crash if context is missing or loading
-  if (!context) return null;
+  const { user, farmInfo, actuators, toggleActuator, currentGPS, syncData, ACTUATORS } = useApp();
+  const { sensorData, farmHealthScore, systemHealth, devices, sensorHistory } = useTelemetry();
 
-  const {
-    sensorData = {}, farmHealthScore = null, systemHealth = {},
-    toggleActuator = () => {}, actuators = {}, ACTUATORS = {},
-    user = {}, devices = {}, farmInfo = {}, syncData = () => {}, 
-    currentGPS = {}, sensorHistory = []
-  } = context;
-
-  const [currentTime, setCurrentTime] = useState(new Date());
   const [isSyncing, setIsSyncing] = useState(false);
-
   const visionOnline = devices?.vision_node?.status === 'ACTIVE' || devices?.vision_node?.status === 'PARTIAL';
-
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   const handleSync = () => {
     setIsSyncing(true);
-    syncData(); // 🚀 Perform a 'Soft Sync' to refresh MQTT and cloud links
-    
-    // Provide visual feedback for 2 seconds before resetting icon
-    setTimeout(() => {
-      setIsSyncing(false);
-    }, 2000);
-  };
-
-  const isPumpActive = actuators ? actuators[ACTUATORS?.PUMP] : false;
-
-  const getGreeting = () => {
-    const h = currentTime.getHours();
-    if (h < 12) return 'Good Morning,';
-    if (h < 17) return 'Good Afternoon,';
-    if (h < 21) return 'Good Evening,';
-    return 'Good Night,';
+    syncData();
+    setTimeout(() => setIsSyncing(false), 2000);
   };
 
   return (
-    <div style={{ padding: '1.25rem', paddingBottom: '10px', background: COLORS.background, fontFamily: "'Outfit', sans-serif" }}>
-
-      <section style={{ marginBottom: '1.8rem', padding: '0 4px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h1 style={{ fontSize: '0.9rem', fontWeight: 600, color: COLORS.textMuted, margin: 0 }}>
-              {getGreeting()}
-            </h1>
-            <h2 style={{ fontSize: '2.2rem', fontWeight: 800, color: COLORS.textMain, margin: '1px 0 0 0', letterSpacing: '-0.02em' }}>
-              {user?.name || 'Guest Farmer'}
-            </h2>
+    <motion.div 
+      variants={staggerContainer}
+      initial="hidden"
+      animate="visible"
+      style={{ padding: '1.25rem', paddingBottom: '140px' }}
+    >
+      {/* Header Section */}
+      <motion.section variants={itemFadeUp} style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <div>
+          <WelcomeHeader />
+          <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--primary)', fontSize: '0.9rem', fontWeight: 800 }}>
+            <MapPin size={16} fill="var(--primary-soft)" />
+            <span>{currentGPS?.city || 'Locating Field...'}</span>
           </div>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            {user?.email?.toLowerCase() === 'prolayjitbiswas14112004@gmail.com' && (
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={() => navigate('/admin')}
-                style={{ 
-                  cursor: 'pointer', padding: '10px 18px', borderRadius: '18px', 
-                  background: 'rgba(220, 38, 38, 0.1)', backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(220, 38, 38, 0.2)',
-                  boxShadow: '0 8px 25px rgba(220, 38, 38, 0.05)', display: 'flex', alignItems: 'center', gap: '10px'
-                }}
-              >
-                <ShieldCheck size={18} color="#dc2626" />
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#dc2626', letterSpacing: '0.05em' }}>ADMIN</span>
-              </motion.button>
-            )}
+        </div>
+
+        <div style={{ display: 'flex', gap: '10px' }}>
+          {user?.email?.toLowerCase() === 'prolayjitbiswas14112004@gmail.com' && (
             <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={handleSync}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => navigate('/admin')}
               style={{ 
-                cursor: 'pointer', padding: '10px 18px', borderRadius: '18px', 
-                background: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(0,0,0,0.05)',
-                boxShadow: '0 8px 25px rgba(0,0,0,0.04)', display: 'flex', alignItems: 'center', gap: '10px'
+                width: '48px', height: '48px', borderRadius: '16px', 
+                background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.1)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
               }}
             >
-              <motion.div animate={{ rotate: isSyncing ? 360 : 0 }} transition={{ duration: 1, repeat: isSyncing ? Infinity : 0, ease: "linear" }}>
-                <RefreshCw size={18} color={isSyncing ? COLORS.primary : COLORS.textMuted} />
-              </motion.div>
-              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: COLORS.textMuted, letterSpacing: '0.05em' }}>SYNC</span>
+              <ShieldCheck size={24} color="#dc2626" />
             </motion.button>
-          </div>
+          )}
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={handleSync}
+            style={{ 
+              width: '48px', height: '48px', borderRadius: '16px', 
+              background: 'white', border: '1px solid rgba(0,0,0,0.04)',
+              boxShadow: 'var(--shadow-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}
+          >
+            <motion.div animate={{ rotate: isSyncing ? 360 : 0 }} transition={{ duration: 1, repeat: isSyncing ? Infinity : 0, ease: "linear" }}>
+              <RefreshCw size={24} color={isSyncing ? 'var(--primary)' : 'var(--text-muted)'} />
+            </motion.div>
+          </motion.button>
         </div>
+      </motion.section>
 
-        <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '6px', color: COLORS.textMuted, fontSize: '0.85rem', fontWeight: 600 }}>
-          <MapPin size={15} color={COLORS.primary} />
-          <span>{currentGPS?.city || (typeof user?.location === 'string' && user.location.includes(',') ? 'Field Zone A' : user?.location) || 'Set farm location'}</span>
-        </div>
-      </section>
+      {/* Hero Health Overview */}
+      <HealthOverview score={farmHealthScore} systemHealth={systemHealth} devices={devices} />
 
-      <HealthOverview score={farmHealthScore} systemHealth={systemHealth} />
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', marginBottom: '1.2rem' }}>
+      {/* Sensor Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
         <SensorCard
           title="Soil Health" nodeType="soil"
-          icon={Sprout} color="#10B981"
+          icon={Sprout} color="#8B5E3C"
           status={devices?.['soil_node']?.status || (sensorData?.soil?.moisture ? 'ACTIVE' : 'OFFLINE')}
           score={systemHealth?.soil}
           onClick={() => navigate('/soil-monitoring')}
         />
         <SensorCard
           title="Irrigation Health" nodeType="irrigation"
-          icon={Droplets} color="#0EA5E9"
+          icon={Waves} color="#06D6A0"
           status={devices?.['water_node']?.status || (sensorData?.water?.level ? 'ACTIVE' : 'OFFLINE')}
           score={systemHealth?.water}
           onClick={() => navigate('/irrigation')}
         />
         <SensorCard
           title="Weather Health" nodeType="weather"
-          icon={CloudRain} color="#14B8A6"
+          icon={CloudSun} color="#3B82F6"
           status={devices?.['weather_node']?.status || (sensorData?.weather?.temp ? 'ACTIVE' : 'OFFLINE')}
           score={systemHealth?.weather}
           onClick={() => navigate('/weather')}
         />
         <SensorCard
           title="Storage Health" nodeType="storage"
-          icon={Archive} color="#8B5CF6"
+          icon={Database} color="#64748B"
           status={devices?.['storage_node']?.status || (sensorData?.storage?.temp ? 'ACTIVE' : 'OFFLINE')}
           score={systemHealth?.storage}
           onClick={() => navigate('/storage-hub')}
         />
       </div>
 
-      <div style={{ marginBottom: '1.2rem' }}>
-        <CamCard
-          isOnline={visionOnline}
-          onClick={() => navigate('/camera')}
-        />
-      </div>
+      {/* Camera View */}
+      <CamCard
+        isOnline={visionOnline}
+        onClick={() => navigate('/camera')}
+      />
 
+      {/* Spacing */}
+      <div style={{ height: '1.5rem' }} />
+
+      {/* Controls */}
       <ControlsCard
         actuators={actuators}
         toggleActuator={toggleActuator}
         ACTUATORS={ACTUATORS}
       />
 
+      {/* Intelligence/Insights */}
       <InsightsCard sensorData={sensorData} sensorHistory={sensorHistory} navigate={navigate} />
 
-      <footer style={{ textAlign: 'center', marginTop: '1.5rem', paddingBottom: '10px' }}>
-        <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#CBD5E1', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-          AgriSense Pro • v{farmInfo?.version || '2.8.0'}
+      <footer style={{ textAlign: 'center', marginTop: '1rem', paddingBottom: '10px' }}>
+        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '0.1em', opacity: 0.5 }}>
+          AgriSense Pro Architecture • v{farmInfo?.version || '18.0.0'}
         </div>
       </footer>
-    </div>
+    </motion.div>
   );
 };
 

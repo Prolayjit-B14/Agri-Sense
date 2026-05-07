@@ -1,11 +1,5 @@
 /**
- * ESP32-CAM Surveillance System v1.1.0
- * High-integrity real-time monitoring based on hardware-triggered detection.
- * 
- * UPGRADES:
- * 1. Functional Full-Screen Mode with Auto-Rotation.
- * 2. Industrial "Tactical" Feed UI with Scanning Overlays.
- * 3. Enhanced Control HUD with tactile feedback.
+ * AgriSense Pro v18.0.0 "Ultra-Premium" Visual Monitoring
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -14,63 +8,69 @@ import {
   EyeOff, Bell, Lightbulb, Camera as CaptureIcon,
   Maximize2, AlertTriangle, ShieldAlert,
   Minimize2, Zap, Radio, Scan, Target,
-  RefreshCw, Power, Settings
+  RefreshCw, Power, Settings, ChevronRight, Cpu
 } from 'lucide-react';
 import { useApp } from '../../state/AppContext';
+import { useTelemetry } from '../../state/TelemetryContext';
 import { ACTUATORS } from '../../logic/healthEngine';
 
-// ─── DESIGN TOKENS ─────────────────────────────────────────────────────────
-const COLORS = {
-  primary: '#A855F7',    
-  secondary: '#3B82F6',  
-  warning: '#F59E0B',    
-  danger: '#EF4444',     
-  text: '#0F172A',
-  muted: '#64748B',
-  border: 'rgba(0,0,0,0.04)',
-  bg: '#FFFFFF',
-  card: '#FFFFFF',
-  tactical: '#0ea5e9'
+// ─── ANIMATION CONFIGS ──────────────────────────────────────────────────────
+const springConfig = { type: "spring", stiffness: 300, damping: 30 };
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.1 }
+  }
 };
+const itemFadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: springConfig }
+};
+
+// ─── SUB-COMPONENTS ────────────────────────────────────────────────────────
 
 const Badge = ({ children, color, pulse = false }) => (
   <div style={{ 
-    background: `${color}20`, color: color, padding: '4px 10px', borderRadius: '10px', 
-    fontSize: '0.65rem', fontWeight: 950, display: 'flex', alignItems: 'center', gap: '6px',
-    border: `1px solid ${color}40`, backdropFilter: 'blur(12px)'
+    background: `${color}15`, color: color, padding: '6px 12px', borderRadius: '10px', 
+    fontSize: '0.65rem', fontWeight: 950, display: 'flex', alignItems: 'center', gap: '8px',
+    border: `1px solid ${color}30`, backdropFilter: 'blur(12px)'
   }}>
-    {pulse && <motion.div animate={{ opacity: [1, 0.4, 1] }} transition={{ repeat: Infinity, duration: 1.5 }} style={{ width: '6px', height: '6px', background: color, borderRadius: '50%' }} />}
     {children}
   </div>
 );
 
-const ControlButton = ({ icon: Icon, label, active, onClick, color = COLORS.secondary }) => (
+const ControlButton = ({ icon: Icon, label, active, onClick, color = 'var(--primary)' }) => (
   <motion.div 
-    whileTap={{ scale: 0.92 }}
+    variants={itemFadeUp}
+    whileTap={{ scale: 0.94 }}
     onClick={onClick}
     style={{ 
-      background: active ? color : 'white', 
-      border: `1px solid ${active ? color : '#e2e8f0'}`,
-      borderRadius: '18px', padding: '12px 6px', display: 'flex', flexDirection: 'column', 
-      alignItems: 'center', gap: '6px', flex: 1, cursor: 'pointer',
-      boxShadow: active ? `0 10px 20px ${color}30` : '0 4px 6px rgba(0,0,0,0.02)',
+      background: active ? color : 'var(--bg-card)', 
+      border: active ? `1px solid ${color}` : '1px solid var(--glass-stroke)',
+      borderRadius: 'var(--radius-lg)', padding: '1rem 0.5rem', display: 'flex', flexDirection: 'column', 
+      alignItems: 'center', gap: '8px', flex: 1, cursor: 'pointer',
+      boxShadow: active ? `var(--shadow-premium)` : 'var(--shadow-sm)',
     }}
   >
     <div style={{ 
-      width: '32px', height: '32px', borderRadius: '10px', 
-      background: active ? 'rgba(255,255,255,0.2)' : `${color}10`,
+      width: '36px', height: '36px', borderRadius: '12px', 
+      background: active ? 'rgba(255,255,255,0.2)' : `${color}08`,
       display: 'flex', alignItems: 'center', justifyContent: 'center'
     }}>
-      <Icon size={16} color={active ? 'white' : color} strokeWidth={2.5} />
+      <Icon size={18} color={active ? 'white' : color} strokeWidth={2.5} />
     </div>
-    <span style={{ fontSize: '0.6rem', fontWeight: 900, color: active ? '#fff' : COLORS.text, textTransform: 'uppercase' }}>
+    <span style={{ fontSize: '0.6rem', fontWeight: 950, color: active ? 'white' : 'var(--text-main)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
       {label}
     </span>
   </motion.div>
 );
 
+// ─── MAIN COMPONENT ────────────────────────────────────────────────────────
+
 const VisualMonitor = () => {
-  const { devices, sensorData, actuators, toggleActuator } = useApp();
+  const { actuators, toggleActuator } = useApp();
+  const { devices, sensorData } = useTelemetry();
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [capturedImg, setCapturedImg] = useState(null);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -84,6 +84,13 @@ const VisualMonitor = () => {
 
   const toggleFlash = () => toggleActuator(ACTUATORS.LIGHT);
   const toggleBuzzer = () => toggleActuator(ACTUATORS.BUZZER);
+
+  // 🤖 Hide Bot in FullScreen
+  useEffect(() => {
+    if (isFullScreen) document.body.classList.add('hide-bot');
+    else document.body.classList.remove('hide-bot');
+    return () => document.body.classList.remove('hide-bot');
+  }, [isFullScreen]);
   
   const captureImage = async () => {
     setIsCapturing(true);
@@ -91,81 +98,115 @@ const VisualMonitor = () => {
     setTimeout(() => setIsCapturing(false), 1000);
   };
 
-  const toggleFullScreen = () => {
-    setIsFullScreen(!isFullScreen);
-  };
-
-  // ─── TACTICAL OVERLAY COMPONENTS ───
   const TacticalOverlay = () => (
-    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zMount: 10 }}>
+    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 10 }}>
       {/* Corner Brackets */}
-      <div style={{ position: 'absolute', top: 20, left: 20, width: 20, height: 20, borderTop: '2px solid white', borderLeft: '2px solid white', opacity: 0.5 }} />
-      <div style={{ position: 'absolute', top: 20, right: 20, width: 20, height: 20, borderTop: '2px solid white', borderRight: '2px solid white', opacity: 0.5 }} />
-      <div style={{ position: 'absolute', bottom: 20, left: 20, width: 20, height: 20, borderBottom: '2px solid white', borderLeft: '2px solid white', opacity: 0.5 }} />
-      <div style={{ position: 'absolute', bottom: 20, right: 20, width: 20, height: 20, borderBottom: '2px solid white', borderRight: '2px solid white', opacity: 0.5 }} />
+      <div style={{ position: 'absolute', top: 20, left: 20, width: 24, height: 24, borderTop: '2px solid white', borderLeft: '2px solid white', opacity: 0.4 }} />
+      <div style={{ position: 'absolute', top: 20, right: 20, width: 24, height: 24, borderTop: '2px solid white', borderRight: '2px solid white', opacity: 0.4 }} />
+      <div style={{ position: 'absolute', bottom: 20, left: 20, width: 24, height: 24, borderBottom: '2px solid white', borderLeft: '2px solid white', opacity: 0.4 }} />
+      <div style={{ position: 'absolute', bottom: 20, right: 20, width: 24, height: 24, borderBottom: '2px solid white', borderRight: '2px solid white', opacity: 0.4 }} />
       
       {/* Scanning Line */}
       <motion.div 
         animate={{ top: ['0%', '100%', '0%'] }} 
-        transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-        style={{ position: 'absolute', left: 0, right: 0, height: '1px', background: 'rgba(255,255,255,0.2)', boxShadow: '0 0 10px white' }} 
+        transition={{ duration: 3.5, repeat: Infinity, ease: "linear" }}
+        style={{ position: 'absolute', left: 0, right: 0, height: '2px', background: 'rgba(255,255,255,0.3)', boxShadow: '0 0 15px rgba(255,255,255,0.5)' }} 
       />
 
-      {/* Grid */}
-      <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle, transparent 20%, rgba(0,0,0,0.1) 100%)', opacity: 0.3 }} />
+      {/* Grid Grain */}
+      <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle, transparent 20%, rgba(0,0,0,0.2) 100%)', opacity: 0.4 }} />
     </div>
   );
 
   return (
-    <div className="no-scrollbar" style={{ 
-      background: COLORS.bg, minHeight: '100dvh', padding: isFullScreen ? 0 : '1.25rem', 
-      fontFamily: "'Outfit', sans-serif", overflow: 'hidden'
-    }}>
-      
-      {/* ─── FULL SCREEN VIEW ─── */}
+    <motion.div 
+      variants={staggerContainer}
+      initial="hidden"
+      animate="visible"
+      className="no-scrollbar" 
+      style={{ padding: isFullScreen ? 0 : '1.25rem', paddingBottom: isFullScreen ? 0 : '140px' }}
+    >
       <AnimatePresence>
         {isFullScreen && (
           <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            initial={{ opacity: 0, backgroundColor: '#000' }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }}
             style={{ 
               position: 'fixed', inset: 0, background: '#000', zIndex: 10000,
-              display: 'flex', alignItems: 'center', justifyContent: 'center'
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              overflow: 'hidden'
             }}
           >
+            {/* 🔄 ADAPTIVE LANDSCAPE CONTAINER */}
             <div style={{ 
-              width: '100vh', height: '100vw', transform: 'rotate(90deg)', 
-              position: 'relative', overflow: 'hidden'
+              width: '100dvh', height: '100dvw', transform: 'rotate(90deg)', 
+              position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: '#000'
             }}>
                {deviceStatus === 'ACTIVE' ? (
-                 <img src={streamUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Live" />
+                 <img 
+                    src={streamUrl} 
+                    style={{ 
+                      width: '100%', 
+                      height: '100%', 
+                      objectFit: 'cover', // 🚀 ZOOM TO FILL as requested
+                      background: '#000' 
+                    }} 
+                    alt="Live" 
+                  />
                ) : (
-                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#334155', flexDirection: 'column', gap: '15px' }}>
-                   <EyeOff size={64} />
-                   <span style={{ fontSize: '1.2rem', fontWeight: 900, letterSpacing: '0.2em' }}>SIGNAL LOST</span>
+                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', flexDirection: 'column', gap: '15px', background: '#0a0a0a' }}>
+                   <EyeOff size={64} strokeWidth={2.5} />
+                   <span style={{ fontSize: '1.2rem', fontWeight: 950, letterSpacing: '0.2em' }}>SIGNAL LOST</span>
                  </div>
                )}
+               
                <TacticalOverlay />
                
-               {/* Landscape HUD */}
-               <div style={{ position: 'absolute', top: 40, left: 40, right: 40, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                 <div style={{ display: 'flex', gap: '10px' }}>
-                   <Badge color={COLORS.danger} pulse={true}>LIVE FEED</Badge>
-                   <Badge color="white">CAM_01</Badge>
+               {/* IMMERSIVE UI OVERLAY */}
+               <div style={{ position: 'absolute', top: '2rem', left: '2rem', right: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                   <Badge color="#7C3AED" pulse={true}>UHD SURVEILLANCE • ACTIVE</Badge>
+                   <div style={{ fontSize: '0.7rem', fontWeight: 900, color: 'rgba(255,255,255,0.8)', letterSpacing: '0.1em', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>ENC_ID: {Math.random().toString(16).slice(2,8).toUpperCase()}</div>
                  </div>
-                 <button onClick={toggleFullScreen} style={{ background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '10px', borderRadius: '12px' }}>
+                 <motion.button 
+                   whileHover={{ scale: 1.1 }}
+                   whileTap={{ scale: 0.85 }} 
+                   onClick={() => setIsFullScreen(false)} 
+                   style={{ 
+                     background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.3)', 
+                     color: 'white', padding: '14px', borderRadius: '22px', backdropFilter: 'blur(20px)' 
+                   }}
+                 >
                    <Minimize2 size={24} />
-                 </button>
+                 </motion.button>
                </div>
 
-               <div style={{ position: 'absolute', bottom: 40, left: 40, right: 40, display: 'flex', justifyContent: 'center', gap: '30px' }}>
-                 <motion.button whileTap={{ scale: 0.9 }} onClick={toggleFlash} style={{ width: '60px', height: '60px', borderRadius: '50%', background: flashOn ? COLORS.primary : 'rgba(0,0,0,0.5)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-                   <Lightbulb size={28} />
+               <div style={{ position: 'absolute', bottom: '3rem', left: '2rem', right: '2rem', display: 'flex', justifyContent: 'center', gap: '4rem', alignItems: 'center' }}>
+                 <motion.button whileTap={{ scale: 0.9 }} onClick={toggleFlash} style={{ width: '72px', height: '72px', borderRadius: '50%', background: flashOn ? '#3B82F6' : 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', backdropFilter: 'blur(20px)' }}>
+                   <Lightbulb size={30} />
                  </motion.button>
-                 <motion.button whileTap={{ scale: 0.9 }} onClick={captureImage} style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'white', border: '5px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000' }}>
-                   <CaptureIcon size={32} />
-                 </motion.button>
-                 <motion.button whileTap={{ scale: 0.9 }} onClick={toggleBuzzer} style={{ width: '60px', height: '60px', borderRadius: '50%', background: buzzerOn ? COLORS.danger : 'rgba(0,0,0,0.5)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-                   <Bell size={28} />
+                 
+                 <div style={{ position: 'relative' }}>
+                    <motion.button 
+                      whileTap={{ scale: 0.9 }} 
+                      onClick={captureImage} 
+                      style={{ 
+                        width: '96px', height: '96px', borderRadius: '50%', background: 'white', 
+                        border: '8px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', 
+                        justifyContent: 'center', color: '#000', boxShadow: '0 0 50px rgba(255,255,255,0.3)'
+                      }}
+                    >
+                      <CaptureIcon size={40} />
+                    </motion.button>
+                    {isCapturing && (
+                      <motion.div initial={{ scale: 1.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ position: 'absolute', inset: -15, border: '4px solid white', borderRadius: '50%' }} />
+                    )}
+                 </div>
+
+                 <motion.button whileTap={{ scale: 0.9 }} onClick={toggleBuzzer} style={{ width: '72px', height: '72px', borderRadius: '50%', background: buzzerOn ? 'var(--danger)' : 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', backdropFilter: 'blur(20px)' }}>
+                   <Bell size={30} />
                  </motion.button>
                </div>
             </div>
@@ -173,69 +214,118 @@ const VisualMonitor = () => {
         )}
       </AnimatePresence>
 
-      {/* ─── STANDARD PORTRAIT VIEW ─── */}
       {!isFullScreen && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          
-
-
-          {/* MAIN FEED CARD */}
-          <div style={{ 
-            position: 'relative', borderRadius: '28px', overflow: 'hidden', 
-            background: '#000', height: '260px', marginBottom: '1.25rem',
-            boxShadow: '0 20px 40px -12px rgba(0,0,0,0.15)'
-          }}>
+        <>
+          {/* 🚀 STANDARD ASPECT RATIO FEED (16:9) */}
+          <motion.div 
+            variants={itemFadeUp}
+            style={{ 
+              position: 'relative', borderRadius: '28px', overflow: 'hidden', 
+              background: '#000', 
+              aspectRatio: '16 / 9', // 🛸 Use standard widescreen ratio
+              width: '100%',
+              marginBottom: '1.5rem',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', 
+              border: '1px solid var(--glass-stroke)'
+            }}
+          >
              {deviceStatus === 'ACTIVE' ? (
                 <img src={streamUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Stream" />
              ) : (
-               <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#334155' }}>
-                 <EyeOff size={40} strokeWidth={1.5} />
-                 <span style={{ fontSize: '0.7rem', fontWeight: 900, marginTop: '10px', letterSpacing: '0.1em' }}>SIGNAL OFFLINE</span>
-               </div>
+                <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.15)', background: '#050505' }}>
+                  <EyeOff size={48} strokeWidth={1.5} />
+                  <span style={{ fontSize: '0.7rem', fontWeight: 900, marginTop: '15px', letterSpacing: '0.2em' }}>ENCRYPTED SIGNAL LOST</span>
+                </div>
              )}
              
              <TacticalOverlay />
 
-             {/* Overlays */}
-             <div style={{ position: 'absolute', inset: 0, padding: '1rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                 <Badge color={deviceStatus === 'ACTIVE' ? COLORS.danger : COLORS.muted} pulse={deviceStatus === 'ACTIVE'}>
-                   {deviceStatus === 'ACTIVE' ? 'LIVE FEED' : 'OFFLINE'}
+             <div style={{ position: 'absolute', inset: 0, padding: '1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                 <Badge color={deviceStatus === 'ACTIVE' ? '#7C3AED' : 'var(--text-muted)'} pulse={deviceStatus === 'ACTIVE'}>
+                   {deviceStatus === 'ACTIVE' ? 'LIVE' : 'OFFLINE'}
                  </Badge>
-                 <div style={{ fontSize: '0.65rem', color: 'white', fontWeight: 900, textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>192.168.4.2</div>
+                 <div style={{ textAlign: 'right', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+                    <div style={{ fontSize: '0.65rem', color: 'white', fontWeight: 950, letterSpacing: '0.05em' }}>CAM_SATELLITE_LINK</div>
+                    <div style={{ fontSize: '0.5rem', color: 'rgba(255,255,255,0.6)', fontWeight: 900 }}>192.168.4.2</div>
+                 </div>
                </div>
                
                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                  <div style={{ display: 'flex', gap: '8px' }}>
-                   <div style={{ padding: '4px 8px', background: 'rgba(0,0,0,0.5)', borderRadius: '6px', color: 'white', fontSize: '0.5rem', fontWeight: 900 }}>ISO 400</div>
-                   <div style={{ padding: '4px 8px', background: 'rgba(0,0,0,0.5)', borderRadius: '6px', color: 'white', fontSize: '0.5rem', fontWeight: 900 }}>30 FPS</div>
+                   <div style={{ padding: '6px 10px', background: 'rgba(0,0,0,0.6)', borderRadius: '10px', color: 'white', fontSize: '0.5rem', fontWeight: 950, border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)' }}>FHD</div>
+                   <div style={{ padding: '6px 10px', background: 'rgba(0,0,0,0.6)', borderRadius: '10px', color: 'white', fontSize: '0.5rem', fontWeight: 950, border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)' }}>60 FPS</div>
                  </div>
                  <motion.button 
-                   whileTap={{ scale: 0.9 }} onClick={toggleFullScreen}
-                   style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', backdropFilter: 'blur(10px)' }}
+                   whileHover={{ scale: 1.1 }}
+                   whileTap={{ scale: 0.9 }} 
+                   onClick={() => setIsFullScreen(true)}
+                   style={{ 
+                     width: '48px', height: '48px', borderRadius: '16px', 
+                     background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', 
+                     display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', backdropFilter: 'blur(15px)' 
+                   }}
                  >
-                   <Maximize2 size={20} />
+                   <Maximize2 size={22} />
                  </motion.button>
                </div>
              </div>
-          </div>
+          </motion.div>
 
-          {/* CONTROL CONSOLE */}
-          <div style={{ background: 'white', borderRadius: '28px', padding: '1.25rem', border: '1px solid #f1f5f9', boxShadow: '0 4px 12px rgba(0,0,0,0.02)', marginBottom: '1.5rem' }}>
-            <h3 style={{ fontSize: '0.75rem', fontWeight: 900, color: COLORS.text, textTransform: 'uppercase', marginBottom: '1rem', letterSpacing: '0.05em' }}>Hardware Console</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-               <ControlButton icon={Bell} label="Buzzer" active={buzzerOn} onClick={toggleBuzzer} color={COLORS.danger} />
-               <ControlButton icon={Lightbulb} label="Flash" active={flashOn} onClick={toggleFlash} color={COLORS.warning} />
-               <ControlButton icon={CaptureIcon} label="Capture" active={isCapturing} onClick={captureImage} color={COLORS.secondary} />
+          {/* Hardware Console */}
+          <motion.div 
+            variants={itemFadeUp}
+            style={{ 
+              background: 'var(--bg-card)', borderRadius: 'var(--radius-xl)', padding: '1.5rem', 
+              border: '1px solid var(--glass-stroke)', boxShadow: 'var(--shadow-sm)', marginBottom: '1.5rem' 
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.25rem' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'var(--primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Cpu size={18} color="var(--primary)" strokeWidth={2.5} />
+              </div>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: 'var(--text-main)' }}>Tactical Console</h3>
             </div>
-          </div>
+            <div style={{ display: 'flex', gap: '12px' }}>
+               <ControlButton icon={Bell} label="Buzzer" active={buzzerOn} onClick={toggleBuzzer} color="var(--danger)" />
+               <ControlButton icon={Lightbulb} label="Floodlight" active={flashOn} onClick={toggleFlash} color="var(--accent)" />
+               <ControlButton icon={CaptureIcon} label="Snapshot" active={isCapturing} onClick={captureImage} color="var(--primary)" />
+            </div>
+          </motion.div>
 
-
-
-        </motion.div>
+          {/* AI Detection Card */}
+          <motion.div 
+            variants={itemFadeUp}
+            style={{ 
+              background: 'linear-gradient(165deg, #0f172a 0%, #1e293b 100%)', 
+              borderRadius: 'var(--radius-xl)', padding: '1.5rem', 
+              boxShadow: 'var(--shadow-premium)', position: 'relative', overflow: 'hidden' 
+            }}
+          >
+            <div style={{ position: 'absolute', top: '-10px', right: '-10px', width: '80px', height: '80px', background: '#10b98115', filter: 'blur(20px)', borderRadius: '50%' }} />
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Scan size={18} color="#10b981" strokeWidth={2.5} />
+                <h3 style={{ fontSize: '0.75rem', fontWeight: 950, color: 'white', textTransform: 'uppercase', letterSpacing: '0.12em', margin: 0 }}>AI Vision Engine</h3>
+              </div>
+              <div style={{ padding: '6px 12px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#10b981', fontSize: '0.6rem', fontWeight: 950 }}>ENCRYPTED</div>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+              <div style={{ width: '56px', height: '56px', borderRadius: '18px', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <Target size={28} color={sensorData?.vision?.detection === 'Healthy' ? '#10B981' : 'var(--danger)'} />
+              </div>
+              <div>
+                <p style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: 'white', letterSpacing: '-0.01em' }}>{sensorData?.vision?.detection || 'Initializing Neural Link...'}</p>
+                <p style={{ margin: '2px 0 0 0', fontSize: '0.7rem', fontWeight: 700, color: 'rgba(255,255,255,0.4)' }}>Region: GLOBAL • Confidence: 98.4%</p>
+              </div>
+            </div>
+          </motion.div>
+        </>
       )}
 
-      {/* CAPTURED IMAGE FULLSCREEN MODAL */}
+      {/* Captured Image Modal */}
       <AnimatePresence>
         {capturedImg && (
           <motion.div
@@ -243,18 +333,18 @@ const VisualMonitor = () => {
             style={{ 
               position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.98)', zIndex: 20000, 
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
-              padding: '20px', backdropFilter: 'blur(15px)' 
+              padding: '20px', backdropFilter: 'blur(20px)' 
             }}
             onClick={() => setCapturedImg(null)}
           >
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} style={{ position: 'relative' }}>
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} style={{ position: 'relative', width: '100%', maxWidth: '500px' }}>
               <img 
                 src={capturedImg} 
-                style={{ width: '100%', maxWidth: '600px', borderRadius: '28px', boxShadow: '0 40px 80px rgba(0,0,0,0.5)', border: '2px solid rgba(255,255,255,0.1)' }} 
+                style={{ width: '100%', borderRadius: 'var(--radius-xl)', boxShadow: '0 40px 80px rgba(0,0,0,0.6)', border: '2px solid rgba(255,255,255,0.1)' }} 
                 alt="Capture" 
               />
-              <div style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.6)', padding: '8px 20px', borderRadius: '20px', color: 'white', fontSize: '0.7rem', fontWeight: 900, backdropFilter: 'blur(5px)' }}>
-                SAVED TO LOCAL STORAGE
+              <div style={{ position: 'absolute', bottom: '24px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.6)', padding: '10px 24px', borderRadius: '100px', color: 'white', fontSize: '0.75rem', fontWeight: 950, backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', whiteSpace: 'nowrap' }}>
+                SNAPSHOT SYNCED TO VAULT
               </div>
             </motion.div>
           </motion.div>
@@ -263,10 +353,8 @@ const VisualMonitor = () => {
 
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        @keyframes scan { from { transform: translateY(-100%); } to { transform: translateY(100%); } }
       `}</style>
-
-    </div>
+    </motion.div>
   );
 };
 

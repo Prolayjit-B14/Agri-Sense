@@ -1,94 +1,132 @@
+/**
+ * AgriSense Pro v18.0.0 "Ultra-Premium" Storage Monitoring
+ */
+
 import React, { useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
-  Thermometer, Droplet, Wind, ShieldCheck, 
-  ChevronRight, Server, Clock, Activity, Minus
+  Thermometer, Droplets, Wind, AirVent, 
+  ChevronRight, Database, Activity, ArrowUp, ArrowDown, Minus
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useApp } from '../../state/AppContext';
+import { useTelemetry } from '../../state/TelemetryContext';
+import useTrendEngine from '../../hooks/useTrendEngine';
 
-// ─── DESIGN TOKENS (UNIFIED) ───────────────────────────────────────────────
-
-const COLORS = {
-  primary: '#8B5CF6',
-  secondary: '#0EA5E9',
-  warning: '#F59E0B',
-  critical: '#F43F5E',
-  offline: '#94A3B8',
-  bg: '#FFFFFF',
-  text: '#0F172A',
-  subtext: '#64748B',
-  white: '#FFFFFF',
-  border: '#E2E8F0'
+// ─── ANIMATION CONFIGS ──────────────────────────────────────────────────────
+const springConfig = { type: 'spring', stiffness: 300, damping: 30 };
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.1 }
+  }
+};
+const itemFadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: springConfig }
 };
 
-const GRADIENTS = {
-  optimal: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
-  moderate: 'linear-gradient(135deg, #FFD54F 0%, #FBC02D 100%)',
-  low: 'linear-gradient(135deg, #EF5350 0%, #D32F2F 100%)',
-  critical: 'linear-gradient(135deg, #F43F5E 0%, #BE123C 100%)',
-  offline: 'linear-gradient(135deg, #94A3B8 0%, #64748B 100%)'
-};
+// ─── DIAGNOSTIC CARD ────────────────────────────────────────────────────────
 
-// ─── SUB-COMPONENTS (UNIFIED SYSTEM) ───────────────────────────────────────
+const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, range, trendInfo, unit }) => {
+  const isOffline = value === null || value === undefined;
+  const systemColor = isOffline ? '#94A3B8' : color;
 
-const DiagnosticCard = ({ label, value, icon: Icon, color, statusText = '', range, unit }) => {
-  const isOffline = value === null || value === undefined || value === '---';
-  const safeStatus = (statusText || '').toLowerCase();
-  
-  const isOptimal = safeStatus.includes('optimal') || safeStatus.includes('normal') || safeStatus.includes('safe') || safeStatus.includes('protected');
-  const isModerate = safeStatus.includes('moderate') || safeStatus.includes('warning');
-  const isCritical = safeStatus.includes('critical') || safeStatus.includes('high') || safeStatus.includes('low');
-  
-  const stateColor = isOffline ? COLORS.offline : (isOptimal ? COLORS.primary : (isModerate ? COLORS.warning : COLORS.critical));
-  const cardBg = isOffline ? 'linear-gradient(165deg, #F8FAFC 0%, #F1F5F9 100%)' : (isOptimal ? 'linear-gradient(165deg, #F5F3FF 0%, #FFFFFF 100%)' : (isModerate ? 'linear-gradient(165deg, #FFFBEB 0%, #FFFFFF 100%)' : 'linear-gradient(165deg, #FEF2F2 0%, #FFFFFF 100%)'));
+  // ── Status dot: green / yellow / red ─────────────────────────────────────
+  const numVal = parseFloat(value);
+  const health = isOffline ? 'offline'
+    : (numVal >= min && numVal <= max) ? 'optimal'
+    : (numVal >= min - (max - min) * 0.15 && numVal <= max + (max - min) * 0.15) ? 'warning'
+    : 'critical';
+
+  const statusMap = {
+    optimal:  { dot: '#22C55E' },
+    warning:  { dot: '#F59E0B' },
+    critical: { dot: '#EF4444' },
+    offline:  { dot: '#CBD5E1' }
+  };
+
+  const { dot: dotColor } = statusMap[health];
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
+      variants={itemFadeUp}
+      whileTap={{ scale: 0.97 }}
       style={{
-        background: cardBg, borderRadius: '24px', padding: '1.25rem 1rem',
-        border: '1px solid rgba(255, 255, 255, 0.8)',
-        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
-        position: 'relative', height: '185px',
-        display: 'flex', flexDirection: 'column',
-        justifyContent: 'space-between', overflow: 'hidden'
+        borderRadius: 'var(--radius-xl)',
+        border: '1px solid ' + (isOffline ? '#E2E8F0' : systemColor + '30'),
+        boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        minHeight: '170px'
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: '0.85rem', fontWeight: 800, color: COLORS.subtext, textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.8 }}>{label}</span>
-        <Icon size={18} color={isOffline ? COLORS.offline : color} />
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
-        <h2 style={{ 
-          margin: 0, 
-          fontSize: isOffline ? '1.5rem' : '2.5rem', 
-          fontWeight: 800, 
-          color: isOffline ? '#CBD5E1' : COLORS.text, 
-          letterSpacing: isOffline ? '0.05em' : '-0.04em', 
-          lineHeight: 1 
+      {/* ── TOP BAND: solid background ── */}
+      <div style={{
+        background: isOffline ? '#F1F5F9' : systemColor + '15',
+        padding: '0.9rem 1rem 0.8rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        gap: '12px'
+      }}>
+        <div style={{
+          width: '40px', height: '40px', borderRadius: '12px', flexShrink: 0,
+          background: isOffline ? 'rgba(0,0,0,0.06)' : systemColor + '25',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: 'none',
+          border: isOffline ? 'none' : '1px solid ' + systemColor + '35'
         }}>
-          {isOffline ? 'OFFLINE' : value}<span style={{ fontSize: '1rem', opacity: 0.3, marginLeft: '2px' }}>{isOffline ? '' : unit}</span>
-        </h2>
-        {!isOffline && (
-          <div style={{ 
-            marginTop: '10px', padding: '6px 22px', borderRadius: '100px', 
-            background: stateColor, color: 'white', fontSize: '0.65rem', fontWeight: 800,
-            textTransform: 'uppercase', letterSpacing: '0.12em'
-          }}>
-            {statusText}
-          </div>
-        )}
+          <Icon size={21} color={isOffline ? '#94A3B8' : systemColor} strokeWidth={2.5} />
+        </div>
+        <span style={{
+          fontSize: '0.8rem', fontWeight: 900,
+          color: isOffline ? '#94A3B8' : systemColor,
+          letterSpacing: '0.02em', textTransform: 'uppercase', lineHeight: 1.2
+        }}>
+          {label}
+        </span>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '12px' }}>
-        <div style={{ textAlign: 'left' }}>
-          <p style={{ margin: 0, fontSize: '0.55rem', fontWeight: 800, color: COLORS.subtext, opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>IDEAL RANGE</p>
-          <p style={{ margin: '2px 0 0 0', fontSize: '0.75rem', fontWeight: 800, color: COLORS.subtext }}>{range}</p>
+      {/* ── BODY: PURE WHITE background ── */}
+      <div style={{
+        background: '#FFFFFF',
+        flex: 1, display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        padding: '0.5rem 1rem 0.8rem'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+          <span style={{
+            fontSize: '3.2rem', fontWeight: 950,
+            color: isOffline ? '#CBD5E1' : 'var(--text-main)',
+            letterSpacing: '-0.06em', lineHeight: 1, textAlign: 'center'
+          }}>
+            {isOffline ? '--' : value}
+          </span>
+          <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#94A3B8' }}>{unit}</span>
         </div>
-        <div style={{ opacity: 0.3 }}>
-          <Activity size={16} color={COLORS.subtext} />
+
+        {/* Range + trend */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          gap: '5px', marginTop: '0.5rem'
+        }}>
+          <span style={{
+            fontSize: '0.48rem', fontWeight: 950,
+            color: isOffline ? '#CBD5E1' : systemColor,
+            letterSpacing: '0.08em', opacity: 0.75
+          }}>RANGE</span>
+          <span style={{ fontSize: '0.6rem', fontWeight: 700, color: '#94A3B8' }}>
+            {range}
+          </span>
+          {!isOffline && (
+            trendInfo?.trend === 'increasing'
+              ? <ArrowUp size={11} color={systemColor} />
+              : trendInfo?.trend === 'decreasing'
+                ? <ArrowDown size={11} color="#EF4444" />
+                : <Minus size={11} color="#CBD5E1" />
+          )}
         </div>
       </div>
     </motion.div>
@@ -99,98 +137,138 @@ const DiagnosticCard = ({ label, value, icon: Icon, color, statusText = '', rang
 
 const StorageMonitoring = () => {
   const navigate = useNavigate();
-  const { sensorData, systemHealth, lastGlobalUpdate } = useApp();
+  const { sensorData, sensorHistory, systemHealth } = useTelemetry();
+  const trend = useTrendEngine(sensorHistory);
 
   const storage = sensorData?.storage || {};
   const storageScore = systemHealth.storage;
-  
+
   const stats = useMemo(() => {
     const safeNum = (val, dec = 1) => (val !== null && val !== undefined && !isNaN(val)) ? Number(val).toFixed(dec) : null;
     return {
       temp: safeNum(storage.temp),
       hum: safeNum(storage.humidity, 0),
       gas: safeNum(storage.mq135, 0),
+      score: safeNum(storageScore, 0)
     };
-  }, [storage]);
+  }, [storage, storageScore]);
 
   const isOnline = stats.temp !== null || stats.hum !== null;
 
   const heroConfig = useMemo(() => {
-    if (!isOnline) return { label: 'FACILITY OFFLINE', status: 'Offline', gradient: GRADIENTS.offline, iconColor: COLORS.offline, message: 'Verify gateway connectivity for storage node.', bg: '#F1F5F9', border: '#E2E8F0' };
-    
-    if (storageScore >= 75) return { label: 'FACILITY STABILITY', status: 'Optimal', gradient: GRADIENTS.optimal, iconColor: COLORS.primary, message: 'Stable conditions for perishable storage.', bg: '#EDE9FE', border: 'rgba(139, 92, 246, 0.1)' };
-    if (storageScore >= 45) return { label: 'FACILITY STABILITY', status: 'Moderate', gradient: GRADIENTS.moderate, iconColor: COLORS.warning, message: 'Variable stability detected. Check ventilation.', bg: '#FEF3C7', border: 'rgba(245, 158, 11, 0.1)' };
-    return { label: 'FACILITY STABILITY', status: 'Critical', gradient: GRADIENTS.critical, iconColor: COLORS.critical, message: 'Storage safety threshold breached!', bg: '#FEE2E2', border: 'rgba(244, 63, 94, 0.1)' };
+    const mainColor = '#64748B';
+    if (!isOnline) return { label: 'Facility Offline', status: 'Inactive', color: mainColor, bg: '#F8FAFC' };
+    if (storageScore >= 75) return { label: 'Optimal Storage', status: 'Stable', color: mainColor, bg: mainColor + '08' };
+    if (storageScore >= 45) return { label: 'Condition Alert', status: 'Adjust', color: mainColor, bg: mainColor + '08' };
+    return { label: 'Critical Breach', status: 'Urgent', color: mainColor, bg: mainColor + '08' };
   }, [isOnline, storageScore]);
 
   return (
-    <div style={{ padding: '1.25rem', paddingBottom: '10px', background: COLORS.bg, minHeight: 'auto', fontFamily: "'Outfit', sans-serif" }}>
-      
-      {/* ─── UNIFIED HERO CARD ─── */}
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate="visible"
+      style={{ padding: '1.25rem', paddingBottom: '140px' }}
+    >
+      {/* Industrial Hero Card */}
       <motion.div
-        initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}
+        variants={itemFadeUp}
         style={{
-          background: `linear-gradient(165deg, ${heroConfig.bg} 0%, #FFFFFF 100%)`, borderRadius: '24px', padding: '1.75rem',
-          boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 2px rgba(255,255,255,0.9)',
-          marginBottom: '1.5rem', position: 'relative', overflow: 'hidden',
-          border: '1px solid rgba(255, 255, 255, 0.8)',
-          display: 'flex', flexDirection: 'column', gap: '1.5rem',
-          transition: 'background 0.5s ease, border 0.5s ease'
+          background: heroConfig.bg,
+          borderRadius: 'var(--radius-xl)',
+          padding: '1.75rem',
+          boxShadow: '0 10px 30px -10px ' + heroConfig.color + '30',
+          marginBottom: '1.5rem',
+          border: '1px solid ' + heroConfig.color + '25',
+          position: 'relative',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1.5rem'
         }}
       >
+        <div style={{ position: 'absolute', top: '-30px', right: '-30px', width: '150px', height: '150px', background: heroConfig.color + '10', filter: 'blur(40px)', borderRadius: '50%', pointerEvents: 'none' }} />
+
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: `${heroConfig.iconColor}10`, padding: '6px 14px', borderRadius: '100px', border: `1px solid ${heroConfig.iconColor}20` }}>
-            <motion.div animate={isOnline ? { opacity: [0.4, 1, 0.4] } : { opacity: 0.5 }} transition={{ duration: 2, repeat: Infinity }} style={{ width: '8px', height: '8px', borderRadius: '50%', background: heroConfig.iconColor }} />
-            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: heroConfig.iconColor, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{isOnline ? 'Facility Active' : 'Facility Offline'}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{
+              width: '44px', height: '44px', borderRadius: '13px',
+              background: '#FFFFFF', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+              border: '1px solid ' + heroConfig.color + '15'
+            }}>
+              <Database size={24} color={heroConfig.color} strokeWidth={2.5} />
+            </div>
+            <div>
+              <h2 style={{ fontSize: '1.2rem', fontWeight: 950, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.02em' }}>
+                Storage Health Index
+              </h2>
+            </div>
+          </div>
+          <div style={{
+            padding: '6px 14px', borderRadius: '100px',
+            background: '#FFFFFF', color: heroConfig.color,
+            fontSize: '0.7rem', fontWeight: 950,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+            border: '1px solid ' + heroConfig.color + '25',
+            display: 'flex', alignItems: 'center', gap: '6px'
+          }}>
+            {heroConfig.status}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', minWidth: '140px' }}>
+            <span style={{ fontSize: '5rem', fontWeight: 950, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.06em', lineHeight: 0.9 }}>
+              {(!isOnline || storageScore === null) ? '--' : Math.round(storageScore)}
+            </span>
+            <span style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-muted)', opacity: 0.6 }}>%</span>
           </div>
 
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-          <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 800, color: COLORS.subtext, textTransform: 'uppercase', letterSpacing: '0.15em', opacity: 0.6 }}>{heroConfig.label}</p>
-          <motion.h1 key={storageScore} style={{ margin: 0, fontSize: '5.5rem', fontWeight: 800, color: COLORS.text, letterSpacing: '-0.04em', lineHeight: 1 }}>
-            {(!isOnline || storageScore === null) ? '--' : storageScore}<span style={{ fontSize: '1.5rem', opacity: 0.3, marginLeft: '4px' }}>%</span>
-          </motion.h1>
-          <motion.div 
-            animate={heroConfig.status === 'Critical' ? { scale: [1, 1.05, 1], boxShadow: [`0 4px 15px ${COLORS.critical}30`, `0 4px 25px ${COLORS.critical}50`, `0 4px 15px ${COLORS.critical}30`] } : {}}
-            transition={{ duration: 2, repeat: Infinity }}
-            style={{ padding: '8px 24px', borderRadius: '100px', background: heroConfig.gradient, color: 'white', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}
-          >
-            {heroConfig.status}
-          </motion.div>
-        </div>
-
-        <div style={{ textAlign: 'center', paddingTop: '8px', borderTop: `1px solid ${COLORS.border}`, opacity: 0.8 }}>
-          <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 700, color: COLORS.subtext }}>{heroConfig.message}</p>
+          <div style={{
+            display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem',
+            padding: '1rem 1.25rem', background: 'rgba(255,255,255,0.5)',
+            borderRadius: 'var(--radius-lg)', border: '1px solid rgba(255,255,255,0.8)',
+            maxWidth: '200px'
+          }}>
+            <div>
+              <div style={{ fontSize: '0.55rem', fontWeight: 950, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+                Sensors
+              </div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                {isOnline ? '3 / 3' : '0 / 3'}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.55rem', fontWeight: 950, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+                Sync
+              </div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                Live
+              </div>
+            </div>
+          </div>
         </div>
       </motion.div>
 
-      {/* ─── UNIFIED SENSOR GRID ─── */}
+      {/* Sensor Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-        <DiagnosticCard label="Temp" value={stats.temp} unit="°C" icon={Thermometer} color={COLORS.critical} statusText={stats.temp === null ? 'Offline' : (stats.temp > 12 ? 'High' : 'Safe')} range="0-12 °C" />
-        <DiagnosticCard label="Humidity" value={stats.hum} unit="%" icon={Droplet} color={COLORS.secondary} statusText={stats.hum === null ? 'Offline' : (stats.hum > 95 ? 'High' : 'Optimal')} range="85-95 %" />
-        <DiagnosticCard label="Air Quality" value={isOnline ? storageScore : null} unit="%" icon={ShieldCheck} color="#10B981" statusText={isOnline ? (storageScore > 80 ? 'Protected' : 'Warning') : 'Offline'} range="90-100 %" />
-        <DiagnosticCard label="Gas Level" value={stats.gas} unit="ppm" icon={Wind} color={COLORS.warning} statusText={stats.gas === null ? 'Offline' : (stats.gas > 400 ? 'Warning' : 'Normal')} range="0-300 ppm" />
+        <DiagnosticCard label="Temperature" value={stats.temp} min={0}  max={12}  unit="°C"  icon={Thermometer} color="#FF6B35" range="0-12 °C" trendInfo={trend.temperature} />
+        <DiagnosticCard label="Humidity"    value={stats.hum}  min={85} max={95} unit="%"   icon={Droplets}    color="#4DA8FF" range="85-95 %" trendInfo={trend.humidity} />
+        <DiagnosticCard label="Safety index" value={isOnline ? Math.round(storageScore) : null} min={90} max={100} unit="%" icon={AirVent} color="#06B6D4" range="90-100 %" />
+        <DiagnosticCard label="Gas Level"   value={stats.gas}  min={0}  max={300} unit="ppm" icon={Wind}       color="#6B7280" range="0-300 ppm" />
       </div>
 
-      {/* ─── FACILITY SUMMARY ─── */}
-      <section style={{ background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '24px', padding: '1.5rem', border: '1px solid rgba(255, 255, 255, 0.8)', marginBottom: '1.5rem', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1rem' }}>
-          <Server size={18} color={COLORS.primary} />
-          <h3 style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: COLORS.text, textTransform: 'uppercase' }}>Facility Analysis</h3>
-        </div>
-        <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 700, color: COLORS.subtext, lineHeight: 1.6 }}>
-          {isOnline ? (
-            `Facility at ${stats.temp}°C is currently ${storageScore > 80 ? 'exhibiting optimal' : 'showing variable'} stability. Air exchange system is ${stats.gas < 300 ? 'efficient' : 'working at capacity'}.`
-          ) : (
-            "Telemetry stream suspended. Please verify gateway connectivity for storage node."
-          )}
-        </p>
-      </section>
-
-      <motion.button whileTap={{ scale: 0.95 }} onClick={() => navigate('/analytics', { state: { tab: 'storage' } })} style={{ width: '100%', height: '52px', borderRadius: '100px', background: '#0F172A', border: 'none', color: 'white', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>View Storage Logs</motion.button>
-
-    </div>
+      <motion.button 
+        variants={itemFadeUp}
+        whileTap={{ scale: 0.98 }} 
+        onClick={() => navigate('/analytics', { state: { tab: 'storage' } })} 
+        className="btn-premium"
+        style={{ width: '100%', marginTop: '1rem' }}
+      >
+        DETAILED ANALYSIS <ChevronRight size={18} />
+      </motion.button>
+    </motion.div>
   );
 };
 

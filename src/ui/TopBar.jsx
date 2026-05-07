@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useApp } from '../state/AppContext';
+import { useTelemetry } from '../state/TelemetryContext';
 import { 
   Bell, Menu, User, MapPin, ChevronDown
 } from 'lucide-react';
@@ -18,24 +19,33 @@ const AgriSenseLogo = () => (
   </div>
 );
 
+const NotificationDot = React.memo(() => {
+  const { recommendations } = useTelemetry();
+  if (!recommendations || recommendations.length === 0) return null;
+  return (
+    <div style={{ 
+      position: 'absolute', top: '8px', right: '8px', 
+      width: '8px', height: '8px',
+      background: '#ef4444', 
+      borderRadius: '50%', border: '2px solid white'
+    }}></div>
+  );
+});
+
 const TopBar = ({ title }) => {
-  const { 
-    isSidebarOpen, setIsSidebarOpen, recommendations 
-  } = useApp();
+  const { setIsSidebarOpen } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
 
   return (
     <header style={{ 
       position: 'relative', zIndex: 1000, 
-      background: 'linear-gradient(165deg, rgba(255,255,255,0.95) 0%, rgba(251,253,255,0.95) 100%)',
-      backdropFilter: 'blur(20px)',
-      WebkitBackdropFilter: 'blur(20px)',
-      borderBottom: '1px solid rgba(255, 255, 255, 0.8)',
+      background: 'rgba(255, 255, 255, 0.98)',
+      borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       padding: '0 1rem', height: '60px',
       flexShrink: 0,
-      boxShadow: '0 4px 20px rgba(0,0,0,0.02), inset 0 1px 1px rgba(255,255,255,0.9)'
+      boxShadow: '0 2px 10px rgba(0,0,0,0.03)'
     }}>
 
       {/* LEFT: MENU & TITLE */}
@@ -82,14 +92,7 @@ const TopBar = ({ title }) => {
           style={{ cursor: 'pointer', padding: '8px', background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', border: '1px solid rgba(255, 255, 255, 0.8)', borderRadius: '12px', position: 'relative', boxShadow: '0 4px 12px rgba(0,0,0,0.02), inset 0 1px 1px rgba(255,255,255,0.9)' }}
         >
           <Bell size={20} color="#64748b" strokeWidth={2} />
-          {recommendations.length > 0 && (
-            <div style={{ 
-              position: 'absolute', top: '8px', right: '8px', 
-              width: '8px', height: '8px',
-              background: '#ef4444', 
-              borderRadius: '50%', border: '2px solid white'
-            }}></div>
-          )}
+          <NotificationDot />
         </motion.div>
         
         <motion.div 

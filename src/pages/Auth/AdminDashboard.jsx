@@ -224,10 +224,9 @@ const FarmerRow = ({ farmer, index }) => (
   >
     <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
       <div style={{ position: 'relative' }}>
-        <img 
-          src={farmer.photo || `https://ui-avatars.com/api/?name=${farmer.name || 'F'}&background=10B981&color=fff`} 
-          style={{ width: '52px', height: '52px', borderRadius: '16px', objectFit: 'cover' }} 
-        />
+        <div style={{ width: '52px', height: '52px', borderRadius: '16px', background: `${COLORS.primary}10`, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${COLORS.primary}20` }}>
+          <User size={24} color={COLORS.primary} strokeWidth={2.5} />
+        </div>
         <div style={{ 
           position: 'absolute', bottom: '-4px', right: '-4px',
           padding: '4px', borderRadius: '6px', background: farmer.isGuest ? '#F1F5F9' : '#ECFDF5',

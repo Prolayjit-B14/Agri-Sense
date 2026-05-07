@@ -1,22 +1,35 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 export default defineConfig({
-  plugins: [
-    react(),
-    nodePolyfills({
-      include: ['buffer', 'process', 'stream', 'util', 'assert'],
-      globals: {
-        Buffer: true,
-        global: true,
-        process: true,
-      },
-    }),
-  ],
+  plugins: [react()],
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    minify: 'terser', 
+    terserOptions: {
+      compress: {
+        drop_console: false, // 🛠️ DEBUGGING: Keep logs for stabilization audit
+        drop_debugger: true
+      }
+    },
+    chunkSizeWarningLimit: 3000,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom') || id.includes('framer-motion')) return 'vendor';
+            if (id.includes('firebase')) return 'firebase';
+            if (id.includes('recharts')) return 'charts';
+            return 'vendor';
+          }
+        }
+      },
+    },
+    // 🚀 PERFORMANCE: Ensure consistent asset naming for Capacitor
+    assetsDir: 'assets',
+    cssCodeSplit: true,
+    sourcemap: false
   },
   resolve: {
     alias: {

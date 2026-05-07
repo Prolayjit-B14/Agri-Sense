@@ -6,7 +6,7 @@
 import { MASTER_CONFIG } from '../setup';
 
 // 🔐 INDUSTRIAL KEY INJECTION (Direct Priority)
-const GEMINI_API_KEY = "AIzaSyB6ZIjqm6InCjred-M99BccpHe1kwBrLZI";
+const GEMINI_API_KEY = MASTER_CONFIG.GEMINI_API_KEY;
 
 // 💡 Diagnostic: Log key status on load (Sanitized)
 if (GEMINI_API_KEY && GEMINI_API_KEY.length > 10) {
@@ -18,7 +18,7 @@ if (GEMINI_API_KEY && GEMINI_API_KEY.length > 10) {
 /**
  * Local Agronomy Logic Engine (Fallback when API keys are missing or failing)
  */
-export const localAgriLogic = (prompt, context) => {
+const localAgriLogic = (prompt, context) => {
   const query = prompt.toLowerCase();
   const { currentSensors, weather, systemHealth, aiRecommendations, knowledgeBase } = context;
   
@@ -99,65 +99,72 @@ export const askGemini = async (prompt, context) => {
 
   const models = [
     "gemini-1.5-flash",
-    "gemini-flash-latest",
-    "gemini-pro",
-    "gemini-1.5-pro"
+    "gemini-1.5-pro",
+    "gemini-pro"
   ];
 
   const slimContext = {
     sensors: context.currentSensors,
     weather: context.weather,
-    kb_summary: "Accessing Industrial Specs for Fertilizers, Pests, and Crop Suitability."
+    health: context.health,
+    logs: context.recentLogs,
+    time: context.time
   };
 
   const fullPrompt = `
-You are AgriBot ELITE, a professional agricultural consultant.
-Your responses must be HIGHLY ORGANIZED, CONCISE, and PROFESSIONAL.
-
---- STRUCTURE RULES ---
-1. Use Clear Headings (e.g., ### 🚜 Status, ### 💧 Irrigation).
-2. Use Bullet Points for recommendations.
-3. Be Technical but Clear.
-4. If a value is optimal, just say "Optimal". If it needs action, use a "🚨 ACTION" tag.
-
---- CONTEXT ---
+You are AgriSense AI, an elite agronomy assistant. 
+Data Context:
+- Farm: ${context.farmName}
 - Sensors: ${JSON.stringify(slimContext.sensors)}
 - Weather: ${JSON.stringify(slimContext.weather)}
-- Knowledge Base: ${slimContext.kb_summary}
+- System: ${JSON.stringify(slimContext.health)}
+- History: ${JSON.stringify(slimContext.logs)}
 
-USER QUERY:
-"${prompt}"
+Instructions:
+1. Provide a professional, concise response.
+2. Use markdown for structure (h3 for sections).
+3. Be action-oriented. If sensors are bad, suggest fixes.
+4. If asked about status, summarize all sensors.
+
+User: ${prompt}
 `;
 
   for (const model of models) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-      const response = await fetch(url, {
-        method: 'POST',
-        mode: 'cors',
-        headers: { 
-          'Content-Type': 'application/json',
-          'x-goog-api-key': GEMINI_API_KEY 
-        },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: fullPrompt }] }]
-        })
-      });
+    for (const apiVersion of ['v1beta', 'v1']) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/${apiVersion}/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+        
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: fullPrompt }] }],
+            generationConfig: {
+              temperature: 0.7,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 1024,
+            }
+          })
+        });
 
-      if (response.ok) {
         const data = await response.json();
-        if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-          return data.candidates[0].content.parts[0].text;
+
+        if (response.ok) {
+          if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+            return data.candidates[0].content.parts[0].text;
+          }
+        } else {
+          console.warn(`🛰️ AgriBot: Model ${model} (${apiVersion}) returned error:`, data.error?.message || response.statusText);
+          // If it's a 429 (Quota) or 403 (Invalid Key), we might want to skip other versions for this model
+          if (response.status === 429 || response.status === 403) break;
         }
-      } else {
-        const errData = await response.json();
-        console.warn(`Model ${model} failed: ${errData.error?.message}`);
+      } catch (e) {
+        console.warn(`🛰️ AgriBot: Network error for ${model} (${apiVersion}):`, e.message);
       }
-    } catch (e) {
-      console.warn(`Model ${model} connection error`);
     }
   }
 
-  // Final Fallback if all models fail
-  return `⚠️ [System: Connection Failure] All cloud models (Flash, Pro) were unavailable in your region. \n\n${localAgriLogic(prompt, context)}`;
+  console.error("🛰️ AgriBot: All Cloud AI models failed. Using Local Diagnostic Engine.");
+  return localAgriLogic(prompt, context);
 };

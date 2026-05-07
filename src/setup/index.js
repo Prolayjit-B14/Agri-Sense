@@ -4,7 +4,7 @@
  * --- HOW TO EDIT ---
  * 1. WiFi & HW: Only edit lines 25-27.
  * 2. Branding: Edit lines 10-14.
- * 3. Mode: Set USE_MOCK_DATA (line 20) to 'false' for Real-Time hardware.
+ * 3. Mode: Application is hard-wired for Real-Time hardware.
  */
 
 export const MASTER_CONFIG = {
@@ -13,34 +13,33 @@ export const MASTER_CONFIG = {
   FARM_NAME: "Master Field",
   TAGLINE: "Smart Agriculture Command Center",
   FOOTER_CREDIT: "by Prolayjit Biswas",
-  VERSION: "19.0.0_ZERO_STABLE",
+  VERSION: "19.1.0_ULTRA_STABLE",
   
   // 🔐 AUTHORIZED INVESTIGATORS
   AUTHORIZED_USERS: [
-    { email: "prolayjitbiswas14112004@gmail.com", password: "Prolay2004", name: "Prolayjit Biswas" }
+    { email: import.meta.env.VITE_LOGIN_EMAIL || "admin@agrisense.com", password: import.meta.env.VITE_LOGIN_PASSWORD || "admin123", name: "Prolayjit Biswas" }
   ],
-  LOGIN_EMAIL: "prolayjitbiswas14112004@gmail.com", // Fallback for Login UI
-  LOGIN_PASSWORD: "Prolay2004",     // Fallback for Login UI
-  
-  // 📡 OPERATION MODE
-  USE_MOCK_DATA: false, // Set to true for demo, false for ESP32 hardware
+  LOGIN_EMAIL: import.meta.env.VITE_LOGIN_EMAIL || "admin@agrisense.com", 
+  LOGIN_PASSWORD: import.meta.env.VITE_LOGIN_PASSWORD || "admin123",
   
   // 🛰️ API & INFRASTRUCTURE
-  MQTT_BROKER: "broker.hivemq.com", // HiveMQ Public WSS Broker
-  MQTT_WSS_PORT: 8884,
-  FIELD_TOPIC_SENSORS: "agrisense/field_a/sensors",
-  FIELD_TOPIC_COMMANDS: "agrisense/field_a/commands",
+  MQTT_BROKER: import.meta.env.VITE_MQTT_BROKER || "localhost", 
+  MQTT_WSS_PORT: 8884, // HiveMQ Cloud WSS
+  MQTT_USER: import.meta.env.VITE_MQTT_USER || "admin",
+  MQTT_PASS: import.meta.env.VITE_MQTT_PASS || "pass",
+  FIELD_TOPIC_SENSORS: "agrisense/agrisense_pro/master_field/sensors",
+  FIELD_TOPIC_COMMANDS: "agrisense/agrisense_pro/master_field/commands",
   
   // 🖼️ ASSETS
   DEFAULT_PROFILE_PHOTO: "https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&q=80&w=100",
   
   // 🗺️ MAP & WEATHER (Optional External APIs)
-  OPENWEATHER_API_KEY: import.meta.env.VITE_WEATHER_API_KEY || "YOUR_OPENWEATHER_API_KEY", 
-  GEMINI_API_KEY: "AIzaSyB6ZIjqm6InCjred-M99BccpHe1kwBrLZI",
-  WEATHER_CITY: "Kalyani",
+  OPENWEATHER_API_KEY: import.meta.env.VITE_OPENWEATHER_API_KEY || "", 
+  GEMINI_API_KEY: import.meta.env.VITE_GEMINI_API_KEY || "",
+  WEATHER_CITY: import.meta.env.VITE_WEATHER_CITY || "Kalyani",
   
-  MAP_LAT: 22.975,
-  MAP_LNG: 88.434,
+  MAP_LAT: parseFloat(import.meta.env.VITE_MAP_LAT) || 22.975,
+  MAP_LNG: parseFloat(import.meta.env.VITE_MAP_LNG) || 88.434,
   MAP_ZOOM: 15,
   
   

@@ -16,7 +16,7 @@ const THRESHOLDS = {
 /**
  * Calculates the status of an individual sensor.
  */
-export const calculateSensorStatus = (sensor, nodeTimestamp) => {
+const calculateSensorStatus = (sensor, nodeTimestamp) => {
   if (!sensor || sensor.value === undefined || sensor.value === '---' || sensor.value === null) {
     return 'INACTIVE';
   }
@@ -35,7 +35,7 @@ export const calculateSensorStatus = (sensor, nodeTimestamp) => {
 /**
  * Calculates human-readable issues for a node.
  */
-export const detectIssues = (node, sensors, status) => {
+const detectIssues = (node, sensors, status) => {
   if (status === 'OFFLINE') return ['Device not responding'];
   
   const issues = [];
@@ -51,7 +51,7 @@ export const detectIssues = (node, sensors, status) => {
 /**
  * Calculates the weighted health score (0-100).
  */
-export const calculateHealthScore = (node = {}, sensors = []) => {
+const calculateHealthScore = (node = {}, sensors = []) => {
   const rssi = typeof node.rssi === 'number' ? node.rssi : -70;
   const packet_loss = typeof node.packet_loss === 'number' ? node.packet_loss : 0;
   const latency = typeof node.latency === 'number' ? node.latency : 50;
@@ -86,11 +86,26 @@ export const processDeviceState = (nodeId, nodeType, rawData) => {
 
   const sensorNames = sensorConfigs[nodeType] || [];
   const processedSensors = sensorNames.map(name => {
-    let sensorVal = rawData?.[name];
+    // 🛰️ ROBUST KEY MAPPING (Align with sensorController)
+    const keyMap = {
+      'temperature': ['temperature', 'temp', 't', 'st'],
+      'humidity': ['humidity', 'hum', 'h'],
+      'moisture': ['moisture', 'm'],
+      'ldr': ['ldr', 'lightIntensity', 'light', 'lux'],
+      'rain': ['rain', 'rainLevel', 'rainfall', 'level'],
+      'npk': ['npk', 'N', 'P', 'K'],
+      'detection': ['detection', 'type', 'status'],
+      'active': ['active', 'status', 'online']
+    };
+
+    let sensorVal = undefined;
+    const searchKeys = keyMap[name] || [name];
     
-    // NPK Logic: Treat as one if any part exists
-    if (name === 'npk') {
-      sensorVal = rawData?.npk || (rawData?.n !== undefined ? { n: rawData.n, p: rawData.p, k: rawData.k } : undefined);
+    for (const key of searchKeys) {
+      if (rawData?.[key] !== undefined) {
+        sensorVal = rawData[key];
+        break;
+      }
     }
     
     const status = calculateSensorStatus({ value: sensorVal, timestamp: rawData?.timestamp || now }, lastSeen);

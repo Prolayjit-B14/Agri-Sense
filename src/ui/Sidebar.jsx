@@ -3,16 +3,18 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Settings as SettingsIcon,
-  CloudRain, Archive, FlaskConical, Camera,
+  CloudSun, Database, FlaskConical, Camera,
   Sparkles, BarChart2, Network, Bell,
-  Sprout, Droplets, FileText, ShieldCheck,
+  Sprout, Waves, FileText, ShieldCheck,
   ChevronLeft, ChevronRight, Leaf, User, PieChart, LayoutDashboard,
   ArrowRight
 } from 'lucide-react';
 import { useApp } from '../state/AppContext';
+import { useTelemetry } from '../state/TelemetryContext';
 
 const Sidebar = () => {
-  const { user, isSidebarOpen, setIsSidebarOpen, farmInfo, mqttStatus } = useApp();
+  const { user, isSidebarOpen, setIsSidebarOpen, farmInfo } = useApp();
+  const { mqttStatus } = useTelemetry();
   const location = useLocation();
   const close = () => setIsSidebarOpen(false);
 
@@ -24,10 +26,10 @@ const Sidebar = () => {
     {
       title: 'FIELD',
       links: [
-        { name: 'Soil Monitor',        path: '/soil-monitoring',        icon: Sprout,        color: '#10B981' },
-        { name: 'Irrigation Control',  path: '/irrigation',             icon: Droplets,      color: '#3B82F6' },
-        { name: 'Weather Station',     path: '/weather',                icon: CloudRain,     color: '#F97316' },
-        { name: 'Storage Area',        path: '/storage-hub',            icon: Archive,       color: '#8B5CF6' },
+        { name: 'Soil Monitor',        path: '/soil-monitoring',        icon: Sprout,        color: '#8B5E3C' },
+        { name: 'Irrigation Control',  path: '/irrigation',             icon: Waves,         color: '#06D6A0' },
+        { name: 'Weather Station',     path: '/weather',                icon: CloudSun,      color: '#3B82F6' },
+        { name: 'Storage Area',        path: '/storage-hub',            icon: Database,       color: '#64748B' },
       ]
     },
     {
@@ -42,7 +44,7 @@ const Sidebar = () => {
     {
       title: 'SYSTEM',
       links: [
-        { name: 'Camera View',         path: '/camera',                 icon: Camera,        color: '#A855F7' },
+        { name: 'Camera View',         path: '/camera',                 icon: Camera,        color: '#7C3AED' },
         { name: 'Device Management',   path: '/device-area',            icon: Network,       color: '#64748b' },
         { name: 'My Account',          path: '/account',                icon: User,          color: '#8b5cf6' },
         { name: 'Alerts',              path: '/alerts',                 icon: Bell,          color: '#eab308' },
@@ -59,7 +61,7 @@ const Sidebar = () => {
         {isSidebarOpen && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{ position: 'fixed', inset: 0, zIndex: 10001, background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)' }}
+            style={{ position: 'fixed', inset: 0, zIndex: 10001, background: 'rgba(0,0,0,0.2)' }}
             onClick={close}
           />
         )}

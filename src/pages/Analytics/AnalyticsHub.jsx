@@ -12,9 +12,10 @@ import {
   Tooltip, ResponsiveContainer, ComposedChart
 } from 'recharts';
 import {
-  Sprout, CloudRain, Archive, Download, FileText
+  Sprout, CloudRain, Archive, Download, FileText, Droplets, Camera
 } from 'lucide-react';
 import { useApp } from '../../state/AppContext';
+import { useTelemetry } from '../../state/TelemetryContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────
@@ -23,15 +24,17 @@ const COLORS = {
   bg: '#FFFFFF', card: '#FFFFFF', border: '#E2E8F0', text: '#0F172A', subtext: '#64748B',
   soil: ['#10B981', '#3B82F6', '#A855F7', '#EC4899', '#F59E0B', '#14B8A6', '#6366F1', '#8B5CF6'],
   weather: ['#0EA5E9', '#F59E0B', '#6366F1', '#10B981', '#F43F5E', '#8B5CF6', '#14B8A6', '#A855F7'],
-  storage: ['#8B5CF6', '#F43F5E', '#10B981', '#3B82F6', '#0EA5E9', '#F59E0B', '#6366F1', '#14B8A6']
+  storage: ['#8B5CF6', '#F43F5E', '#10B981', '#3B82F6', '#0EA5E9', '#F59E0B', '#6366F1', '#14B8A6'],
+  water: ['#3B82F6', '#0EA5E9', '#10B981', '#F59E0B'],
+  vision: ['#A855F7', '#EC4899', '#EF4444', '#10B981']
 };
 
 // ─── COMPONENTS ───────────────────────────────────────────────────────────
-const AnalyticsCard = ({ title, isOffline, children, height = '340px', currentVal, avgVal, minVal, maxVal, unit = '', isHistorical, color }) => {
+// 🚀 PERFORMANCE: Memoize the card and use CSS containment to prevent layout thrashing
+const AnalyticsCard = React.memo(({ title, isOffline, children, height = '340px', currentVal, avgVal, minVal, maxVal, unit = '', isHistorical, color }) => {
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
+      variants={itemFadeUp}
       style={{
         background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)',
         borderRadius: '24px',
@@ -42,15 +45,17 @@ const AnalyticsCard = ({ title, isOffline, children, height = '340px', currentVa
         flexDirection: 'column',
         height,
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        contain: 'content' // 🚀 PERFORMANCE: Isolate paint and layout
       }}
     >
+
       {/* 🚀 Diagnostic Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
             <div style={{ width: '4px', height: '14px', borderRadius: '4px', background: color }} />
-            <h3 style={{ fontSize: '0.65rem', fontWeight: 900, margin: 0, color: COLORS.subtext, textTransform: 'uppercase', letterSpacing: '0.12em' }}>{title}</h3>
+            <h3 style={{ fontSize: '0.7rem', fontWeight: 900, margin: 0, color: COLORS.subtext, letterSpacing: '0.05em' }}>{title}</h3>
           </div>
           
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
@@ -61,8 +66,6 @@ const AnalyticsCard = ({ title, isOffline, children, height = '340px', currentVa
               {unit}
             </span>
           </div>
-          
-          {/* Live indicator removed per request */}
         </div>
         
         {isHistorical && !isOffline && (
@@ -72,11 +75,11 @@ const AnalyticsCard = ({ title, isOffline, children, height = '340px', currentVa
             overflow: 'hidden'
           }}>
             <div style={{ background: 'transparent', padding: '8px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.5rem', fontWeight: 900, color: COLORS.subtext, textTransform: 'uppercase', marginBottom: '2px' }}>MIN</span>
+              <span style={{ fontSize: '0.55rem', fontWeight: 900, color: COLORS.subtext, marginBottom: '2px' }}>Min</span>
               <span style={{ fontSize: '0.85rem', fontWeight: 950, color: COLORS.text }}>{minVal?.toFixed(1) || '--'}</span>
             </div>
             <div style={{ background: 'transparent', padding: '8px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.5rem', fontWeight: 900, color: COLORS.subtext, textTransform: 'uppercase', marginBottom: '2px' }}>MAX</span>
+              <span style={{ fontSize: '0.55rem', fontWeight: 900, color: COLORS.subtext, marginBottom: '2px' }}>Max</span>
               <span style={{ fontSize: '0.85rem', fontWeight: 950, color: COLORS.text }}>{maxVal?.toFixed(1) || '--'}</span>
             </div>
           </div>
@@ -90,12 +93,26 @@ const AnalyticsCard = ({ title, isOffline, children, height = '340px', currentVa
         </div>
         {isOffline && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontSize: '0.7rem', fontWeight: 950, color: COLORS.neutral, letterSpacing: '0.2em' }}>NODE OFFLINE</span>
+            {/* Offline text removed per user request */}
           </div>
         )}
       </div>
     </motion.div>
   );
+});
+
+// ─── ANIMATION CONFIGS ──────────────────────────────────────────────────────
+const springConfig = { type: "spring", stiffness: 300, damping: 30 };
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08, delayChildren: 0.1 }
+  }
+};
+const itemFadeUp = {
+  hidden: { opacity: 0, y: 15 },
+  visible: { opacity: 1, y: 0, transition: springConfig }
 };
 
 const TIME_RANGES = [
@@ -118,12 +135,11 @@ const CustomTooltip = ({ active, payload, unit, isRealtime, color }) => {
 
     return (
       <div style={{
-        background: 'rgba(15, 23, 42, 0.98)',
-        backdropFilter: 'blur(20px)',
+        background: 'rgba(15, 23, 42, 0.95)',
         padding: '5px 9px',
         borderRadius: '10px',
         boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
-        border: '1px solid rgba(255,255,255,0.15)',
+        border: '1px solid rgba(255,255,255,0.1)',
         color: 'white',
         pointerEvents: 'none',
         display: 'flex',
@@ -138,7 +154,7 @@ const CustomTooltip = ({ active, payload, unit, isRealtime, color }) => {
           <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '1px 0' }}>
             <div style={{ width: '2px', height: '10px', borderRadius: '1px', background: entry.color || color || COLORS.good }} />
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '2px' }}>
-              {dataSeries.length > 1 && <span style={{ fontSize: '0.5rem', fontWeight: 900, opacity: 0.4, width: '10px' }}>{entry.dataKey.toUpperCase()[0]}</span>}
+              {dataSeries.length > 1 && <span style={{ fontSize: '0.55rem', fontWeight: 900, opacity: 0.4, width: '10px' }}>{entry.dataKey[0]}</span>}
               <span style={{ fontSize: '1rem', fontWeight: 950, letterSpacing: '-0.02em', lineHeight: 1 }}>{entry.value?.toFixed(1)}</span>
               <span style={{ fontSize: '0.55rem', fontWeight: 800, opacity: 0.5 }}>{unit}</span>
             </div>
@@ -192,12 +208,20 @@ const Pinpoint = (props) => {
 };
 
 const AnalyticsHub = () => {
-  const { sensorData, devices, sensorHistory, fetchHistory, farmInfo } = useApp();
+  const { farmInfo } = useApp();
+  const { sensorData, devices, sensorHistory, fetchHistory } = useTelemetry();
   const location = useLocation();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(location.state?.tab || 'soil');
   const [timeRange, setTimeRange] = useState(TIME_RANGES[0]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+
+  // 🚀 PERFORMANCE: Defer chart rendering until after navigation transition
+  useEffect(() => {
+    const timer = setTimeout(() => setIsReady(true), 400);
+    return () => clearTimeout(timer);
+  }, []);
 
   // 🛰️ DYNAMIC CLOUD FETCH: Load data when time range changes
   useEffect(() => {
@@ -276,6 +300,18 @@ const AnalyticsHub = () => {
             temp: entry.storage?.temp, humidity: entry.storage?.humidity,
             mq135: entry.storage?.mq135,
             health: entry.storage?.healthIndex
+          };
+        }
+        if (type === 'water') {
+          return { ...base, 
+            level: entry.water?.level,
+            pump: entry.water?.pumpActive ? 1 : 0
+          };
+        }
+        if (type === 'vision') {
+          return { ...base, 
+            active: entry.vision?.active ? 1 : 0,
+            pest: entry.vision?.detection === 'Pest Detected' ? 1 : 0
           };
         }
         return base;
@@ -369,7 +405,9 @@ const AnalyticsHub = () => {
     return {
       soil: mapData(filteredHistory, 'soil'),
       weather: mapData(filteredHistory, 'weather'),
-      storage: mapData(filteredHistory, 'storage')
+      storage: mapData(filteredHistory, 'storage'),
+      water: mapData(filteredHistory, 'water'),
+      vision: mapData(filteredHistory, 'vision')
     };
   }, [sensorHistory, timeRange.id, timeMetrics]);
 
@@ -380,34 +418,42 @@ const AnalyticsHub = () => {
     if (type === 'soil') return !sensorData?.soil?.moisture && sensorHistory.length === 0;
     if (type === 'weather') return !sensorData?.weather?.temp && sensorHistory.length === 0;
     if (type === 'storage') return !sensorData?.storage?.temp && sensorHistory.length === 0;
+    if (type === 'water') return !sensorData?.water?.level && sensorHistory.length === 0;
+    if (type === 'vision') return !sensorData?.vision?.active && sensorHistory.length === 0;
     return deviceOffline;
   };
 
-  // 🧠 ANALYTICS ENGINE: Static-Grid Oscilloscope Processor
+  // 🧠 ANALYTICS ENGINE: Static-Grid Oscilloscope Processor with Downsampling
   const processedData = useMemo(() => {
     const isRealtime = timeRange.id === 'realtime';
     const processed = {};
-    const realtimeStart = Date.now() - (5 * 60 * 1000);
+    const now = Date.now();
+    const realtimeStart = now - (5 * 60 * 1000);
 
     Object.keys(historyData).forEach(tab => {
-      const data = historyData[tab] || [];
+      let data = historyData[tab] || [];
+      
+      // 🚀 PERFORMANCE: Downsample large datasets for smooth rendering
+      if (data.length > 300) {
+        const factor = Math.ceil(data.length / 300);
+        data = data.filter((_, i) => i % factor === 0);
+      }
+
       if (!isRealtime) { processed[tab] = data; return; }
 
       const mapped = data.map(entry => ({
         ...entry,
         plotTime: (Number(entry.name) - realtimeStart) / 1000 
-      })).filter(d => d.plotTime >= 0 && d.plotTime <= 300);
+      })).filter(d => d.plotTime >= -5 && d.plotTime <= 305); // Bleed slightly for smooth edges
 
       if (mapped.length > 0) {
-        const first = mapped[0];
-        const last = mapped[mapped.length - 1];
-        processed[tab] = [{ ...first, plotTime: 0 }, ...mapped, { ...last, plotTime: 300 }];
-      } else {
         processed[tab] = mapped;
+      } else {
+        processed[tab] = [];
       }
     });
     return processed;
-  }, [historyData, timeRange.id, timeMetrics]);
+  }, [historyData, timeRange.id]);
 
   const isRealtime = timeRange.id === 'realtime';
   const xDomain = isRealtime ? [0, 300] : [timeMetrics.startTime, timeMetrics.endTime || timeMetrics.now];
@@ -475,13 +521,20 @@ const AnalyticsHub = () => {
       weather: [
         { title: "Ambient Temp", type: "line", key: "temp", color: COLORS.weather[0], unit: "°C", min: 0, max: 60 },
         { title: "Humidity", type: "line", key: "humidity", color: COLORS.weather[1], unit: "%", min: 0, max: 100 },
-        { title: "Light (LDR)", type: "line", key: "lightIntensity", color: COLORS.weather[2], unit: "LUX", min: 0, max: 1000 },
-        { title: "Rain Level", type: "line", key: "rainLevel", color: COLORS.weather[3], unit: "mm", min: 0, max: 50 }
+        { title: "Light (LDR)", type: "line", key: "lightIntensity", color: COLORS.weather[2], unit: "LUX", min: 0, max: 8000 },
+        { title: "Rain Level", type: "line", key: "rainLevel", color: COLORS.weather[3], unit: "mm", min: 0, max: 100 }
       ],
       storage: [
         { title: "Storage Temp", type: "line", key: "temp", color: COLORS.storage[0], unit: "°C", min: 0, max: 60 },
         { title: "Storage Humidity", type: "line", key: "humidity", color: COLORS.storage[1], unit: "%", min: 0, max: 100 },
         { title: "MQ135 (Gas)", type: "line", key: "mq135", color: COLORS.storage[2], unit: "ppm", min: 0, max: 500 }
+      ],
+      water: [
+        { title: "Reservoir Level", type: "line", key: "level", color: COLORS.water[0], unit: "%", min: 0, max: 100 },
+        { title: "Hydraulic Flow", type: "line", key: "flow", color: COLORS.water[1], unit: "L/min", min: 0, max: 50 }
+      ],
+      vision: [
+        { title: "Camera Activity", type: "line", key: "active", color: COLORS.vision[0], unit: "", min: 0, max: 2 }
       ]
     }[tabId] || [];
 
@@ -490,7 +543,7 @@ const AnalyticsHub = () => {
     const formatXLabel = getFormatXLabel();
 
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
         {charts.map((c, i) => {
           // 🚀 ROBUST STATS ENGINE: Handles single-key and multi-key (NPK) summary logic
           const targetKeys = c.keys || (c.key ? [c.key] : []);
@@ -609,7 +662,20 @@ const AnalyticsHub = () => {
   };
 
   return (
-    <div style={{ background: COLORS.bg, minHeight: '100vh', padding: '0.75rem', fontFamily: "'Outfit', sans-serif", display: 'flex', flexDirection: 'column' }}>
+    <motion.div 
+      variants={staggerContainer}
+      initial="hidden"
+      animate="visible"
+      style={{ 
+        background: 'var(--bg-main)', 
+        minHeight: '100%', 
+        padding: '1.25rem', 
+        paddingBottom: '140px',
+        fontFamily: "'Outfit', sans-serif", 
+        display: 'flex', 
+        flexDirection: 'column' 
+      }}
+    >
       
 
 
@@ -631,71 +697,6 @@ const AnalyticsHub = () => {
               <tab.icon size={14} /><span style={{ fontSize: '0.75rem', fontWeight: 800 }}>{tab.label}</span>
             </button>
           ))}
-        </div>
-
-        {/* 🚀 COMPACT EXPORT ACTION (Moved to Header Line) */}
-        <div style={{ display: 'flex', gap: '8px', marginLeft: '12px' }}>
-          <button
-            onClick={() => navigate('/reports')}
-            title="Full Report"
-            style={{
-              width: '34px', height: '34px', borderRadius: '12px',
-              background: '#FFFFFF', border: '1px solid #E2E8F0',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
-              color: '#10B981', transition: '0.2s'
-            }}
-          >
-            <FileText size={15} color="#10B981" strokeWidth={2.5} />
-          </button>
-          
-          <button
-            onClick={() => {
-              const flattened = sensorHistory.map(entry => ({
-                Timestamp: new Date(entry.timestamp).toLocaleString(),
-                Unix_ms: entry.timestamp,
-                Farm: farmInfo?.name || 'AgriSense',
-                Project: farmInfo?.projectName || 'Industrial',
-                Soil_Moisture_Pct: entry.soil?.moisture ?? '',
-                Soil_PH: entry.soil?.ph ?? '',
-                Soil_Temp_C: entry.soil?.temp ?? '',
-                Nitrogen_mg_kg: entry.soil?.npk?.n ?? '',
-                Phosphorus_mg_kg: entry.soil?.npk?.p ?? '',
-                Potassium_mg_kg: entry.soil?.npk?.k ?? '',
-                Ambient_Temp_C: entry.weather?.temp ?? '',
-                Humidity_Pct: entry.weather?.humidity ?? '',
-                Light_LUX: entry.weather?.lightIntensity ?? '',
-                Rain_Level_mm: entry.weather?.rainLevel ?? '',
-                Storage_Temp_C: entry.storage?.temp ?? '',
-                Storage_Humidity_Pct: entry.storage?.humidity ?? '',
-                Gas_MQ135_ppm: entry.storage?.mq135 ?? ''
-              }));
-
-              const headers = Object.keys(flattened[0] || {});
-              const csvContent = [
-                headers.join(','),
-                ...flattened.map(row => headers.map(h => `"${row[h]}"`).join(','))
-              ].join('\n');
-
-              const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `AgriSense_Export_${new Date().toISOString().split('T')[0]}.csv`;
-              a.click();
-              URL.revokeObjectURL(url);
-            }}
-            title="Export CSV (Excel)"
-            style={{
-              width: '34px', height: '34px', borderRadius: '12px',
-              background: COLORS.good, border: 'none',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', boxShadow: `0 4px 12px ${COLORS.good}33`,
-              color: 'white', transition: '0.2s', flexShrink: 0
-            }}
-          >
-            <Download size={15} color="white" strokeWidth={2.5} />
-          </button>
         </div>
       </div>
 
@@ -722,16 +723,18 @@ const AnalyticsHub = () => {
         })}
       </div>
 
-      <div style={{ flex: 1, paddingBottom: '1rem' }}>
-        {renderGrid(activeTab)}
+      <div style={{ flex: 1, paddingBottom: '1rem', minHeight: '400px', display: 'flex', flexDirection: 'column' }}>
+        {isReady ? renderGrid(activeTab) : (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '15px', background: 'rgba(255,255,255,0.5)', borderRadius: '24px' }}>
+             <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} style={{ width: '32px', height: '32px', border: '3px solid #10B981', borderTopColor: 'transparent', borderRadius: '50%' }} />
+             <div style={{ fontSize: '0.7rem', fontWeight: 900, color: '#94A3B8', letterSpacing: '0.1em' }}>PROCESSING DATA MATRIX...</div>
+          </div>
+        )}
       </div>
 
       <style>{`
         .recharts-tooltip-wrapper {
           transform: none !important;
-          top: -95px !important;
-          right: 0px !important;
-          left: auto !important;
           transition: opacity 0.2s ease-in-out !important;
           pointer-events: none !important;
         }
@@ -739,7 +742,7 @@ const AnalyticsHub = () => {
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
-    </div>
+    </motion.div>
   );
 };
 

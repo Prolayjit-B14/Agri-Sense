@@ -1,95 +1,131 @@
+/**
+ * AgriSense Pro v18.0.0 "Ultra-Premium" Weather Monitoring
+ */
+
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  CloudRain, Sun, Wind, Thermometer, Droplet,
+  CloudRain, Sun, Wind, Thermometer, Droplets,
   Navigation, Activity, Gauge, Eye,
-  Sunrise, Sunset, LineChart, Umbrella, CloudSun, Clock
+  Sunrise, Sunset, LineChart, Umbrella, CloudSun,
+  ChevronRight, Cloud, Zap, ArrowUp, ArrowDown, Minus
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../state/AppContext';
+import { useTelemetry } from '../../state/TelemetryContext';
+import useTrendEngine from '../../hooks/useTrendEngine';
 
-// ─── DESIGN TOKENS (UNIFIED) ───────────────────────────────────────────────
-
-const COLORS = {
-  primary: '#F97316',
-  secondary: '#3B82F6',
-  warning: '#F59E0B',
-  critical: '#EF4444',
-  offline: '#94A3B8',
-  bg: '#FFFFFF',
-  text: '#1E293B',
-  subtext: '#64748B',
-  white: '#FFFFFF',
-  border: '#E2E8F0'
+// ─── ANIMATION CONFIGS ──────────────────────────────────────────────────────
+const springConfig = { type: 'spring', stiffness: 300, damping: 30 };
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.1 }
+  }
+};
+const itemFadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: springConfig }
 };
 
-const GRADIENTS = {
-  optimal: 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)',
-  moderate: 'linear-gradient(135deg, #FFD54F 0%, #FBC02D 100%)',
-  low: 'linear-gradient(135deg, #EF5350 0%, #D32F2F 100%)',
-  critical: 'linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)',
-  offline: 'linear-gradient(135deg, #94A3B8 0%, #64748B 100%)'
-};
+// ─── SUB-COMPONENTS ────────────────────────────────────────────────────────
 
-// ─── SUB-COMPONENTS (UNIFIED SYSTEM) ───────────────────────────────────────
-
-const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, statusText = '', range, unit }) => {
+const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, range, trendInfo, unit }) => {
   const isOffline = value === null || value === undefined;
-  const safeStatus = (statusText || '').toLowerCase();
-  
-  const isOptimal = safeStatus.includes('optimal') || safeStatus.includes('safe') || safeStatus.includes('stable') || safeStatus.includes('no rain') || safeStatus.includes('light') || safeStatus.includes('normal');
-  const isModerate = safeStatus.includes('moderate') || safeStatus.includes('high') || safeStatus.includes('low');
-  const isCritical = safeStatus.includes('critical') || safeStatus.includes('warning') || safeStatus.includes('heavy') || safeStatus.includes('storm');
-  
-  const stateColor = isOffline ? COLORS.offline : (isOptimal ? COLORS.primary : (isModerate ? COLORS.warning : (isCritical ? COLORS.critical : COLORS.offline)));
-  const cardBg = isOffline ? 'linear-gradient(165deg, #F8FAFC 0%, #F1F5F9 100%)' : (isOptimal ? 'linear-gradient(165deg, #F0FDF4 0%, #FFFFFF 100%)' : (isModerate ? 'linear-gradient(165deg, #FFFBEB 0%, #FFFFFF 100%)' : 'linear-gradient(165deg, #FEF2F2 0%, #FFFFFF 100%)'));
+  const systemColor = isOffline ? '#94A3B8' : color;
+
+  const numVal = parseFloat(value);
+  const health = isOffline ? 'offline'
+    : (numVal >= min && numVal <= max) ? 'optimal'
+    : (numVal >= min - (max - min) * 0.15 && numVal <= max + (max - min) * 0.15) ? 'warning'
+    : 'critical';
+
+  const statusMap = {
+    optimal:  { dot: '#22C55E' },
+    warning:  { dot: '#F59E0B' },
+    critical: { dot: '#EF4444' },
+    offline:  { dot: '#CBD5E1' }
+  };
+
+  const { dot: dotColor } = statusMap[health];
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
+      variants={itemFadeUp}
+      whileTap={{ scale: 0.97 }}
       style={{
-        background: cardBg, borderRadius: '24px', padding: '1.25rem 1rem',
-        border: '1px solid rgba(255, 255, 255, 0.8)',
-        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
-        position: 'relative', height: '185px',
-        display: 'flex', flexDirection: 'column',
-        justifyContent: 'space-between', overflow: 'hidden'
+        borderRadius: 'var(--radius-xl)',
+        border: '1px solid ' + (isOffline ? '#E2E8F0' : systemColor + '30'),
+        boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        minHeight: '170px'
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: '0.85rem', fontWeight: 800, color: COLORS.subtext, textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.8 }}>{label}</span>
-        <Icon size={18} color={isOffline ? COLORS.offline : color} />
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
-        <h2 style={{ 
-          margin: 0, 
-          fontSize: isOffline ? '1.5rem' : '2.5rem', 
-          fontWeight: 800, 
-          color: isOffline ? '#CBD5E1' : COLORS.text, 
-          letterSpacing: isOffline ? '0.05em' : '-0.04em', 
-          lineHeight: 1 
+      <div style={{
+        background: isOffline ? '#F1F5F9' : systemColor + '15',
+        padding: '0.9rem 1rem 0.8rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        gap: '12px'
+      }}>
+        <div style={{
+          width: '40px', height: '40px', borderRadius: '12px', flexShrink: 0,
+          background: isOffline ? 'rgba(0,0,0,0.06)' : systemColor + '25',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: 'none',
+          border: isOffline ? 'none' : '1px solid ' + systemColor + '35'
         }}>
-          {isOffline ? 'OFFLINE' : value}<span style={{ fontSize: '1rem', opacity: 0.3, marginLeft: '2px' }}>{isOffline ? '' : unit}</span>
-        </h2>
-        {!isOffline && (
-          <div style={{ 
-            marginTop: '10px', padding: '6px 22px', borderRadius: '100px', 
-            background: stateColor, color: 'white', fontSize: '0.65rem', fontWeight: 800,
-            textTransform: 'uppercase', letterSpacing: '0.12em'
-          }}>
-            {statusText}
-          </div>
-        )}
+          <Icon size={21} color={isOffline ? '#94A3B8' : systemColor} strokeWidth={2.5} />
+        </div>
+        <span style={{
+          fontSize: '0.8rem', fontWeight: 900,
+          color: isOffline ? '#94A3B8' : systemColor,
+          letterSpacing: '0.02em', textTransform: 'uppercase', lineHeight: 1.2
+        }}>
+          {label}
+        </span>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '12px' }}>
-        <div style={{ textAlign: 'left' }}>
-          <p style={{ margin: 0, fontSize: '0.55rem', fontWeight: 800, color: COLORS.subtext, opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>IDEAL RANGE</p>
-          <p style={{ margin: '2px 0 0 0', fontSize: '0.75rem', fontWeight: 800, color: COLORS.subtext }}>{range}</p>
+      <div style={{
+        background: '#FFFFFF',
+        flex: 1, display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        padding: '0.5rem 1rem 0.8rem'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+          <span style={{
+            fontSize: '3.2rem', fontWeight: 950,
+            color: isOffline ? '#CBD5E1' : 'var(--text-main)',
+            letterSpacing: '-0.06em', lineHeight: 1, textAlign: 'center'
+          }}>
+            {isOffline ? '--' : value}
+          </span>
+          <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#94A3B8' }}>{unit}</span>
         </div>
-        <div style={{ opacity: 0.3 }}>
-          <Activity size={16} color={COLORS.subtext} />
+
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          gap: '5px', marginTop: '0.5rem'
+        }}>
+          <span style={{
+            fontSize: '0.48rem', fontWeight: 950,
+            color: isOffline ? '#CBD5E1' : systemColor,
+            letterSpacing: '0.08em', opacity: 0.75
+          }}>RANGE</span>
+          <span style={{ fontSize: '0.6rem', fontWeight: 700, color: '#94A3B8' }}>
+            {range}
+          </span>
+          {!isOffline && (
+            trendInfo?.trend === 'increasing'
+              ? <ArrowUp size={11} color={systemColor} />
+              : trendInfo?.trend === 'decreasing'
+                ? <ArrowDown size={11} color="#EF4444" />
+                : <Minus size={11} color="#CBD5E1" />
+          )}
         </div>
       </div>
     </motion.div>
@@ -97,20 +133,31 @@ const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, statusText 
 };
 
 const RegionalMetric = ({ label, value, icon: Icon, color }) => (
-  <div style={{ background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', padding: '12px 8px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.8)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', boxShadow: '0 4px 12px rgba(0,0,0,0.02), inset 0 1px 1px rgba(255,255,255,0.9)' }}>
-     <Icon size={16} color={color} />
-     <div style={{ textAlign: 'center' }}>
-       <p style={{ margin: 0, fontSize: '0.5rem', fontWeight: 800, color: COLORS.subtext, textTransform: 'uppercase' }}>{label}</p>
-       <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 800, color: COLORS.text }}>{value}</p>
+  <motion.div 
+    variants={itemFadeUp}
+    style={{ 
+      background: 'white', padding: '1rem 0.5rem', borderRadius: 'var(--radius-lg)', 
+      border: '1px solid var(--glass-stroke)', display: 'flex', flexDirection: 'column', 
+      alignItems: 'center', gap: '8px', boxShadow: 'var(--shadow-sm)' 
+    }}
+  >
+     <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: `${color}08`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+       <Icon size={16} color={color} strokeWidth={2.5} />
      </div>
-  </div>
+     <div style={{ textAlign: 'center' }}>
+       <p style={{ margin: 0, fontSize: '0.65rem', fontWeight: 800, color: 'var(--text-muted)' }}>{label}</p>
+       <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 900, color: 'var(--text-main)' }}>{value}</p>
+     </div>
+  </motion.div>
 );
 
 // ─── MAIN COMPONENT ────────────────────────────────────────────────────────
 
 const WeatherMonitoring = () => {
   const navigate = useNavigate();
-  const { sensorData, apiWeather, apiForecast, systemHealth, lastGlobalUpdate, devices } = useApp();
+  const { apiWeather, apiForecast } = useApp();
+  const { sensorData, sensorHistory, systemHealth } = useTelemetry();
+  const trend = useTrendEngine(sensorHistory);
 
   const weather = sensorData?.weather || {};
   const weatherScore = systemHealth.weather;
@@ -125,135 +172,182 @@ const WeatherMonitoring = () => {
     };
   }, [weather]);
 
-  const isOnline = (devices?.['weather_node']?.status === 'ACTIVE' && weatherScore !== null);
+  const isOnline = weatherScore !== null;
 
   const heroConfig = useMemo(() => {
-    if (!isOnline || weatherScore === null) return { label: 'DEVICE OFFLINE', status: 'Offline', gradient: GRADIENTS.offline, iconColor: COLORS.offline, message: 'Check node power and connectivity.', bg: '#F1F5F9', border: '#E2E8F0' };
-    
-    if (weatherScore >= 75) return { label: 'CLIMATE STABILITY', status: 'Optimal', gradient: GRADIENTS.optimal, iconColor: COLORS.primary, message: 'Current conditions support peak crop respiration.', bg: '#DCFCE7', border: 'rgba(20, 184, 166, 0.1)' };
-    if (weatherScore >= 45) return { label: 'CLIMATE STABILITY', status: 'Moderate', gradient: GRADIENTS.moderate, iconColor: COLORS.warning, message: 'Sub-optimal climate detected. Monitor heat stress.', bg: '#FEF3C7', border: 'rgba(245, 158, 11, 0.1)' };
-    return { label: 'CLIMATE STABILITY', status: 'Critical', gradient: GRADIENTS.critical, iconColor: COLORS.critical, message: 'Extreme weather threshold breached.', bg: '#FEE2E2', border: 'rgba(239, 68, 68, 0.1)' };
+    const mainColor = '#3B82F6';
+    if (!isOnline) return { label: 'Node Offline', status: 'Inactive', color: '#64748B', bg: '#F8FAFC' };
+    if (weatherScore >= 75) return { label: 'Weather Optimal', status: 'Stable', color: mainColor, bg: mainColor + '08' };
+    if (weatherScore >= 45) return { label: 'Climate Warning', status: 'Adjust', color: mainColor, bg: mainColor + '08' };
+    return { label: 'Extreme Alert', status: 'Urgent', color: mainColor, bg: mainColor + '08' };
   }, [isOnline, weatherScore]);
 
   return (
-    <div style={{ padding: '1.25rem', paddingBottom: '10px', background: COLORS.bg, minHeight: 'auto', fontFamily: "'Outfit', sans-serif" }}>
-      
-      {/* ─── UNIFIED HERO CARD ─── */}
+    <motion.div 
+      variants={staggerContainer}
+      initial="hidden"
+      animate="visible"
+      style={{ padding: '1.25rem', paddingBottom: '140px' }}
+    >
+      {/* Industrial Hero Card */}
       <motion.div
-        initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}
+        variants={itemFadeUp}
         style={{
-          background: `linear-gradient(165deg, ${heroConfig.bg} 0%, #FFFFFF 100%)`, borderRadius: '24px', padding: '1.75rem',
-          boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 2px rgba(255,255,255,0.9)',
-          marginBottom: '1.5rem', position: 'relative', overflow: 'hidden',
-          border: '1px solid rgba(255, 255, 255, 0.8)',
-          display: 'flex', flexDirection: 'column', gap: '1.5rem',
-          transition: 'background 0.5s ease, border 0.5s ease'
+          background: heroConfig.bg,
+          borderRadius: 'var(--radius-xl)',
+          padding: '1.75rem',
+          boxShadow: '0 10px 30px -10px ' + heroConfig.color + '30',
+          marginBottom: '1.5rem',
+          border: '1px solid ' + heroConfig.color + '25',
+          position: 'relative',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1.5rem'
         }}
       >
+        <div style={{ position: 'absolute', top: '-30px', right: '-30px', width: '150px', height: '150px', background: heroConfig.color + '10', filter: 'blur(40px)', borderRadius: '50%', pointerEvents: 'none' }} />
+
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: `${heroConfig.iconColor}10`, padding: '6px 14px', borderRadius: '100px', border: `1px solid ${heroConfig.iconColor}20` }}>
-            <motion.div animate={isOnline ? { opacity: [0.4, 1, 0.4] } : { opacity: 0.5 }} transition={{ duration: 2, repeat: Infinity }} style={{ width: '8px', height: '8px', borderRadius: '50%', background: heroConfig.iconColor }} />
-            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: heroConfig.iconColor, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{isOnline ? 'Climate Node Active' : 'Device Offline'}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{
+              width: '44px', height: '44px', borderRadius: '13px',
+              background: '#FFFFFF', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+              border: '1px solid ' + heroConfig.color + '15'
+            }}>
+              <CloudSun size={24} color={heroConfig.color} strokeWidth={2.5} />
+            </div>
+            <div>
+              <h2 style={{ fontSize: '1.2rem', fontWeight: 950, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.02em' }}>
+                Weather Health Index
+              </h2>
+            </div>
+          </div>
+          <div style={{
+            padding: '6px 14px', borderRadius: '100px',
+            background: '#FFFFFF', color: heroConfig.color,
+            fontSize: '0.7rem', fontWeight: 950,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+            border: '1px solid ' + heroConfig.color + '25',
+            display: 'flex', alignItems: 'center', gap: '6px'
+          }}>
+            {heroConfig.status}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', minWidth: '140px' }}>
+            <span style={{ fontSize: '5rem', fontWeight: 950, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.06em', lineHeight: 0.9 }}>
+              {(!isOnline || weatherScore === null) ? '--' : Math.round(weatherScore)}
+            </span>
+            <span style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-muted)', opacity: 0.6 }}>%</span>
           </div>
 
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-          <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 800, color: COLORS.subtext, textTransform: 'uppercase', letterSpacing: '0.15em', opacity: 0.6 }}>{heroConfig.label}</p>
-          <motion.h1 key={weatherScore} style={{ margin: 0, fontSize: '5.5rem', fontWeight: 800, color: COLORS.text, letterSpacing: '-0.04em', lineHeight: 1 }}>
-            {isOnline && weatherScore !== null ? Math.round(weatherScore) : '--'}<span style={{ fontSize: '1.5rem', opacity: 0.3, marginLeft: '4px' }}>%</span>
-          </motion.h1>
-          <motion.div 
-            animate={heroConfig.status === 'Critical' ? { scale: [1, 1.05, 1], boxShadow: [`0 4px 15px ${COLORS.critical}30`, `0 4px 25px ${COLORS.critical}50`, `0 4px 15px ${COLORS.critical}30`] } : {}}
-            transition={{ duration: 2, repeat: Infinity }}
-            style={{ padding: '8px 24px', borderRadius: '100px', background: heroConfig.gradient, color: 'white', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}
-          >
-            {heroConfig.status}
-          </motion.div>
-        </div>
-
-        <div style={{ textAlign: 'center', paddingTop: '8px', borderTop: `1px solid ${COLORS.border}`, opacity: 0.8 }}>
-          <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 700, color: COLORS.subtext }}>{heroConfig.message}</p>
+          <div style={{
+            display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem',
+            padding: '1rem 1.25rem', background: 'rgba(255,255,255,0.5)',
+            borderRadius: 'var(--radius-lg)', border: '1px solid rgba(255,255,255,0.8)',
+            maxWidth: '200px'
+          }}>
+            <div>
+              <div style={{ fontSize: '0.55rem', fontWeight: 950, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+                Sensors
+              </div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                {isOnline ? '4 / 4' : '0 / 4'}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.55rem', fontWeight: 950, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+                Sync
+              </div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                Live
+              </div>
+            </div>
+          </div>
         </div>
       </motion.div>
 
-      {/* ─── UNIFIED SENSOR GRID ─── */}
+      {/* Sensor Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-        <DiagnosticCard label="Temp" value={stats.temp} unit="°C" min={15} max={35} icon={Thermometer} color={COLORS.primary} statusText={stats.temp === null ? 'Offline' : (stats.temp > 32 ? 'High' : (stats.temp < 18 ? 'Low' : 'Optimal'))} range="18-32 °C" />
-        <DiagnosticCard label="Humidity" value={stats.humidity} unit="%" min={40} max={80} icon={Droplet} color={COLORS.secondary} statusText={stats.humidity === null ? 'Offline' : (stats.humidity > 75 ? 'High' : (stats.humidity < 45 ? 'Low' : 'Optimal'))} range="40-70 %" />
-        <DiagnosticCard label="Sunlight" value={stats.light} unit="lx" min={200} max={10000} icon={Sun} color={COLORS.warning} statusText={stats.light === null ? 'Offline' : (stats.light > 8000 ? 'Extreme' : (stats.light < 500 ? 'Low' : 'Optimal'))} range="1k-8k lx" />
-        <DiagnosticCard 
-          label="Rain" 
-          value={stats.rain} 
-          unit="mm" 
-          min={0} 
-          max={50} 
-          icon={CloudRain} 
-          color="#0EA5E9" 
-          statusText={
-            stats.rain === null ? 'Offline' : 
-            (Number(stats.rain) === 0 ? 'No Rain' : 
-            (Number(stats.rain) <= 5 ? 'Light' : 
-            (Number(stats.rain) <= 20 ? 'Moderate' : 'Heavy')))
-          } 
-          range="0-10 mm" 
-        />
+        <DiagnosticCard label="Temp"     value={stats.temp}     min={18} max={32} unit="°C" icon={Thermometer} color="#FF6B35" range="18-32 °C" trendInfo={trend.temperature} />
+        <DiagnosticCard label="Humidity" value={stats.humidity} min={40} max={70} unit="%"  icon={Droplets}    color="#4DA8FF" range="40-70 %"  trendInfo={trend.humidity} />
+        <DiagnosticCard label="Sunlight" value={stats.light}    min={1000} max={8000} unit="lx" icon={Sun}     color="#FFD600" range="1k-8k lx" />
+        <DiagnosticCard label="Rain"     value={stats.rain}     min={0} max={100} unit="mm" icon={CloudRain}   color="#3B82F6" range="0-100 mm" />
       </div>
 
-      {/* ─── REGIONAL & FORECAST ─── */}
-      <section style={{ background: 'white', borderRadius: '24px', padding: '1.5rem', border: `1px solid ${COLORS.border}`, marginBottom: '1.5rem' }}>
-        <h3 style={{ fontSize: '0.75rem', fontWeight: 800, color: COLORS.text, marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Navigation size={18} color={COLORS.primary} /> Regional Data
-        </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
-           <RegionalMetric label="AQI" value={apiWeather?.aqi || '--'} icon={Activity} color="#10B981" />
-           <RegionalMetric label="Clouds" value={apiWeather?.clouds ? `${apiWeather.clouds}%` : '--'} icon={CloudSun} color="#3B82F6" />
-           <RegionalMetric label="Wind" value={apiWeather?.windSpeed || '--'} icon={Wind} color="#F59E0B" />
-           <RegionalMetric label="Feels" value={`${apiWeather?.feelsLike || '--'}°`} icon={Thermometer} color="#EF4444" />
-           <RegionalMetric label="Press" value={apiWeather?.pressure || '--'} icon={Gauge} color="#8B5CF6" />
-           <RegionalMetric label="Visib" value={apiWeather?.visibility || '--'} icon={Eye} color="#10B981" />
-           <RegionalMetric label="Rise" value={apiWeather?.sunrise || '--'} icon={Sunrise} color={COLORS.primary} />
-           <RegionalMetric label="Set" value={apiWeather?.sunset || '--'} icon={Sunset} color={COLORS.secondary} />
+      {/* Regional Data Grid */}
+      <motion.section variants={itemFadeUp} style={{ marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(59, 130, 246, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Navigation size={18} color="#3B82F6" strokeWidth={2.5} />
+          </div>
+          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: 'var(--text-main)' }}>Regional Intelligence</h3>
         </div>
-      </section>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
+           <RegionalMetric label="AQI"    value={apiWeather?.aqi || '--'} icon={Activity} color="#10B981" />
+           <RegionalMetric label="Clouds" value={apiWeather?.clouds ? `${apiWeather.clouds}%` : '--'} icon={Cloud} color="#64748B" />
+           <RegionalMetric label="Wind"   value={apiWeather?.windSpeed || '--'} icon={Wind} color="#F59E0B" />
+           <RegionalMetric label="Feels"  value={`${apiWeather?.feelsLike || '--'}°`} icon={Thermometer} color="#EF4444" />
+           <RegionalMetric label="Press"  value={apiWeather?.pressure || '--'} icon={Gauge} color="#8B5CF6" />
+           <RegionalMetric label="Visib"  value={apiWeather?.visibility || '--'} icon={Eye} color="#10B981" />
+           <RegionalMetric label="UV"     value={apiWeather?.uvIndex || '--'} icon={Zap} color="#F97316" />
+           <RegionalMetric label="Set"    value={apiWeather?.sunset || '--'} icon={Sunset} color="#3B82F6" />
+        </div>
+      </motion.section>
 
-      <section style={{ background: 'white', borderRadius: '24px', padding: '1.5rem', border: `1px solid ${COLORS.border}`, marginBottom: '1.5rem' }}>
-        <h3 style={{ margin: '0 0 1rem 0', fontSize: '0.75rem', fontWeight: 800, color: COLORS.text, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <LineChart size={18} color={COLORS.primary} /> 5-Day Forecast
-        </h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {(apiForecast || []).map((day, idx) => {
-            const getIcon = (cond) => {
-              const c = (cond || '').toLowerCase();
-              if (c.includes('rain')) return <CloudRain size={16} color={COLORS.secondary} />;
-              if (c.includes('cloud')) return <CloudSun size={16} color={COLORS.subtext} />;
-              return <Sun size={16} color={COLORS.warning} />;
-            };
-            return (
-              <div key={idx} style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '20px', border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: '0 2px 8px rgba(0,0,0,0.01), inset 0 1px 1px rgba(255,255,255,0.9)' }}>
-                <div style={{ width: '60px' }}><p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 800, color: COLORS.text }}>{day.date}</p></div>
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #E2E8F0' }}>
-                    {getIcon(day.condition)}
-                  </div>
-                  <div>
-                    <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 800, color: COLORS.text }}>{day.condition}</p>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Umbrella size={10} color={COLORS.secondary} />
-                      <span style={{ fontSize: '0.6rem', fontWeight: 800, color: COLORS.secondary }}>{day.rainProb || '0%'}</span>
-                    </div>
+      {/* 5-Day Forecast */}
+      <motion.section variants={itemFadeUp} style={{ marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'var(--primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <LineChart size={18} color="var(--primary)" strokeWidth={2.5} />
+          </div>
+          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: 'var(--text-main)' }}>5-Day Forecast</h3>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {(apiForecast || []).map((day, idx) => (
+            <motion.div 
+              key={idx} 
+              whileTap={{ scale: 0.98 }}
+              style={{ 
+                display: 'flex', alignItems: 'center', padding: '1rem', 
+                background: 'white', borderRadius: 'var(--radius-lg)', 
+                border: '1px solid var(--glass-stroke)', boxShadow: 'var(--shadow-sm)' 
+              }}
+            >
+              <div style={{ width: '70px' }}>
+                <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 900, color: 'var(--text-main)' }}>{day.date}</p>
+              </div>
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {day.condition.includes('Rain') ? <CloudRain size={20} color="#3B82F6" /> : <Sun size={20} color="#F59E0B" />}
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-main)' }}>{day.condition}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Umbrella size={12} color="#3B82F6" />
+                    <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#3B82F6' }}>{day.rainProb || '0%'}</span>
                   </div>
                 </div>
-                <p style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: COLORS.text }}>{day.temp}°</p>
               </div>
-            );
-          })}
+              <p style={{ margin: 0, fontSize: '1.2rem', fontWeight: 950, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>{day.temp}°</p>
+            </motion.div>
+          ))}
         </div>
-      </section>
+      </motion.section>
 
-      <motion.button whileTap={{ scale: 0.95 }} onClick={() => navigate('/analytics', { state: { tab: 'weather' } })} style={{ width: '100%', height: '52px', borderRadius: '100px', background: '#0F172A', border: 'none', color: 'white', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>View Weather Analytics</motion.button>
-
-    </div>
+      <motion.button 
+        variants={itemFadeUp}
+        whileTap={{ scale: 0.98 }} 
+        onClick={() => navigate('/analytics', { state: { tab: 'weather' } })} 
+        className="btn-premium"
+        style={{ width: '100%', marginTop: '1rem' }}
+      >
+        DETAILED ANALYTICS <ChevronRight size={18} />
+      </motion.button>
+    </motion.div>
   );
 };
 

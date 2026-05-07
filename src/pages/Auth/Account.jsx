@@ -28,6 +28,14 @@ const COLORS = {
   glass: 'rgba(255, 255, 255, 0.9)'
 };
 
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.1 }
+  }
+};
+
 const SectionHeader = ({ title, color = COLORS.primary }) => (
   <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center' }}>
     <div style={{ width: '4px', height: '16px', background: color, borderRadius: '2px', marginRight: '12px' }} />
@@ -66,7 +74,7 @@ const InputField = ({ label, value, onChange, placeholder, type = "text", icon: 
 const Account = () => {
   const navigate = useNavigate();
   const { 
-    user, updateUser, logout, farmInfo, updateBranding, syncDeviceId, currentGPS 
+    user, updateUser, logout, farmInfo, updateBranding, syncDeviceId, currentGPS, syncGPS 
   } = useApp();
   
   const [formData, setFormData] = useState({ 
@@ -132,10 +140,12 @@ const Account = () => {
 
   const handleFetchLocation = async () => {
     try {
-      const coordinates = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
-      const locStr = `${coordinates.coords.latitude.toFixed(4)}, ${coordinates.coords.longitude.toFixed(4)}`;
-      setFormData(prev => ({ ...prev, location: locStr }));
-      showToast("Geospatial Link Active! 📍");
+      const city = await syncGPS();
+      if (city) {
+        showToast(`Geospatial Link Active: ${city} 📍`);
+      } else {
+        showToast("GPS Link Timeout.", 'error');
+      }
     } catch (err) {
       showToast("GPS Link Timeout.", 'error');
     }
@@ -144,29 +154,48 @@ const Account = () => {
   const handleSaveChanges = async () => {
     if (isSaving) return;
     setIsSaving(true);
+    console.log("💾 Account: Initiating Sync...", { formData, codename, clientId });
     try {
       const success = await updateUser(formData);
       if (success) {
-        await updateBranding({ projectName: codename, name: clientId });
-        syncDeviceId(codename, clientId);
-        showToast("Cloud Synchronized Successfully ✅");
-      } else { throw new Error("Update Failed"); }
-    } catch (e) { showToast("Sync Error Occurred.", 'error'); } 
+        console.log("✅ Account: User Profile Saved");
+        const brandSuccess = await updateBranding({ projectName: codename, name: clientId });
+        if (brandSuccess) {
+          console.log("✅ Account: Device Info Saved");
+          syncDeviceId(codename, clientId);
+          showToast("Cloud Synchronized Successfully ✅");
+        } else {
+          showToast("Device Info Save Failed.", 'error');
+        }
+      } else { 
+        console.error("❌ Account: User Profile Save Failed");
+        showToast("Profile Sync Error.", 'error'); 
+      }
+    } catch (e) { 
+      console.error("💥 Account: Critical Sync Failure", e);
+      showToast("Sync Error Occurred.", 'error'); 
+    } 
     finally { setIsSaving(false); }
   };
 
   return (
-    <div className="no-scrollbar" style={{ padding: '16px', background: COLORS.bg, height: '100%', overflowY: 'auto', fontFamily: "'Outfit', sans-serif" }}>
+    <motion.div 
+      initial="hidden"
+      animate="visible"
+      variants={staggerContainer}
+      className="no-scrollbar" 
+      style={{ padding: '16px', paddingBottom: '140px', background: COLORS.bg, minHeight: '100dvh', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', fontFamily: "'Outfit', sans-serif" }}
+    >
       
       {/* 🛡️ TOAST NOTIFICATION */}
       <AnimatePresence>
         {toast && (
           <motion.div
-            initial={{ y: -100, opacity: 0, scale: 0.9 }}
-            animate={{ y: 20, opacity: 1, scale: 1 }}
-            exit={{ y: -100, opacity: 0, scale: 0.9 }}
+            initial={{ y: -100, opacity: 0, scale: 0.9, x: '-50%' }}
+            animate={{ y: 20, opacity: 1, scale: 1, x: '-50%' }}
+            exit={{ y: -100, opacity: 0, scale: 0.9, x: '-50%' }}
             style={{ 
-              position: 'fixed', top: 0, left: '50%', x: '-50%', zIndex: 3000,
+              position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)', zIndex: 3000,
               background: toast?.type === 'error' ? 'rgba(239, 68, 68, 0.95)' : 'rgba(15, 23, 42, 0.95)',
               backdropFilter: 'blur(20px)', color: 'white', padding: '12px 28px', 
               borderRadius: '40px', fontWeight: 800, fontSize: '0.85rem',
@@ -174,8 +203,8 @@ const Account = () => {
               display: 'flex', alignItems: 'center', gap: '10px'
             }}
           >
-            {toast.type === 'error' ? <AlertCircle size={18} /> : <Sparkles size={18} color={COLORS.primary} />}
-            <span>{toast.message}</span>
+            {toast?.type === 'error' ? <AlertCircle size={18} /> : <Sparkles size={18} color={COLORS.primary} />}
+            <span>{toast?.message}</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -213,7 +242,7 @@ const Account = () => {
               <span style={{ fontSize: '0.8rem', color: COLORS.subtext, fontWeight: 700, wordBreak: 'break-all' }}>{user?.email}</span>
               {user?.isGuest && (
                 <motion.div 
-                  onClick={() => { navigator.clipboard.writeText(user.email); showToast("Registry ID Copied!"); }}
+                  onClick={() => { if (user?.email) { navigator.clipboard.writeText(user.email); showToast("Registry ID Copied!"); } }}
                   whileTap={{ scale: 0.95 }}
                   style={{ 
                     display: 'inline-flex', alignItems: 'center', gap: '6px', 
@@ -223,7 +252,7 @@ const Account = () => {
                   }}
                 >
                   <Fingerprint size={12} />
-                  <span style={{ fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{user.email.split('@')[0]}</span>
+                  <span style={{ fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{user?.email?.split('@')[0] || 'GUEST'}</span>
                 </motion.div>
               )}
             </div>
@@ -241,7 +270,7 @@ const Account = () => {
           </div>
           <InputField label="Name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} icon={User} iconColor="#F59E0B" />
           <InputField label="Email" value={formData.email} readOnly icon={Mail} iconColor="#3B82F6" />
-          <InputField label="Phone" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} icon={Phone} iconColor="#10B981" />
+          <InputField label="Phone" type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} icon={Phone} iconColor="#10B981" />
           
           <div onClick={handleFetchLocation} style={{ padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', background: 'rgba(16, 185, 129, 0.02)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -267,18 +296,18 @@ const Account = () => {
         </div>
 
         {/* 🚀 GLOBAL ACTIONS */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '12px' }}>
           <motion.button 
             whileTap={{ scale: 0.95 }} onClick={() => { logout(); navigate('/login'); }}
-            style={{ height: '64px', borderRadius: '24px', background: 'white', color: COLORS.danger, border: `1px solid ${COLORS.danger}20`, fontWeight: 900, fontSize: '0.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+            style={{ height: '52px', borderRadius: '16px', background: 'white', color: COLORS.danger, border: `1px solid ${COLORS.danger}20`, fontWeight: 900, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
           >
-            <LogOut size={20} /> SIGN OUT
+            <LogOut size={18} /> LOGOUT
           </motion.button>
           <motion.button 
             whileTap={{ scale: 0.95 }} onClick={handleSaveChanges} disabled={isSaving}
-            style={{ height: '64px', borderRadius: '24px', background: COLORS.primary, color: 'white', border: 'none', fontWeight: 900, fontSize: '0.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: `0 15px 30px ${COLORS.primary}30` }}
+            style={{ height: '52px', borderRadius: '16px', background: COLORS.primary, color: 'white', border: 'none', fontWeight: 900, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: `0 10px 20px ${COLORS.primary}25` }}
           >
-            {isSaving ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} style={{ width: '18px', height: '18px', border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%' }} /> : <><Save size={20} /> SAVE</>}
+            {isSaving ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} style={{ width: '18px', height: '18px', border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%' }} /> : <><Save size={18} /> SAVE CHANGES</>}
           </motion.button>
         </div>
 
@@ -331,7 +360,7 @@ const Account = () => {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

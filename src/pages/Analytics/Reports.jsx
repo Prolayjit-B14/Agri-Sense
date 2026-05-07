@@ -1,6 +1,7 @@
 import React, { useState, useMemo, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../../state/AppContext';
+import { useTelemetry } from '../../state/TelemetryContext';
 import { 
   FileText, Download, ShieldCheck, 
   RefreshCw, FileCheck, Loader2,
@@ -11,10 +12,8 @@ import {
   ZoomIn, ZoomOut, Eye, Award, 
   TrendingUp, ClipboardList, Sparkles,
   ChevronLeft, PieChart, Shield,
-  ArrowRight, FilePlus, RotateCcw, AlertTriangle, Maximize
+  ArrowRight, FilePlus, RotateCcw, AlertTriangle, Maximize, Globe
 } from 'lucide-react';
-import FarmMap from './farm_intelligence_map.png';
-
 // ─── DESIGN TOKENS ──────────────────────────────────────────────────────────
 const T = {
   emerald: '#10B981',
@@ -99,10 +98,18 @@ const ReportPage = memo(({ title, subtitle, color = T.emerald, children, activeP
 ));
 
 const Reports = () => {
-  const { sensorData } = useApp();
+  const { sensorData } = useTelemetry();
   const [genStep, setGenStep] = useState(0); 
   const [activePage, setActivePage] = useState(1);
   const TOTAL_PAGES = 11;
+
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1, delayChildren: 0.1 }
+    }
+  };
   
   const steps = useMemo(() => [
     { label: 'System Ready', icon: <Cpu /> },
@@ -119,11 +126,16 @@ const Reports = () => {
   };
 
   return (
-    <div style={{ 
-      padding: '0.8rem 1rem', paddingBottom: '85px', background: T.bg, height: '100dvh', 
-      display: 'flex', flexDirection: 'column', boxSizing: 'border-box',
-      fontFamily: "'Outfit', sans-serif", overflow: 'hidden'
-    }}>
+    <motion.div 
+      variants={staggerContainer}
+      initial="hidden"
+      animate="visible"
+      style={{ 
+        padding: '0.8rem 1rem', paddingBottom: '140px', background: T.bg, height: '100dvh', 
+        display: 'flex', flexDirection: 'column', boxSizing: 'border-box',
+        fontFamily: "'Outfit', sans-serif", overflow: 'hidden'
+      }}
+    >
       
       {/* ─── STATUS HEADER / CTA ─── */}
       <section style={{ marginBottom: '0.5rem', flexShrink: 0 }}>
@@ -245,8 +257,8 @@ const Reports = () => {
                   {/* ... (children content same as before) */}
                   {activePage === 1 && (
                     <>
-                      <div style={{ width: '100%', height: '35%', borderRadius: '8px', overflow: 'hidden', border: '1px solid #F1F5F9', marginBottom: '0.4rem' }}>
-                        <img src={FarmMap} alt="Map" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <div style={{ width: '100%', height: '35%', borderRadius: '8px', overflow: 'hidden', border: '1px solid #F1F5F9', marginBottom: '0.4rem', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Globe size={48} color={T.emerald} opacity={0.15} strokeWidth={1} />
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px' }}>
                         <DataCard label="Stability" value="98.4%" status="Nominal" />
@@ -296,7 +308,7 @@ const Reports = () => {
         .animate-spin { animation: spin 1s linear infinite; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
       `}</style>
-    </div>
+    </motion.div>
   );
 };
 

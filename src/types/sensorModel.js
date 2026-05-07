@@ -28,6 +28,7 @@ export const INITIAL_SENSOR_DATA = {
   },
   water: { 
     level: null, 
+    flow: null,
     pumpActive: false, 
     healthIndex: null
   },

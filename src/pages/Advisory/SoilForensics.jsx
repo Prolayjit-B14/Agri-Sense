@@ -19,6 +19,7 @@ import { Geolocation } from '@capacitor/geolocation';
 
 // Context & Utils
 import { useApp } from '../../state/AppContext';
+import { useTelemetry } from '../../state/TelemetryContext';
 import { MASTER_CONFIG } from '../../setup';
 
 // ─── DESIGN TOKENS ─────────────────────────────────────────────────────────
@@ -40,8 +41,16 @@ const COLORS = {
 
 const RAD = {
   card: '24px',
-  inner: '20px',
-  btn: '16px'
+  inner: '18px',
+  btn: '14px'
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.1 }
+  }
 };
 
 // ─── MATH UTILS ───────────────────────────────────────────────────────────
@@ -79,7 +88,7 @@ const StepIndicator = ({ currentStep }) => (
           }}>
             {currentStep > step ? <CheckCircle2 size={16} /> : step}
           </div>
-          <span style={{ fontSize: '0.55rem', fontWeight: 800, color: currentStep >= step ? COLORS.textMain : COLORS.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <span style={{ fontSize: '0.6rem', fontWeight: 800, color: currentStep >= step ? COLORS.textMain : COLORS.textMuted, letterSpacing: '0.02em' }}>
             {['Map', 'Strategy', 'Collect', 'Zones', 'Report'][step-1]}
           </span>
         </div>
@@ -89,7 +98,8 @@ const StepIndicator = ({ currentStep }) => (
 );
 
 const SoilForensics = () => {
-  const { sensorData, devices, syncData, currentGPS, setCurrentGPS } = useApp();
+  const { syncData, currentGPS, setCurrentGPS, syncGPS } = useApp();
+  const { sensorData, devices } = useTelemetry();
   
   const isSoilNodeActive = useMemo(() => {
     const node = devices?.['soil_node'];
@@ -254,7 +264,7 @@ const SoilForensics = () => {
     return () => clearTimeout(timer);
   }, [isCollecting, collectProgress, currentReadings, activeSampleIndex, sensorData.soil, mapCenter]);
 
-  const calculateIDWValue = (x, y, type) => {
+  const calculateIDWValue = useCallback((x, y, type) => {
     if (samples.length === 0) return 0;
     let num = 0, den = 0;
     samples.forEach(s => {
@@ -264,7 +274,17 @@ const SoilForensics = () => {
       num += val * w; den += w;
     });
     return num / den;
-  };
+  }, [samples]);
+
+  const idwGrid = useMemo(() => {
+    if (currentStep !== 4) return [];
+    return Array.from({ length: 400 }).map((_, i) => {
+      const x = (i % 20) * 20;
+      const y = Math.floor(i / 20) * 22;
+      const val = calculateIDWValue(x, y, analysisLayer);
+      return { x, y, val };
+    });
+  }, [currentStep, analysisLayer, calculateIDWValue]);
 
   const getZoneColor = (val, type) => {
     const t = type === 'Moisture' ? [15, 25, 35, 50] : type === 'PH' ? [5.5, 6.2, 7.3, 8.0] : [30, 50, 75, 100];
@@ -330,7 +350,12 @@ const SoilForensics = () => {
   );
 
   return (
-    <div style={{ background: '#FFFFFF', minHeight: '100%', paddingBottom: '0', fontFamily: "'Outfit', sans-serif" }}>
+    <motion.div 
+      variants={staggerContainer}
+      initial="hidden"
+      animate="visible"
+      style={{ background: 'var(--bg-main)', minHeight: '100%', paddingBottom: '140px', fontFamily: "'Outfit', sans-serif" }}
+    >
       <StepIndicator currentStep={currentStep} />
       <div style={{ padding: '1.25rem' }}>
         <AnimatePresence mode="wait">
@@ -339,7 +364,7 @@ const SoilForensics = () => {
               {!isSoilNodeActive && (
                 <div style={{ 
                   position: 'absolute', inset: '-10px', zIndex: 1000, 
-                  background: 'rgba(255, 255, 255, 0.92)', backdropFilter: 'blur(12px)', 
+                  background: 'rgba(255, 255, 255, 0.95)', 
                   borderRadius: RAD.card, display: 'flex', flexDirection: 'column', 
                   alignItems: 'center', justifyContent: 'center', textAlign: 'center', 
                   padding: '2rem', border: `2px dashed ${COLORS.border}`
@@ -352,8 +377,8 @@ const SoilForensics = () => {
                     All Soil Node sensors (N, P, K, pH, Moisture) must be active for a forensic audit. Please connect your hardware to proceed.
                   </p>
                   <div style={{ display: 'flex', gap: '12px', width: '100%', maxWidth: '320px' }}>
-                    <button onClick={() => window.history.back()} style={{ flex: 1, height: '54px', borderRadius: RAD.btn, border: `1px solid ${COLORS.border}`, background: 'white', color: COLORS.textMain, fontWeight: 900, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Go Back</button>
-                    <button onClick={() => syncData()} style={{ flex: 1, height: '54px', borderRadius: RAD.btn, border: 'none', background: COLORS.primary, color: 'white', fontWeight: 900, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', boxShadow: `0 8px 20px ${COLORS.primary}30` }}>Retry Sync</button>
+                    <button onClick={() => window.history.back()} style={{ flex: 1, height: '54px', borderRadius: RAD.btn, border: `1px solid ${COLORS.border}`, background: 'white', color: COLORS.textMain, fontWeight: 900, fontSize: '0.75rem', letterSpacing: '0.05em' }}>Go Back</button>
+                    <button onClick={() => syncData()} style={{ flex: 1, height: '54px', borderRadius: RAD.btn, border: 'none', background: COLORS.primary, color: 'white', fontWeight: 900, fontSize: '0.75rem', letterSpacing: '0.05em', boxShadow: `0 8px 20px ${COLORS.primary}30` }}>Retry Sync</button>
                   </div>
                 </div>
               )}
@@ -361,16 +386,16 @@ const SoilForensics = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.25rem', alignItems: 'center' }}>
                 <div>
                   <h2 style={{ fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain, margin: 0 }}>Field Mapping</h2>
-                  <p style={{ fontSize: '0.65rem', fontWeight: 800, color: COLORS.subtext, margin: '2px 0 0 0' }}>{locationName}</p>
+                  <p style={{ fontSize: '0.65rem', fontWeight: 800, color: COLORS.subtext, margin: '2px 0 0 0' }}>{currentGPS?.city || 'Locating Field...'}</p>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                   <motion.button 
                     whileTap={{ scale: 0.95 }} 
-                    onClick={() => { setLocationName('Refreshing...'); initLocation(); }} 
+                    onClick={async () => { await syncGPS(); }} 
                     style={{ padding: '6px 10px', background: '#ECFDF5', borderRadius: '10px', fontSize: '0.65rem', fontWeight: 900, color: COLORS.primaryDark, border: `1px solid ${COLORS.primary}20`, display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
                   >
                     <Navigation size={12} />
-                    GPS: {gpsAccuracy}m
+                    GPS: {currentGPS?.accuracy?.toFixed(1) || '--'}m
                   </motion.button>
                   <motion.button whileTap={{ scale: 0.95 }} onClick={() => setIsMapInteractive(!isMapInteractive)} style={{ padding: '6px 12px', background: isMapInteractive ? COLORS.warning : COLORS.primary, color: 'white', borderRadius: '10px', border: 'none', fontSize: '0.65rem', fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
                     {isMapInteractive ? 'LOCK TO DRAW' : 'UNLOCK MAP'}
@@ -475,10 +500,9 @@ const SoilForensics = () => {
                 <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
                   <defs><clipPath id="fClp_final_z"><polygon points={boundaryPoints.map(p => `${p.x},${p.y}`).join(' ')} /></clipPath></defs>
                   <g clipPath="url(#fClp_final_z)">
-                    {Array.from({length: 400}).map((_, i) => { 
-                      const x = (i % 20) * 20, y = Math.floor(i / 20) * 22, val = calculateIDWValue(x, y, analysisLayer); 
-                      return <rect key={i} x={x} y={y} width="20" height="22" fill={getZoneColor(val, analysisLayer)} fillOpacity="0.75" />; 
-                    })}
+                    {idwGrid.map((cell, i) => (
+                      <rect key={i} x={cell.x} y={cell.y} width="20" height="22" fill={getZoneColor(cell.val, analysisLayer)} fillOpacity="0.75" />
+                    ))}
                   </g>
                   <polygon points={boundaryPoints.map(p => `${p.x},${p.y}`).join(' ')} fill="none" stroke="white" strokeWidth="2" strokeDasharray="4 2" />
                 </svg>
@@ -566,7 +590,7 @@ const SoilForensics = () => {
           )}
         </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

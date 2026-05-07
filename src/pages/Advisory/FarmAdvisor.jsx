@@ -17,6 +17,7 @@ import {
   Lightbulb, CalendarDays, Layers
 } from 'lucide-react';
 import { useApp } from '../../state/AppContext';
+import { useTelemetry } from '../../state/TelemetryContext';
 
 // ─── ASSET IMPORTS ──────────────────────────────────────────────────────────
 import cropCsv from '../../data/geo/CropSuitabilityData_Final.csv?url';
@@ -48,6 +49,19 @@ const RAD = {
   btn: '14px'
 };
 
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.1 }
+  }
+};
+
+const itemFadeUp = {
+  hidden: { opacity: 0, y: 15 },
+  visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 30 } }
+};
+
 const DESIGN = {
   container: '1.25rem',
   cardPad: '1.25rem 1rem',
@@ -77,7 +91,7 @@ const CropBottomSheet = ({ isOpen, onClose, crops, onSelect, selectedCrop }) => 
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={onClose}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, backdropFilter: 'blur(4px)' }}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000 }}
           />
           <motion.div 
             initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
@@ -95,7 +109,6 @@ const CropBottomSheet = ({ isOpen, onClose, crops, onSelect, selectedCrop }) => 
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                 <Search size={18} color="#94A3B8" style={{ position: 'absolute', left: '16px' }} />
                 <input 
-                  autoFocus
                   placeholder="Search 86 Industrial Crops..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -155,11 +168,18 @@ const CropBottomSheet = ({ isOpen, onClose, crops, onSelect, selectedCrop }) => 
 // ─── MAIN COMPONENT ─────────────────────────────────────────────────────────
 
 const FarmAdvisor = () => {
-  const { sensorData, user } = useApp();
+  const { user, currentGPS } = useApp();
+  const { sensorData } = useTelemetry();
   const [selectedCrop, setSelectedCrop] = useState('rice');
   const [db, setDb] = useState({ crops: null, loading: true, error: false });
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('sensor'); // 'sensor' or 'suitability'
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsReady(true), 400);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Guard against missing context or sensors
   if (!sensorData) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF' }}><RefreshCw className="animate-spin" color={COLORS.primary} /></div>;
@@ -585,7 +605,7 @@ const FarmAdvisor = () => {
         isValid: canFertilize,
         urea: urea * 1, ssp: ssp * 1, mop: mop * 1,
         product: meta.fert?.common || 'NPK Mix',
-        reason: canFertilize ? (meta.fert?.logic || fertReason) : "OFFLINE - CONNECT NPK SENSORS",
+        reason: canFertilize ? (meta.fert?.logic || fertReason) : "CONNECT NPK SENSORS",
         stage: meta.fert?.stage || 'Vegetative',
         products: meta.fert?.products || ['Urea', 'DAP', 'MOP']
       },
@@ -601,7 +621,19 @@ const FarmAdvisor = () => {
       },
       meta
     };
-  }, [db, selectedCrop, sensorData]);
+  }, [
+    db, 
+    selectedCrop, 
+    sensorData?.soil?.moisture, 
+    sensorData?.soil?.temp, 
+    sensorData?.soil?.ph,
+    sensorData?.soil?.npk?.n,
+    sensorData?.soil?.npk?.p,
+    sensorData?.soil?.npk?.k,
+    sensorData?.weather?.temp,
+    sensorData?.weather?.rainLevel,
+    sensorData?.vision?.detection
+  ]);
 
   if (db.loading || !brain) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF' }}><RefreshCw className="animate-spin" color={COLORS.primary} /></div>;
 
@@ -625,12 +657,33 @@ const FarmAdvisor = () => {
   const sectionHeader = { margin: '0 0 1.25rem 0', fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain, display: 'flex', alignItems: 'center', gap: '10px' };
 
   return (
-    <div className="no-scrollbar" style={{ background: '#FFFFFF', minHeight: '100dvh', paddingBottom: '2rem', fontFamily: "'Outfit', sans-serif", overflowX: 'hidden' }}>
+    <motion.div 
+      variants={staggerContainer}
+      initial="hidden"
+      animate="visible"
+      className="no-scrollbar" 
+      style={{ 
+        background: 'var(--bg-main)', 
+        minHeight: '100dvh', 
+        paddingBottom: '140px',
+        fontFamily: "'Outfit', sans-serif", 
+        overflowX: 'hidden',
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+    >
+      {!isReady ? (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '15px' }}>
+          <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} style={{ width: '40px', height: '40px', border: '3px solid #10B981', borderTopColor: 'transparent', borderRadius: '50%' }} />
+          <div style={{ fontSize: '0.75rem', fontWeight: 900, color: '#94A3B8', letterSpacing: '0.1em' }}>CALIBRATING ADVISOR...</div>
+        </div>
+      ) : (
+        <>
 
       {/* 🚀 INDUSTRIAL CROP HERO CARD - PREMIUM REDESIGN */}
       <div style={{ padding: `0.5rem ${DESIGN.container} ${DESIGN.container}` }}>
         <motion.div 
-          initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+          variants={itemFadeUp}
           style={{ 
             background: 'linear-gradient(165deg, #10B98105 0%, #FFFFFF 50%, #FBFDFF 100%)', borderRadius: '24px', padding: DESIGN.cardPad,
             boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)', border: '1px solid rgba(255, 255, 255, 0.8)',
@@ -653,7 +706,7 @@ const FarmAdvisor = () => {
               <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: getCropIcon(brain.meta.type, selectedCrop).color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {React.createElement(getCropIcon(brain.meta.type, selectedCrop).icon, { size: 16, color: 'white' })}
               </div>
-              <h1 style={{ fontSize: '1rem', fontWeight: 950, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.02em', margin: 0 }}>
+              <h1 style={{ fontSize: '1.1rem', fontWeight: 950, color: '#0F172A', letterSpacing: '0.02em', margin: 0 }}>
                 {formatCropName(selectedCrop)}
               </h1>
             </div>
@@ -668,10 +721,10 @@ const FarmAdvisor = () => {
             {[
               { label: 'Soil Type', val: 'Loamy', icon: Layers, color: COLORS.primary },
               { label: 'Climate', val: 'Sub-Tropical', icon: Cloud, color: COLORS.secondary },
-              { label: 'Region', val: 'Nadia, WB', icon: MapPin, color: '#6366F1' },
-              { label: 'Market Demand', val: brain.demand, icon: TrendingUp, color: getDemandColor(brain.demand) },
+              { label: 'Region', val: currentGPS?.city || 'Regional Hub', icon: MapPin, color: '#6366F1' },
+              { label: 'Market', val: brain.demand, icon: TrendingUp, color: getDemandColor(brain.demand) },
               { label: 'Crop Category', val: brain.meta.type, icon: Leaf, color: COLORS.primary },
-              { label: 'Geo-Location', val: 'Kalyani', icon: MapPin, color: COLORS.secondary }
+              { label: 'Location', val: currentGPS?.city || 'Active Field', icon: MapPin, color: COLORS.secondary }
             ].map((p, i) => (
               <div key={i} style={{ 
                 background: `${p.color}08`, padding: '10px', borderRadius: '14px', 
@@ -679,7 +732,7 @@ const FarmAdvisor = () => {
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                   {React.createElement(p.icon, { size: 12, color: p.color })}
-                  <p style={{ margin: 0, fontSize: '0.55rem', fontWeight: 900, color: p.color, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{p.label}</p>
+                  <p style={{ margin: 0, fontSize: '0.6rem', fontWeight: 900, color: p.color, letterSpacing: '0.04em' }}>{p.label}</p>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 700, color: COLORS.textMain, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.val}</p>
@@ -700,8 +753,8 @@ const FarmAdvisor = () => {
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.95rem', fontWeight: 950, color: brain.recColor }}>{brain.recStatus}</span>
-                <span style={{ fontSize: '0.6rem', fontWeight: 900, color: '#94A3B8', textTransform: 'uppercase' }}>
-                  {brain.isOffline ? 'OFFLINE' : `${brain.matchScore}% Match`}
+                <span style={{ fontSize: '0.65rem', fontWeight: 900, color: '#94A3B8' }}>
+                  {brain.isOffline ? 'Sync Pending' : `${brain.matchScore}% Match`}
                 </span>
               </div>
               <p style={{ margin: '2px 0 0 0', fontSize: '0.7rem', fontWeight: 700, color: '#64748B', lineHeight: 1.3 }}>{brain.isOffline ? 'Sensors disconnected. Real-time suitability pending.' : brain.recReason}</p>
@@ -716,19 +769,19 @@ const FarmAdvisor = () => {
               { 
                 id: 'Confidence', 
                 val: brain.isOffline ? 0 : brain.confidence, 
-                label: brain.isOffline ? 'Offline' : (brain.confidence > 85 ? 'High' : 'Moderate'),
+                label: brain.isOffline ? 'Syncing...' : (brain.confidence > 85 ? 'High' : 'Moderate'),
                 color: '#6366F1'
               },
               { 
                 id: 'Match Score', 
                 val: brain.isOffline ? 0 : brain.matchScore, 
-                label: brain.isOffline ? 'Offline' : (brain.matchScore > 80 ? 'Ideal' : (brain.matchScore > 50 ? 'Fair' : 'Low')),
+                label: brain.isOffline ? 'Waiting...' : (brain.matchScore > 80 ? 'Ideal' : (brain.matchScore > 50 ? 'Fair' : 'Low')),
                 color: COLORS.secondary 
               },
               { 
                 id: 'Suitability', 
                 val: brain.isOffline ? 0 : brain.suitabilityScore, 
-                label: brain.isOffline ? 'Offline' : (brain.suitabilityScore > 65 ? 'Optimal' : 'Risky'),
+                label: brain.isOffline ? 'Pending' : (brain.suitabilityScore > 65 ? 'Optimal' : 'Risky'),
                 color: brain.summary.color 
               }
             ].map((m, i) => (
@@ -737,7 +790,7 @@ const FarmAdvisor = () => {
                 border: '1px solid rgba(255, 255, 255, 0.8)', display: 'flex', flexDirection: 'column', gap: '6px',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.02), inset 0 1px 1px rgba(255,255,255,0.9)'
               }}>
-                <span style={{ fontSize: '0.55rem', fontWeight: 900, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{m.id}</span>
+                <span style={{ fontSize: '0.6rem', fontWeight: 900, color: '#94A3B8', letterSpacing: '0.04em' }}>{m.id}</span>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <span style={{ fontSize: '1rem', fontWeight: 950, color: '#1E293B' }}>{m.val > 0 ? `${m.val}%` : '--'}</span>
                   <span style={{ fontSize: '0.6rem', fontWeight: 850, color: m.val > 0 ? m.color : '#94A3B8' }}>{m.label}</span>
@@ -870,7 +923,7 @@ const FarmAdvisor = () => {
               {!brain.fertilizer.isValid ? (
                 <div style={{ padding: '30px 20px', textAlign: 'center', background: '#FFFFFF', borderRadius: '20px', border: `1px dashed ${COLORS.border}` }}>
                   <RefreshCw size={24} color={COLORS.textMuted} style={{ marginBottom: '10px', opacity: 0.5 }} />
-                  <div style={{ fontSize: '0.8rem', fontWeight: 800, color: COLORS.textMuted }}>NPK SENSORS OFFLINE</div>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 800, color: COLORS.textMuted }}>NPK Sensors Offline</div>
                 </div>
               ) : (
                 <>
@@ -885,7 +938,7 @@ const FarmAdvisor = () => {
                         background: '#FFFFFF', borderRadius: '16px', padding: '12px 8px', 
                         border: '1px solid rgba(0,0,0,0.02)', textAlign: 'center'
                       }}>
-                        <div style={{ fontSize: '0.62rem', fontWeight: 900, color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{f.label}</div>
+                        <div style={{ fontSize: '0.62rem', fontWeight: 900, color: COLORS.textMuted, letterSpacing: '0.04em' }}>{f.label}</div>
                         <div style={{ fontSize: '1.25rem', fontWeight: 950, color: COLORS.textMain, marginTop: '2px' }}>{Math.round(f.val)}<span style={{ fontSize: '0.7rem', marginLeft: '2px', opacity: 0.5 }}>kg</span></div>
                       </div>
                     ))}
@@ -896,7 +949,7 @@ const FarmAdvisor = () => {
                     <div style={{ display: 'flex', alignItems: 'start', gap: '10px' }}>
                        <Scale size={13} color={COLORS.primary} style={{ marginTop: '2px' }} />
                        <div>
-                         <div style={{ fontSize: '0.6rem', fontWeight: 900, color: COLORS.textMuted, textTransform: 'uppercase', marginBottom: '2px' }}>Apply:</div>
+                         <div style={{ fontSize: '0.6rem', fontWeight: 900, color: COLORS.textMuted, marginBottom: '2px' }}>Apply:</div>
                          <span style={{ fontSize: '0.8rem', fontWeight: 850, color: COLORS.textMain, lineHeight: 1.3 }}>
                            DAP + SSP (Basal), Urea split, MOP as Potash source
                          </span>
@@ -905,7 +958,7 @@ const FarmAdvisor = () => {
                     <div style={{ display: 'flex', alignItems: 'start', gap: '10px', opacity: 0.7 }}>
                        <Clock size={13} color={COLORS.primary} style={{ marginTop: '2px' }} />
                        <div>
-                         <div style={{ fontSize: '0.6rem', fontWeight: 900, color: COLORS.textMuted, textTransform: 'uppercase', marginBottom: '2px' }}>Schedule:</div>
+                         <div style={{ fontSize: '0.6rem', fontWeight: 900, color: COLORS.textMuted, marginBottom: '2px' }}>Schedule:</div>
                          <span style={{ fontSize: '0.75rem', fontWeight: 750, color: COLORS.textMuted, lineHeight: 1.3 }}>
                            Basal → Tillering → Panicle (split N application)
                          </span>
@@ -936,13 +989,13 @@ const FarmAdvisor = () => {
               {!brain.compost.isValid ? (
                 <div style={{ padding: '30px 20px', textAlign: 'center', background: '#FFFFFF', borderRadius: '20px', border: `1px dashed ${COLORS.border}` }}>
                   <RefreshCw size={24} color={COLORS.textMuted} style={{ marginBottom: '10px', opacity: 0.5 }} />
-                  <div style={{ fontSize: '0.8rem', fontWeight: 800, color: COLORS.textMuted }}>SOIL SENSORS OFFLINE</div>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 800, color: COLORS.textMuted }}>Soil Sensors Offline</div>
                 </div>
               ) : (
                 <>
                   {/* BALANCE STATUS DISPLAY */}
                   <div style={{ padding: `8px ${DESIGN.container}`, textAlign: 'left', marginBottom: DESIGN.cardMargin }}>
-                    <div style={{ fontSize: '0.6rem', fontWeight: 900, color: COLORS.textMuted, textTransform: 'uppercase', marginBottom: '4px' }}>Requirement:</div>
+                    <div style={{ fontSize: '0.6rem', fontWeight: 900, color: COLORS.textMuted, marginBottom: '4px' }}>Requirement:</div>
                     <span style={{ fontSize: '1.8rem', fontWeight: 950, color: COLORS.textMain, lineHeight: 1 }}>{brain.compost.perAcre}</span>
                   </div>
 
@@ -980,7 +1033,7 @@ const FarmAdvisor = () => {
               {brain.isOffline ? (
                 <div style={{ padding: '30px 20px', textAlign: 'center', background: '#FFFFFF', borderRadius: '20px', border: `1px dashed ${COLORS.border}` }}>
                   <RefreshCw size={24} color={COLORS.textMuted} style={{ marginBottom: '10px', opacity: 0.5 }} />
-                  <div style={{ fontSize: '0.8rem', fontWeight: 800, color: COLORS.textMuted }}>THREAT SENSORS OFFLINE</div>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 800, color: COLORS.textMuted }}>Syncing Threat Forensics...</div>
                 </div>
               ) : (
                 brain.pests.detected.map((p, i) => (
@@ -1015,7 +1068,7 @@ const FarmAdvisor = () => {
             }}>
               {['Factor', 'Ideal', 'Industrial Insights'].map((h, i) => (
                 <span key={i} style={{ 
-                  fontSize: '0.75rem', fontWeight: 950, color: '#94A3B8', textTransform: 'uppercase',
+                  fontSize: '0.75rem', fontWeight: 950, color: '#94A3B8',
                   letterSpacing: '0.04em',
                   textAlign: 'left',
                   paddingLeft: i === 0 ? '30px' : 0
@@ -1067,12 +1120,14 @@ const FarmAdvisor = () => {
 
       </div>
 
+        </>
+      )}
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .animate-spin { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
-    </div>
+    </motion.div>
   );
 };
 
