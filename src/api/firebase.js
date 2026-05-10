@@ -1,7 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
-import { getAnalytics } from "firebase/analytics";
 import { getStorage } from "firebase/storage";
 
 // 🚀 YOUR OFFICIAL FIREBASE CONFIG
@@ -18,8 +17,12 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
-export const analytics = getAnalytics(app);
 export const storage = getStorage(app);
+
+// ⚠️ Analytics removed: getAnalytics() was the PRIMARY white-screen crash root cause.
+// It throws synchronously when measurementId is undefined, before React even mounts.
+// Exported as null for backward compatibility with any code that imports it.
+export const analytics = null;
 
 // 🔐 SET PERMANENT PERSISTENCE
 setPersistence(auth, browserLocalPersistence).catch(err => console.error("Persistence Error:", err));

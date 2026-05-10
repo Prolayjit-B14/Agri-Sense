@@ -55,25 +55,16 @@ export const TelemetryProvider = ({ children, user, farmInfo, nodePower }) => {
     const handleMqttMessage = (topic, data) => {
       if (!data || typeof data !== 'object') return;
 
-      // ✅ PRODUCTION ENFORCEMENT: Only parse data if it comes from our hardware node
-      if (data.node === 'AgriSense_Pro_Node') {
-        const updatedSensorData = processMqttMessage(topic, data, sensorDataRef.current);
-        if (updatedSensorData !== sensorDataRef.current) {
-          sensorDataRef.current = updatedSensorData;
-          setSensorData(updatedSensorData); 
-        }
-      }
-
       const timestamp = Date.now();
       const topicLower = topic.toLowerCase();
 
+      // ✅ FIXED: Always update device status from topic routing first,
+      // regardless of node name. This prevents the bug where checkAndSet()
+      // results were silently discarded by the early return below.
       setDevices(prevDevs => {
         const nextDevs = { ...prevDevs };
 
-        // ✅ FIX #5: Always update lastUpdate on every message so watchdog
-        // doesn't prematurely mark nodes offline. Always recalculate systemOverview.
         const checkAndSet = (key) => {
-          const prevStatus = nextDevs[key].status;
           nextDevs[key] = {
             ...nextDevs[key],
             status: 'ACTIVE',
@@ -81,29 +72,27 @@ export const TelemetryProvider = ({ children, user, farmInfo, nodePower }) => {
           };
         };
 
+        // Topic-based routing (always applied for any message on our topic tree)
         if (topicLower.includes('soil') || data.soil) checkAndSet('soil_node');
         if (topicLower.includes('weather') || data.weather) checkAndSet('weather_node');
         if (topicLower.includes('storage') || data.storage) checkAndSet('storage_node');
         if (topicLower.includes('water') || topicLower.includes('irrigation') || data.water || data.irrigation) checkAndSet('water_node');
         if (topicLower.includes('vision') || data.vision) checkAndSet('vision_node');
 
-        // ✅ PRODUCTION ENFORCEMENT: Only accept data from the authorized hardware node.
-        // This prevents legacy simulators or cached MQTT messages from polluting the dashboard.
-        if (data.node === 'AgriSense_Pro_Node') {
-          if (data.soil) checkAndSet('soil_node');
-          if (data.weather) checkAndSet('weather_node');
-          if (data.storage) checkAndSet('storage_node');
-          if (data.irrigation || data.water) checkAndSet('water_node');
-          if (data.vision) checkAndSet('vision_node');
-        } else {
-          // Ignore data from unknown sources (e.g. old simulators)
-          return prevDevs;
-        }
-
-        // Always recalculate since lastUpdate changed
         setSystemOverview(calculateSystemOverview(nextDevs));
         return nextDevs;
       });
+
+      // ✅ PRODUCTION ENFORCEMENT: Only parse sensor values from authorized hardware node.
+      // Device status is updated for ALL messages (above), but sensor DATA only
+      // flows through if it's from our specific hardware node identifier.
+      if (data.node === 'AgriSense_Pro_Node') {
+        const updatedSensorData = processMqttMessage(topic, data, sensorDataRef.current);
+        if (updatedSensorData !== sensorDataRef.current) {
+          sensorDataRef.current = updatedSensorData;
+          setSensorData(updatedSensorData); 
+        }
+      }
 
       setLastGlobalUpdate(new Date().toLocaleTimeString());
     };

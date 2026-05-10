@@ -209,7 +209,10 @@ const CamCard = React.memo(({ isOnline, onClick }) => (
           onError={(e) => { e.target.style.display = 'none'; }}
         />
       ) : (
-        <img src="file:///C:/Users/polu1/.gemini/antigravity/brain/f861e518-2409-4f42-a157-691898edc51a/farm_field_camera_view_1777741743015.png" alt="Field" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4 }} />
+        <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#1e293b', gap: '10px' }}>
+          <Camera size={48} color="rgba(255,255,255,0.1)" />
+          <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.05em' }}>FEED OFFLINE</span>
+        </div>
       )}
       
       <div style={{ 

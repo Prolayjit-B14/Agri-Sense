@@ -5,7 +5,8 @@
 
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate, Outlet } from 'react-router-dom';
-import { App as CapApp } from '@capacitor/app';
+// import { App as CapApp } from '@capacitor/app';
+const CapApp = null; // Fallback for browser
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   LayoutGrid, LineChart, Cpu,
@@ -13,6 +14,7 @@ import {
   Settings as SettingsIcon, FlaskConical, Sparkles,
   AlertCircle, AlertTriangle
 } from 'lucide-react';
+import { TelemetryProvider } from './state/TelemetryContext';
 
 // Context & State
 import { AppProvider, useApp } from './state/AppContext';
@@ -23,64 +25,35 @@ import Sidebar from './ui/Sidebar';
 import AgriBot from './ui/AgriBot';
 
 // 🚀 PERFORMANCE: Lazy load pages to prevent white-screen on startup
-const Login = React.lazy(() => import('./pages/Auth/Login'));
-const Splash = React.lazy(() => import('./pages/Auth/Splash'));
+import Login from './pages/Auth/Login';
+import Splash from './pages/Auth/Splash';
+// 🚀 PERFORMANCE: Lazy load pages
 const Account = React.lazy(() => import('./pages/Auth/Account'));
 const AdminDashboard = React.lazy(() => import('./pages/Auth/AdminDashboard'));
-
 const Dashboard = React.lazy(() => import('./pages/Core/Dashboard'));
 const AlertCenter = React.lazy(() => import('./pages/Core/AlertCenter'));
-
 const SoilMonitor = React.lazy(() => import('./pages/Monitoring/SoilMonitor'));
 const WeatherMonitor = React.lazy(() => import('./pages/Monitoring/WeatherMonitor'));
 const StorageMonitor = React.lazy(() => import('./pages/Monitoring/StorageMonitor'));
 const VisualMonitor = React.lazy(() => import('./pages/Monitoring/VisualMonitor'));
-
 const IrrigationSystem = React.lazy(() => import('./pages/Control/IrrigationSystem'));
 const DeviceManager = React.lazy(() => import('./pages/Control/DeviceManager'));
-
 const AnalyticsHub = React.lazy(() => import('./pages/Analytics/AnalyticsHub'));
 const Reports = React.lazy(() => import('./pages/Analytics/Reports'));
-
 const SoilForensics = React.lazy(() => import('./pages/Advisory/SoilForensics'));
 const FarmAdvisor = React.lazy(() => import('./pages/Advisory/FarmAdvisor'));
-
-// 🚀 PERFORMANCE: Route Preloading Engine
-const preloadRoute = (factory) => {
-  const Component = factory();
-  return Component;
-};
-
-// Preload critical routes on module load to prevent skeleton flashes
-setTimeout(() => {
-  import('./pages/Core/Dashboard');
-  import('./pages/Analytics/AnalyticsHub');
-  import('./pages/Monitoring/SoilMonitor');
-  import('./pages/Control/IrrigationSystem');
-  import('./pages/Monitoring/WeatherMonitor');
-  import('./pages/Monitoring/StorageMonitor');
-  import('./pages/Auth/Account');
-}, 500); // Trigger earlier
 
 
 // ─── LOADING SKELETON ──────────────────────────────────────────────────────
 const PageLoader = () => (
   <div style={{ 
-    height: '100%', display: 'flex', flexDirection: 'column', 
-    alignItems: 'center', justifyContent: 'center', background: '#FFFFFF',
-    gap: '20px'
+    height: '100dvh', width: '100vw', display: 'flex', flexDirection: 'column', 
+    alignItems: 'center', justifyContent: 'center', background: '#020617',
+    gap: '20px', zIndex: 10000, position: 'fixed', top: 0, left: 0
   }}>
-    <div style={{ position: 'relative', width: '60px', height: '60px' }}>
-      <motion.div 
-        animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }} 
-        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-        style={{ width: '60px', height: '60px', borderRadius: '18px', background: '#10B981' }}
-      />
-      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
-        <Leaf size={24} color="white" />
-      </div>
-    </div>
-    <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#94A3B8', letterSpacing: '0.1em' }}>SYNCHRONIZING...</div>
+    <div style={{ width: '50px', height: '50px', border: '4px solid #1e293b', borderTopColor: '#10b981', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+    <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#94A3B8', letterSpacing: '0.1em' }}>INITIALIZING ENGINE...</div>
+    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
   </div>
 );
 
@@ -166,28 +139,26 @@ const BottomNav = React.memo(() => {
 
 // ─── ERROR BOUNDARY ────────────────────────────────────────────────────────
 class ErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false };
-  }
+  constructor(props) { super(props); this.state = { hasError: false }; }
   static getDerivedStateFromError(error) { return { hasError: true }; }
-  componentDidCatch(error, errorInfo) { console.error("AgriSense Crash Detected:", error, errorInfo); }
+  componentDidCatch(error, errorInfo) { 
+    console.error("AgriSense Crash Detected:", error, errorInfo);
+    try {
+      const logs = JSON.parse(localStorage.getItem('agrisense_crash_logs') || '[]');
+      logs.push({ message: error.message, stack: error.stack, time: new Date().toISOString() });
+      localStorage.setItem('agrisense_crash_logs', JSON.stringify(logs.slice(-10)));
+    } catch(e) {}
+  }
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ padding: '2rem', textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-main)' }}>
-          <div style={{ width: '80px', height: '80px', borderRadius: '30px', background: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem', border: '1px solid rgba(239, 68, 68, 0.1)' }}>
-            <AlertCircle size={40} color="#EF4444" />
+        <div style={{ padding: '2rem', textAlign: 'center', height: '100dvh', width: '100vw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#020617', color: 'white' }}>
+          <div style={{ width: '70px', height: '70px', borderRadius: '25px', background: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+            <span style={{ fontSize: '2rem' }}>⚠️</span>
           </div>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--text-main)', margin: 0 }}>System Anomaly</h2>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '12px', marginBottom: '2rem', maxWidth: '280px' }}>Our diagnostic module detected a conflict in the interface layer. A re-sync is recommended.</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="btn-premium"
-            style={{ width: '200px' }}
-          >
-            RE-SYNC PLATFORM
-          </button>
+          <h2 style={{ fontSize: '1.4rem', fontWeight: 900, margin: 0 }}>System Anomaly</h2>
+          <p style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: '12px', marginBottom: '2rem', maxWidth: '280px' }}>Our diagnostic module detected a conflict in the interface layer. A re-sync is recommended.</p>
+          <button onClick={() => { localStorage.clear(); window.location.reload(); }} style={{ padding: '14px 30px', background: '#10b981', color: 'white', border: 'none', borderRadius: '14px', fontWeight: 900, cursor: 'pointer' }}>RE-SYNC PLATFORM</button>
         </div>
       );
     }
@@ -312,10 +283,16 @@ const MainLayout = ({ children }) => {
 
 const AppRoutes = () => {
   const app = useApp();
-  if (!app) return null; // Safety gate
+  console.log("🚦 [AppRoutes]: useApp returned", app ? "data" : "NULL");
+  if (!app || Object.keys(app).length === 0) {
+    console.log("🚦 [AppRoutes]: App context is missing or empty!");
+    return <div style={{ color: 'red', padding: '20px', background: 'white', height: '100dvh' }}>App context is missing or empty!</div>;
+  }
   const { user, isDataLoading, isDarkMode, cloudSyncStatus, setIsDataLoading } = app;
   const navigate = useNavigate();
   const location = useLocation();
+
+  console.log("🚦 [AppRoutes]: Current State:", { user: user?.email, isDataLoading, path: location.pathname });
 
   useEffect(() => {
     // ✋ LOADING GUARD: Wait for Cloud Sync to finish
@@ -433,23 +410,9 @@ const AppRoutes = () => {
   );
 };
 
-import { TelemetryProvider } from './state/TelemetryContext';
-
-export default function App() {
-  return (
-    <Router>
-      <AppProvider>
-        <TelemetryWrapper>
-          <ErrorBoundary>
-            <AppRoutes />
-          </ErrorBoundary>
-        </TelemetryWrapper>
-      </AppProvider>
-    </Router>
-  );
-}
 
 // Helper to bridge AppContext and TelemetryProvider
+// ⚠️ MUST be defined BEFORE App() so it is not accessed before initialization (const is not hoisted)
 const TelemetryWrapper = ({ children }) => {
   const { user, farmInfo, nodePower } = useApp();
   return (
@@ -458,4 +421,21 @@ const TelemetryWrapper = ({ children }) => {
     </TelemetryProvider>
   );
 };
+
+export default function App() {
+  console.log("🛠️ [APP]: Rendering App component");
+  return (
+    <Router>
+      <AppProvider>
+        <ErrorBoundary>
+          <TelemetryWrapper>
+            <React.Suspense fallback={<PageLoader />}>
+              <AppRoutes />
+            </React.Suspense>
+          </TelemetryWrapper>
+        </ErrorBoundary>
+      </AppProvider>
+    </Router>
+  );
+}
 

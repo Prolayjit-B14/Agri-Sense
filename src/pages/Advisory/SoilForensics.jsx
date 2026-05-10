@@ -13,9 +13,7 @@ import {
 // Native Bridges
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { Filesystem, Directory } from '@capacitor/filesystem';
-import { Share } from '@capacitor/share';
-import { Geolocation } from '@capacitor/geolocation';
+// ⚠️ Capacitor plugins are loaded dynamically to prevent browser crashes
 
 // Context & Utils
 import { useApp } from '../../state/AppContext';
@@ -135,6 +133,18 @@ const SoilForensics = () => {
     let watchId;
     const initLocation = async () => {
       try {
+        // Dynamic import to prevent browser crash
+        const { Geolocation } = await import('@capacitor/geolocation').catch(() => ({ Geolocation: null }));
+        if (!Geolocation) {
+          // Fallback to browser geolocation
+          if ('geolocation' in navigator) {
+            navigator.geolocation.getCurrentPosition((pos) => {
+              setMapCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+              setGpsAccuracy(pos.coords.accuracy.toFixed(1));
+            }, () => { if (currentGPS) setMapCenter({ lat: currentGPS.lat, lng: currentGPS.lng }); });
+          } else if (currentGPS) setMapCenter({ lat: currentGPS.lat, lng: currentGPS.lng });
+          return;
+        }
         const permissions = await Geolocation.checkPermissions();
         if (permissions.location !== 'granted') {
           const req = await Geolocation.requestPermissions();
@@ -154,7 +164,7 @@ const SoilForensics = () => {
         // Reverse Geocoding
         try {
           const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`, {
-            headers: { 'Accept': 'application/json', 'User-Agent': 'AgriSense/17.1.0' }
+            headers: { 'Accept': 'application/json', 'User-Agent': `AgriSense/${MASTER_CONFIG.VERSION}` }
           });
           if (response.ok) {
             const data = await response.json();
@@ -178,7 +188,11 @@ const SoilForensics = () => {
     initLocation();
     
     return () => {
-      if (watchId) Geolocation.clearWatch({ id: watchId });
+      if (watchId) {
+        import('@capacitor/geolocation').then(({ Geolocation }) => {
+          Geolocation.clearWatch({ id: watchId });
+        }).catch(() => {});
+      }
     };
   }, []);
 
@@ -325,18 +339,29 @@ const SoilForensics = () => {
       const pdfBase64 = pdf.output('datauristring').split(',')[1];
       
       const fileName = `Soil_Audit_${Math.floor(Date.now()/1000)}.pdf`;
-      const result = await Filesystem.writeFile({
-        path: fileName,
-        data: pdfBase64,
-        directory: Directory.Cache
-      });
       
-      await Share.share({
-        title: 'Forensic Soil Audit',
-        text: 'AgriSense Precision Diagnostic Report',
-        url: result.uri,
-        dialogTitle: 'Export Soil Report'
-      });
+      try {
+        // Try native share (Capacitor)
+        const { Filesystem, Directory } = await import('@capacitor/filesystem');
+        const { Share } = await import('@capacitor/share');
+        const result = await Filesystem.writeFile({
+          path: fileName,
+          data: pdfBase64,
+          directory: Directory.Cache
+        });
+        await Share.share({
+          title: 'Forensic Soil Audit',
+          text: 'AgriSense Precision Diagnostic Report',
+          url: result.uri,
+          dialogTitle: 'Export Soil Report'
+        });
+      } catch (nativeErr) {
+        // Fallback: browser download
+        const link = document.createElement('a');
+        link.href = pdf.output('bloburl');
+        link.download = fileName;
+        link.click();
+      }
     } catch (err) {
       console.error('PDF Generation Error:', err);
       alert('PDF Generation Failed. Please ensure maps have loaded.');

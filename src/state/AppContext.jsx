@@ -22,7 +22,7 @@ import { INITIAL_API_WEATHER } from '../types/sensorModel';
 import { ACTUATORS } from '../logic/healthEngine';
 import mqttService from '../api/mqttService';
 
-const AppContext = createContext();
+const AppContext = createContext({});
 
 export const AppProvider = ({ children }) => {
   const navigate = useNavigate();
@@ -84,7 +84,7 @@ export const AppProvider = ({ children }) => {
   const [profileMeta, setProfileMeta] = useState({
     role: 'Industrial Controller',
     accessLevel: 'Admin (L5)',
-    nodesManaged: 4,
+    nodesManaged: 5,
     lastLogin: 'Today',
     commandsIssued: 0,
     alertsResolved: 0,
@@ -428,8 +428,10 @@ export const AppProvider = ({ children }) => {
     updateUser, updateBranding, syncDeviceId, syncData, ACTUATORS
   }), [
     user, farmInfo, isDarkMode, isSidebarOpen, actuators, connectivityStatus, 
-    isDataLoading, profileMeta, nodePower, currentGPS, syncGPS, apiWeather, apiForecast,
-    toggleTheme, toggleNodePower, toggleActuator, ACTUATORS
+    isDataLoading, profileMeta, nodePower, currentGPS, apiWeather, apiForecast,
+    toggleTheme, toggleNodePower, toggleActuator, updateUser, updateBranding, syncData
+    // Note: login, logout, register, googleLogin, guestLogin, syncDeviceId are stable refs (defined inline)
+    // ACTUATORS is a module-level constant, not reactive state — excluded from deps intentionally
   ]);
 
   return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;

@@ -11,8 +11,8 @@
     "android:sync": "npx cap sync",
     "android:open": "npx cap open android",
     "production:sync": "npm run build && npx cap sync android",
-    "production:build:apk": "npm run build && npx cap sync android && cd android && ./gradlew assembleRelease",
-    "production:build:aab": "npm run build && npx cap sync android && cd android && ./gradlew bundleRelease",
+    "production:build:apk": "npm run build && npx cap sync android && cd android && .\\gradlew assembleRelease",
+    "production:build:aab": "npm run build && npx cap sync android && cd android && .\\gradlew bundleRelease",
     "android:clean": "powershell -Command \"Remove-Item -Path android/app/build, android/build, node_modules/@capacitor/app/android/build, node_modules/@capacitor/android/capacitor/build -Recurse -Force -ErrorAction SilentlyContinue\""
   },
   "dependencies": {

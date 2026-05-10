@@ -3,10 +3,9 @@
  * Manages real-time telemetry stream and command publishing to hardware nodes.
  */
 
-import * as mqttModule from 'mqtt';
+import mqtt from 'mqtt';
 import { MASTER_CONFIG } from '../setup';
 
-const mqtt = mqttModule.default || mqttModule;
 const { connect } = mqtt;
 
 const MQTT_CONFIG = {

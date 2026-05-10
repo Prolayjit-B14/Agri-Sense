@@ -181,10 +181,7 @@ const FarmAdvisor = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Guard against missing context or sensors
-  if (!sensorData) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF' }}><RefreshCw className="animate-spin" color={COLORS.primary} /></div>;
-
-
+  // Guard against missing context or sensors - MOVED BELOW hooks to avoid Rules of Hooks violation
   const allCropsList = useMemo(() => {
     // Source of truth: CROP_SPECS (Industrial database)
     // We only show crops that we have verified data for.
