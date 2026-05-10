@@ -31,7 +31,9 @@ html {
   --bg-main: #f8fafc;
   --bg-card: #ffffff;
   --bg-elevated: #ffffff;
-  --bg-dark: #020617;
+  --bg-dark: #0f172a;
+  --bg-sheet: #f1f5f9;
+  --success-soft: rgba(16, 185, 129, 0.12);
   --bg-overlay: rgba(0, 0, 0, 0.12);
   
   --text-main: #0f172a;
@@ -71,6 +73,9 @@ html {
   --bg-main: #0a0f1d; /* Deep Navy Main */
   --bg-card: #161d31; /* Deep Navy Card */
   --bg-elevated: #1e2945; /* Lighter Navy Elevated */
+  --bg-dark: #0a0f1d;
+  --bg-reverse: #ffffff;
+  --bg-sheet: #1e2945;
   --bg-overlay: rgba(0, 0, 0, 0.75);
   
   --text-main: #ffffff;
@@ -96,8 +101,17 @@ html {
 }
 
 /* 🤖 UTILITIES */
-.hide-bot .agribot-root {
+.hide-bot .agribot-root,
+.hide-bot .bottom-nav,
+.hide-bot .top-bar {
   display: none !important;
+}
+
+.hide-bot main, 
+.hide-bot body,
+.hide-bot #root {
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -148,7 +162,7 @@ body {
   margin: 0 auto;
   padding: 0 1.25rem;
   padding-top: env(safe-area-inset-top, 20px);
-  padding-bottom: 100px; /* Room for bottom nav */
+  padding-bottom: 80px; /* Room for bottom nav */
   box-sizing: border-box;
 }
 

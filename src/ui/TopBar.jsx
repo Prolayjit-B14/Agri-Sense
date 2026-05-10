@@ -34,7 +34,7 @@ const TopBar = ({ title }) => {
   const location = useLocation();
 
   return (
-    <header style={{ 
+    <header className="top-bar" style={{ 
       position: 'relative', zIndex: 1000, 
       background: 'var(--glass)',
       backdropFilter: 'blur(20px)',

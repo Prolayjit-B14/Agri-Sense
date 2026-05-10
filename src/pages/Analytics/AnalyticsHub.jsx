@@ -135,7 +135,7 @@ const CustomTooltip = ({ active, payload, unit, isRealtime, color }) => {
 
     return (
       <div style={{
-        background: 'var(--bg-dark)',
+        background: 'var(--bg-card)',
         padding: '5px 9px',
         borderRadius: '10px',
         boxShadow: 'var(--shadow-lg)',
@@ -595,13 +595,13 @@ const AnalyticsHub = () => {
                     tickFormatter={formatXLabel}
                     axisLine={{ stroke: 'var(--border-main)', strokeWidth: 1 }} 
                     tickLine={{ stroke: 'var(--border-main)' }} 
-                    tick={{ fontSize: 9, fontWeight: 800, fill: COLORS.subtext, dy: 10 }} 
+                    tick={{ fontSize: 9, fontWeight: 800, fill: 'var(--text-muted)', dy: 10 }} 
                     interval={0}
                   />
                   <YAxis 
                     axisLine={{ stroke: 'var(--border-main)', strokeWidth: 1 }} 
                     tickLine={{ stroke: 'var(--border-main)' }} 
-                    tick={{ fontSize: 9, fontWeight: 900, fill: COLORS.subtext, dx: -5 }}
+                    tick={{ fontSize: 9, fontWeight: 900, fill: 'var(--text-muted)', dx: -5 }}
                     tickFormatter={(v) => v % 1 === 0 ? v : v.toFixed(1)}
                     domain={[c.min ?? 0, c.max ?? 'auto']}
                     allowDataOverflow={true}

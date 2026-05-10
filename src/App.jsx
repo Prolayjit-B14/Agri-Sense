@@ -74,31 +74,15 @@ const BottomNav = React.memo(() => {
   const activeIndex = tabs.findIndex(tab => tab.path === location.pathname);
 
   return (
-    <nav style={{
+    <nav className="bottom-nav" style={{
       position: 'fixed', bottom: 0, left: 0, right: 0,
       background: 'var(--bg-card)',
       borderTop: '1px solid var(--border-main)',
-      height: '74px', display: 'flex', justifyContent: 'space-around',
+      height: '66px', display: 'flex', justifyContent: 'space-around',
       alignItems: 'center', padding: '0 8px', zIndex: 1000,
       boxShadow: 'var(--shadow-lg)'
     }}>
-      {/* Sliding Active Pill */}
-      {activeIndex !== -1 && (
-        <motion.div
-          layoutId="navPill"
-          transition={{ type: "spring", stiffness: 350, damping: 30 }}
-          style={{
-            position: 'absolute',
-            width: `${100 / tabs.length - 2}%`,
-            height: '58px',
-            background: 'var(--primary-soft)',
-            borderRadius: '20px',
-            left: `${(activeIndex * (100 / tabs.length)) + 1}%`,
-            boxShadow: 'var(--shadow-sm)',
-            zIndex: -1
-          }}
-        />
-      )}
+      {/* Tab Links */}
 
       {tabs.map((item, index) => {
         const Icon = item.icon;
@@ -252,7 +236,7 @@ const MainLayout = ({ children }) => {
   return (
     <div style={{ height: '100dvh', width: '100vw', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg-main)' }}>
       <TopBar title={titles[location.pathname] || 'AgriSense'} />
-      <main ref={mainRef} style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', position: 'relative', paddingBottom: '140px' }}>
+      <main ref={mainRef} style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', position: 'relative', paddingBottom: '120px' }}>
         <div style={{ maxWidth: '500px', margin: '0 auto', width: '100%', height: '100%' }}>
           <AnimatePresence mode="popLayout" custom={navDirection}>
             <motion.div 

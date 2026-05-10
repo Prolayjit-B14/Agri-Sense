@@ -32,7 +32,7 @@ import {
 // ─── DESIGN TOKENS ─────────────────────────────────────────────────────────
 const COLORS = {
   primary: 'var(--primary)',
-  primaryDark: 'var(--primary-deep)',
+  primaryDark: 'var(--primary-dark)',
   secondary: 'var(--secondary)',
   danger: 'var(--danger)',
   warning: 'var(--accent)',
@@ -802,7 +802,7 @@ const FarmAdvisor = () => {
         {activeTab === 'sensor' ? (
           <>
             {/* 📋 SMART MATCH TABLE ENGINE */}
-            <div style={{ ...cardStyle, background: `linear-gradient(165deg, ${COLORS.primary}08 0%, #FFFFFF 100%)` }}>
+            <div style={{ ...cardStyle, background: `linear-gradient(165deg, ${COLORS.primary}08 0%, var(--bg-card) 100%)` }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: DESIGN.cardMargin }}>
                 <div style={{ padding: '0 2px' }}>
                   <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 950, color: COLORS.textMain, display: 'flex', alignItems: 'center', gap: '10px', textAlign: 'left' }}>
@@ -858,10 +858,10 @@ const FarmAdvisor = () => {
             </div>
 
             {/* 🧪 FERTILIZER ENGINE */}
-            <div style={{ ...cardStyle, background: `linear-gradient(165deg, ${COLORS.secondary}08 0%, #FFFFFF 100%)` }}>
+            <div style={{ ...cardStyle, background: `linear-gradient(165deg, ${COLORS.secondary}08 0%, var(--bg-card) 100%)` }}>
               <div style={{ 
                 position: 'absolute', top: 0, left: 0, right: 0, height: '100%', 
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%)', 
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 50%)', 
                 pointerEvents: 'none' 
               }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: DESIGN.cardMargin, position: 'relative', zIndex: 1 }}>
@@ -875,7 +875,7 @@ const FarmAdvisor = () => {
               </div>
 
               {!brain.fertilizer.isValid ? (
-                <div style={{ padding: '30px 20px', textAlign: 'center', background: '#FFFFFF', borderRadius: '20px', border: `1px dashed ${COLORS.border}` }}>
+                <div style={{ padding: '30px 20px', textAlign: 'center', background: 'var(--bg-card)', borderRadius: '20px', border: `1px dashed var(--border-main)` }}>
                   <RefreshCw size={24} color={COLORS.textMuted} style={{ marginBottom: '10px', opacity: 0.5 }} />
                   <div style={{ fontSize: '0.8rem', fontWeight: 800, color: COLORS.textMuted }}>NPK Sensors Offline</div>
                 </div>
@@ -889,8 +889,8 @@ const FarmAdvisor = () => {
                       { label: 'MOP', val: brain.fertilizer.mop }
                     ].map((f, i) => (
                       <div key={i} style={{ 
-                        background: '#FFFFFF', borderRadius: '16px', padding: '12px 8px', 
-                        border: '1px solid rgba(0,0,0,0.02)', textAlign: 'center'
+                        background: 'var(--bg-card)', borderRadius: '16px', padding: '12px 8px', 
+                        border: '1px solid var(--border-main)', textAlign: 'center'
                       }}>
                         <div style={{ fontSize: '0.62rem', fontWeight: 900, color: COLORS.textMuted, letterSpacing: '0.04em' }}>{f.label}</div>
                         <div style={{ fontSize: '1.25rem', fontWeight: 950, color: COLORS.textMain, marginTop: '2px' }}>{Math.round(f.val)}<span style={{ fontSize: '0.7rem', marginLeft: '2px', opacity: 0.5 }}>kg</span></div>
@@ -924,10 +924,10 @@ const FarmAdvisor = () => {
             </div>
 
             {/* 🌿 COMPOST ENGINE */}
-            <div style={{ ...cardStyle, background: `linear-gradient(165deg, ${COLORS.primary}08 0%, #FFFFFF 100%)` }}>
+            <div style={{ ...cardStyle, background: `linear-gradient(165deg, ${COLORS.primary}08 0%, var(--bg-card) 100%)` }}>
               <div style={{ 
                 position: 'absolute', top: 0, left: 0, right: 0, height: '100%', 
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%)', 
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 50%)', 
                 pointerEvents: 'none' 
               }} />
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: DESIGN.cardMargin }}>
@@ -941,7 +941,7 @@ const FarmAdvisor = () => {
                   </div>
 
               {!brain.compost.isValid ? (
-                <div style={{ padding: '30px 20px', textAlign: 'center', background: '#FFFFFF', borderRadius: '20px', border: `1px dashed ${COLORS.border}` }}>
+                <div style={{ padding: '30px 20px', textAlign: 'center', background: 'var(--bg-card)', borderRadius: '20px', border: `1px dashed var(--border-main)` }}>
                   <RefreshCw size={24} color={COLORS.textMuted} style={{ marginBottom: '10px', opacity: 0.5 }} />
                   <div style={{ fontSize: '0.8rem', fontWeight: 800, color: COLORS.textMuted }}>Soil Sensors Offline</div>
                 </div>
@@ -969,10 +969,10 @@ const FarmAdvisor = () => {
             </div>
 
             {/* 🛡️ PEST ENGINE */}
-            <div style={{ ...cardStyle, background: `linear-gradient(165deg, ${COLORS.danger}08 0%, #FFFFFF 100%)` }}>
+            <div style={{ ...cardStyle, background: `linear-gradient(165deg, ${COLORS.danger}08 0%, var(--bg-card) 100%)` }}>
               <div style={{ 
                 position: 'absolute', top: 0, left: 0, right: 0, height: '100%', 
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%)', 
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 50%)', 
                 pointerEvents: 'none' 
               }} />
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: DESIGN.cardMargin }}>
@@ -985,7 +985,7 @@ const FarmAdvisor = () => {
               </div>
 
               {brain.isOffline ? (
-                <div style={{ padding: '30px 20px', textAlign: 'center', background: '#FFFFFF', borderRadius: '20px', border: `1px dashed ${COLORS.border}` }}>
+                <div style={{ padding: '30px 20px', textAlign: 'center', background: 'var(--bg-card)', borderRadius: '20px', border: `1px dashed var(--border-main)` }}>
                   <RefreshCw size={24} color={COLORS.textMuted} style={{ marginBottom: '10px', opacity: 0.5 }} />
                   <div style={{ fontSize: '0.8rem', fontWeight: 800, color: COLORS.textMuted }}>Syncing Threat Forensics...</div>
                 </div>
@@ -1005,7 +1005,7 @@ const FarmAdvisor = () => {
           </>
         ) : (
           /* 🌾 CROP SUITABILITY CHECK TABLE - INDUSTRIAL REDESIGN */
-          <div style={{ ...cardStyle, background: `linear-gradient(165deg, ${COLORS.secondary}08 0%, #FFFFFF 100%)` }}>
+          <div style={{ ...cardStyle, background: `linear-gradient(165deg, ${COLORS.secondary}08 0%, var(--bg-card) 100%)` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: DESIGN.cardMargin, padding: '0 4px' }}>
               <h3 style={{ ...sectionHeader, fontSize: '1.3rem', fontWeight: 950, gap: '10px', marginBottom: 0 }}>
                 {getCropIcon(CROP_SPECS[selectedCrop]?.type, selectedCrop) && React.createElement(getCropIcon(CROP_SPECS[selectedCrop]?.type, selectedCrop).icon, { size: 20, color: COLORS.secondary })}
@@ -1035,7 +1035,7 @@ const FarmAdvisor = () => {
                 display: 'grid', gridTemplateColumns: '1.5fr 1fr 2fr', gap: DESIGN.gap, 
                 padding: `14px 8px`, 
                 minHeight: '60px',
-                borderBottom: idx === brain.suitabilityTable.length - 1 ? 'none' : `1px solid rgba(241, 245, 249, 0.8)`, 
+                borderBottom: idx === brain.suitabilityTable.length - 1 ? 'none' : `1px solid var(--border-main)`, 
                 alignItems: 'start'
               }}>
                 {/* Column 1: Factor */}
@@ -1071,11 +1071,9 @@ const FarmAdvisor = () => {
             ))}
           </div>
         )}
-
       </div>
-
-        </>
-      )}
+    </>
+  )}
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .animate-spin { animation: spin 1s linear infinite; }

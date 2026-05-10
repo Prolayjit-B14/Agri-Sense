@@ -16,7 +16,7 @@ const COLORS = {
   accent: 'var(--accent)',
   danger: 'var(--danger)',
   warning: 'var(--accent)',
-  dark: 'var(--bg-dark)',
+  dark: 'var(--text-main)',
   subtext: 'var(--text-muted)',
   glass: 'var(--glass)',
   stroke: 'var(--glass-stroke)'
@@ -91,6 +91,8 @@ const AgriBot = () => {
       <AnimatePresence>
         {!isOpen && (
           <motion.button
+            key="bot-trigger"
+            className="agribot-root"
             initial={{ scale: 0, opacity: 0, rotate: -45 }}
             animate={{ scale: 1, opacity: 1, rotate: 0 }}
             exit={{ scale: 0, opacity: 0, rotate: 45 }}
@@ -99,14 +101,14 @@ const AgriBot = () => {
             onClick={() => setIsOpen(true)}
             style={{
               position: 'fixed',
-              bottom: '100px', 
+              bottom: '88px', 
               right: '20px',
               width: '68px',
               height: '68px',
               borderRadius: '22px',
-              background: 'var(--bg-dark)',
-              color: 'var(--bg-card)',
-              border: '1px solid var(--border-main)',
+              background: 'var(--primary)',
+              color: 'white',
+              border: 'none',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

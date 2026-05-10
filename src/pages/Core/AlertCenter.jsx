@@ -186,7 +186,7 @@ const AlertCenter = () => {
       {/* 1. FILTERS */}
       <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginBottom: '1.25rem', paddingBottom: '8px' }} className="no-scrollbar">
         {[
-          { id: 'all', label: 'All', icon: Bell, color: COLORS.text },
+          { id: 'all', label: 'All', icon: Bell, color: 'var(--primary)' },
           { id: 'critical', label: 'Critical', icon: Zap, color: COLORS.critical },
           { id: 'warning', label: 'Warnings', icon: AlertTriangle, color: COLORS.warning },
           { id: 'success', label: 'Optimal', icon: ShieldCheck, color: COLORS.success }
@@ -200,7 +200,7 @@ const AlertCenter = () => {
               style={{
                 padding: '10px 18px', borderRadius: '16px', border: 'none',
                 background: isActive ? f.color : 'var(--bg-card)',
-                color: isActive ? 'white' : COLORS.subtext,
+                color: isActive ? 'var(--bg-card)' : COLORS.subtext,
                 fontSize: '0.75rem', fontWeight: 850, whiteSpace: 'nowrap',
                 display: 'flex', alignItems: 'center', gap: '8px',
                 boxShadow: isActive ? `0 8px 25px ${f.color}30` : 'var(--shadow-sm)',
