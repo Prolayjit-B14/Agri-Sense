@@ -17,16 +17,16 @@ export const MASTER_CONFIG = {
   
   // 🔐 AUTHORIZED INVESTIGATORS
   AUTHORIZED_USERS: [
-    { email: import.meta.env.VITE_LOGIN_EMAIL || "admin@agrisense.com", password: import.meta.env.VITE_LOGIN_PASSWORD || "admin123", name: "Prolayjit Biswas" }
+    { email: import.meta.env.VITE_LOGIN_EMAIL || "", password: import.meta.env.VITE_LOGIN_PASSWORD || "", name: "Prolayjit Biswas" }
   ],
-  LOGIN_EMAIL: import.meta.env.VITE_LOGIN_EMAIL || "admin@agrisense.com", 
-  LOGIN_PASSWORD: import.meta.env.VITE_LOGIN_PASSWORD || "admin123",
+  LOGIN_EMAIL: import.meta.env.VITE_LOGIN_EMAIL || "", 
+  LOGIN_PASSWORD: import.meta.env.VITE_LOGIN_PASSWORD || "",
   
   // 🛰️ API & INFRASTRUCTURE
   MQTT_BROKER: import.meta.env.VITE_MQTT_BROKER || "localhost", 
   MQTT_WSS_PORT: 8884, // HiveMQ Cloud WSS
-  MQTT_USER: import.meta.env.VITE_MQTT_USER || "admin",
-  MQTT_PASS: import.meta.env.VITE_MQTT_PASS || "pass",
+  MQTT_USER: import.meta.env.VITE_MQTT_USER || "",
+  MQTT_PASS: import.meta.env.VITE_MQTT_PASS || "",
 
   
   // 🖼️ ASSETS
@@ -34,7 +34,7 @@ export const MASTER_CONFIG = {
   
   // 🗺️ MAP & WEATHER (Optional External APIs)
   OPENWEATHER_API_KEY: import.meta.env.VITE_OPENWEATHER_API_KEY || "", 
-  GEMINI_API_KEY: import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyCkSNHlszuwxAUua2f3k0qPGclcGsENEuU",
+  GEMINI_API_KEY: import.meta.env.VITE_GEMINI_API_KEY || "", 
   WEATHER_CITY: import.meta.env.VITE_WEATHER_CITY || "",
   
   MAP_LAT: parseFloat(import.meta.env.VITE_MAP_LAT) || null,
