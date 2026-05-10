@@ -115,7 +115,7 @@ const Splash = () => {
       
       {/* FOOTER - Versioning */}
       <div style={{ position: 'absolute', bottom: '30px', color: COLORS.textMuted, opacity: 0.6, fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.1em' }}>
-        AGRISENSE PRO • v19.1.1
+        AGRISENSE PRO • v1.4.3
       </div>
 
     </div>

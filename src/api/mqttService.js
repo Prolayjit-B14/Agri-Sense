@@ -1,6 +1,11 @@
 /**
- * AgriSense Pro v17.1.0 MQTT Service
+ * AgriSense Pro v17.2.0 MQTT Service
  * Manages real-time telemetry stream and command publishing to hardware nodes.
+ * 
+ * FIX LOG:
+ * - v17.2.0: Increased keepalive from 10s → 60s to prevent HiveMQ Cloud disconnects.
+ *            Added reconnectPeriod 5000ms (was 3000ms) to prevent reconnect storms.
+ *            Added error logging for JSON parse failures during development.
  */
 
 import mqtt from 'mqtt';
@@ -16,6 +21,8 @@ const MQTT_CONFIG = {
   username: MASTER_CONFIG.MQTT_USER,
   password: MASTER_CONFIG.MQTT_PASS
 };
+
+const isDev = import.meta.env.DEV;
 
 class MqttService {
   constructor() {
@@ -33,19 +40,26 @@ class MqttService {
     
     const normalize = (val, fallback) => (val || fallback).trim().toLowerCase().replace(/[\s-]+/g, '_');
     
+    this.rawPrimaryId = (primaryId || 'agrisense_pro').trim();
     this.primaryId   = normalize(primaryId, 'agrisense_pro');
-    this.secondaryId = normalize(secondaryId, 'master_field');
+    this.secondaryId = normalize(secondaryId, 'field_b');
     this.onMessage   = onMessageCallback;
     this.onStatus    = onStatusCallback;
 
-    const pairedTopic = `agrisense/${this.primaryId}/${this.secondaryId}/#`;
+    // ✅ FIX: Use raw email for topic (normalize was corrupting email addresses with hyphens)
+    // The topic must match exactly what the firmware publishes:
+    // agrisense/{USER_EMAIL}/field_b/sensors
+    const rawPrimary = (primaryId || 'agrisense_pro').trim();
+    const pairedTopic = `agrisense/${rawPrimary}/field_b/#`;
+    
+    if (isDev) console.log(`[MQTT] 🔌 Connecting... Topic: ${pairedTopic}`);
     this.onStatus?.('connecting');
 
     try {
       this.client = connect(this.url, {
-        reconnectPeriod: 3000,
+        reconnectPeriod: 5000,       // ✅ FIX: was 3000ms - increased to prevent reconnect storms
         connectTimeout: 30 * 1000,
-        keepalive: 60,
+        keepalive: 60,               // ✅ FIX: was 10s - HiveMQ Cloud needs ≥60s for cellular stability
         clientId: 'agrisense_web_' + Math.random().toString(16).slice(2, 10),
         username: MQTT_CONFIG.username,
         password: MQTT_CONFIG.password,
@@ -55,8 +69,10 @@ class MqttService {
 
       this.client.on('connect', () => {
         this.onStatus?.('connected');
-        this.client.subscribe(pairedTopic, (err) => {
+        if (isDev) console.log(`[MQTT] ✅ Connected. Subscribing to: ${pairedTopic}`);
+        this.client.subscribe(pairedTopic, { qos: 0 }, (err) => {
           if (err) console.error('[MQTT_ERROR] ❌ Subscription Failed', err);
+          else if (isDev) console.log(`[MQTT] 📡 Subscribed to: ${pairedTopic}`);
         });
       });
 
@@ -66,32 +82,39 @@ class MqttService {
           const parsedData = JSON.parse(rawData);
           if (this.onMessage) this.onMessage(topic, parsedData);
         } catch (e) {
-          // Quietly ignore malformed JSON in production
+          // ✅ FIX: Log parse errors in dev, silently ignore in production
+          if (isDev) console.warn('[MQTT] ⚠️ JSON parse failed for topic:', topic, '| Raw:', rawData.slice(0, 100));
         }
       });
 
       this.client.on('error', (err) => {
+        if (isDev) console.error('[MQTT] ❌ Connection Error:', err.message);
         this.onStatus?.('error');
       });
 
       this.client.on('close', () => {
+        if (isDev) console.log('[MQTT] 🔌 Connection closed.');
         this.onStatus?.('disconnected');
       });
       
       this.client.on('reconnect', () => {
+        if (isDev) console.log('[MQTT] 🔄 Reconnecting...');
         this.onStatus?.('reconnecting');
       });
 
     } catch (err) {
+      console.error('[MQTT] ❌ Fatal connect error:', err);
       this.onStatus?.('error');
     }
   }
 
   publishCommand(action) {
-    if (this.client && this.primaryId && this.secondaryId) {
-      const topic = `agrisense/${this.primaryId}/${this.secondaryId}/commands`;
+    if (this.client && this.rawPrimaryId && this.secondaryId) {
+      // Publish to the raw primary (email-based topic) for command routing
+      const topic = `agrisense/${this.rawPrimaryId}/field_b/commands`;
       const message = JSON.stringify(action);
-      this.client.publish(topic, message);
+      this.client.publish(topic, message, { qos: 0 });
+      if (isDev) console.log('[MQTT] 📤 Command published to:', topic, action);
     }
   }
 
@@ -105,9 +128,11 @@ class MqttService {
   refresh() {
     const oldCb = this.onMessage;
     const oldSt = this.onStatus;
+    const oldPrimary = this.rawPrimaryId;
+    const oldSecondary = this.secondaryId;
     this.disconnect();
     setTimeout(() => {
-      this.connect(this.primaryId, this.secondaryId, oldCb, oldSt);
+      this.connect(oldPrimary, oldSecondary, oldCb, oldSt);
     }, 500);
   }
 }

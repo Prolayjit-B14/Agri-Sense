@@ -101,7 +101,8 @@ export const processMqttMessage = (topic, data, prev) => {
       newState.vision.active = vData.active === true || vData.active === 1 || vData.status === "online";
       newState.vision.type = vData.detection || vData.type || '---';
       newState.vision.level = vData.level || 'Normal';
-      newState.vision.zone = vData.zone || prev.vision.zone || '---';
+      newState.vision.zone = vData.zone || prev.vision?.zone || '---';
+      newState.vision.ip = vData.ip || prev.vision?.ip || null; // 🚀 FIXED: Default to null, never undefined
       newState.vision.timestamp = Date.now();
     }
 
@@ -111,7 +112,7 @@ export const processMqttMessage = (topic, data, prev) => {
         ...data.hardware
       };
       // Synchronize actuator statuses if present in hardware object
-      if (data.hardware.pump) newState.water.pumpActive = (data.hardware.pump === "active" || data.hardware.pump === true || data.hardware.pump === "on");
+      if (data.hardware.pump) newState.water.pumpActive = (data.hardware.pump === "active" || data.hardware.pump === "ACTIVE" || data.hardware.pump === true || data.hardware.pump === "on");
     }
   }
   // Discrete Node Topics Fallback

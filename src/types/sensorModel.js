@@ -37,6 +37,7 @@ export const INITIAL_SENSOR_DATA = {
     type: '---', 
     level: 'Normal', 
     zone: '---', 
+    ip: null,
     timestamp: null
   }
 };

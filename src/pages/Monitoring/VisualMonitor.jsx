@@ -125,8 +125,10 @@ const VisualMonitor = () => {
   const [capturedImg, setCapturedImg] = useState(null);
   const [isCapturing, setIsCapturing] = useState(false);
   
-  const CAM_IP = 'http://192.168.4.2';
-  const streamUrl = `${CAM_IP}/stream`;
+  // Dynamically pull the camera IP reported by the ESP32-CAM over MQTT
+  const visionIP = sensorData?.vision?.ip || '192.168.4.2';
+  const CAM_IP = `http://${visionIP}`;
+  const streamUrl = `${CAM_IP}:81/stream`;
   
   const flashOn = actuators[ACTUATORS.LIGHT];
   const buzzerOn = actuators[ACTUATORS.BUZZER];
@@ -252,7 +254,7 @@ const VisualMonitor = () => {
             style={{ position: 'fixed', inset: 0, background: 'var(--bg-dark)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
           >
              {deviceStatus === 'ACTIVE' ? (
-               <img src={streamUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Live" />
+               <img key={streamUrl} src={streamUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Live" />
              ) : (
                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--danger)', flexDirection: 'column', gap: '15px' }}>
                  <EyeOff size={64} strokeWidth={2.5} />
@@ -272,7 +274,7 @@ const VisualMonitor = () => {
             style={{ position: 'relative', borderRadius: '28px', overflow: 'hidden', background: 'var(--bg-dark)', aspectRatio: '16 / 9', width: '100%', marginBottom: '1.5rem', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--glass-stroke)' }}
           >
              {deviceStatus === 'ACTIVE' ? (
-                <img src={streamUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Stream" />
+                <img key={streamUrl} src={streamUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Stream" />
              ) : (
                 <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-inactive)', opacity: 0.5 }}>
                   <EyeOff size={48} strokeWidth={1.5} />

@@ -129,42 +129,40 @@ Instructions:
 User: ${prompt}
 `;
 
-  for (const model of models) {
-    for (const apiVersion of ['v1beta', 'v1']) {
-      try {
-        const url = `https://generativelanguage.googleapis.com/${apiVersion}/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
-        
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: fullPrompt }] }],
-            generationConfig: {
-              temperature: 0.7,
-              topK: 40,
-              topP: 0.95,
-              maxOutputTokens: 1024,
-            }
-          })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-            return data.candidates[0].content.parts[0].text;
-          }
-        } else {
-          console.warn(`🛰️ AgriBot: Model ${model} (${apiVersion}) returned error:`, data.error?.message || response.statusText);
-          // If it's a 429 (Quota) or 403 (Invalid Key), we might want to skip other versions for this model
-          if (response.status === 429 || response.status === 403) break;
+  const model = "gemini-flash-latest";
+  const apiVersion = "v1beta";
+  const url = `https://generativelanguage.googleapis.com/${apiVersion}/models/${model}:generateContent`;
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'X-goog-api-key': GEMINI_API_KEY 
+      },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: fullPrompt }] }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 1024,
         }
-      } catch (e) {
-        console.warn(`🛰️ AgriBot: Network error for ${model} (${apiVersion}):`, e.message);
+      })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+        return data.candidates[0].content.parts[0].text;
       }
+    } else {
+      console.warn(`🛰️ AgriBot Error [${response.status}]:`, data.error?.message || response.statusText);
+      throw new Error(data.error?.message || "Cloud AI Offline");
     }
+  } catch (e) {
+    console.error("🛰️ AgriBot Network Exception:", e.message);
   }
 
-  console.error("🛰️ AgriBot: All Cloud AI models failed. Using Local Diagnostic Engine.");
+  console.error("🛰️ AgriBot: Cloud AI failed. Using Local Diagnostic Engine.");
   return localAgriLogic(prompt, context);
 };

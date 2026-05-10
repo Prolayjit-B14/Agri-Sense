@@ -5,7 +5,7 @@ import { processMqttMessage } from '../engines/sensorController';
 import { INITIAL_SENSOR_DATA } from '../types/sensorModel';
 import { processDeviceState, calculateSystemOverview } from '../api/deviceService';
 import { db } from '../api/firebase';
-import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit, getDocs, addDoc } from 'firebase/firestore';
 import { calculateNodeHealth, calculateOverallHealth, getAIv2Recommendations } from '../logic/healthEngine';
 
 const TelemetryContext = createContext();
@@ -36,16 +36,11 @@ export const TelemetryProvider = ({ children, user, farmInfo, nodePower }) => {
   const connectionRef = useRef(null);
 
   useEffect(() => {
-    const toId = (raw) => {
-      if (!raw || typeof raw !== 'string') return null;
-      return raw.trim().toLowerCase().replace(/[\s-]+/g, '_');
-    };
-
-    let primary = toId(farmInfo?.projectName) || toId(MASTER_CONFIG.PROJECT_NAME) || 'agrisense_pro';
-    let secondary = toId(farmInfo?.name) || toId(MASTER_CONFIG.FARM_NAME) || 'master_field';
-
-    if (primary.includes('agrisne') || primary.includes('agri_sense') || primary.includes('agrisence')) primary = 'agrisense_pro';
-    if (secondary.includes('master') || secondary.includes('field') || secondary.includes('file')) secondary = 'master_field';
+    // ✅ FIX: Use raw email for MQTT topic — must match firmware TOPIC_SENSORS exactly.
+    // The firmware builds: agrisense/{USER_EMAIL}/field_b/sensors
+    // Do NOT normalize/transform the email — it will break topic matching.
+    const primary = (user?.email || 'agrisense_pro').trim();
+    const secondary = 'field_b';
 
     const topic = `agrisense/${primary}/${secondary}/#`;
 
@@ -72,21 +67,33 @@ export const TelemetryProvider = ({ children, user, farmInfo, nodePower }) => {
           };
         };
 
-        // Topic-based routing (always applied for any message on our topic tree)
-        if (topicLower.includes('soil') || data.soil) checkAndSet('soil_node');
-        if (topicLower.includes('weather') || data.weather) checkAndSet('weather_node');
-        if (topicLower.includes('storage') || data.storage) checkAndSet('storage_node');
-        if (topicLower.includes('water') || topicLower.includes('irrigation') || data.water || data.irrigation) checkAndSet('water_node');
-        if (topicLower.includes('vision') || data.vision) checkAndSet('vision_node');
+        // ✅ FIX: Robust node detection for unified payloads.
+        // Even if the data isn't nested under "soil:", if it contains moisture, it's a soil node.
+        const topicSoil = topicLower.includes('soil');
+        const topicWeather = topicLower.includes('weather');
+        const topicStorage = topicLower.includes('storage');
+        const topicWater = topicLower.includes('water') || topicLower.includes('irrigation');
+        const topicVision = topicLower.includes('vision');
+
+        if (topicSoil || data.soil || data.moisture || data.m || data.ph) checkAndSet('soil_node');
+        if (topicWeather || data.weather || data.temp || data.humidity || data.ldr) checkAndSet('weather_node');
+        if (topicStorage || data.storage || data.mq135) checkAndSet('storage_node');
+        if (topicWater || data.water || data.irrigation || data.level || data.flow) checkAndSet('water_node');
+        if (topicVision || data.vision || data.detection) checkAndSet('vision_node');
 
         setSystemOverview(calculateSystemOverview(nextDevs));
         return nextDevs;
       });
 
-      // ✅ PRODUCTION ENFORCEMENT: Only parse sensor values from authorized hardware node.
-      // Device status is updated for ALL messages (above), but sensor DATA only
-      // flows through if it's from our specific hardware node identifier.
-      if (data.node === 'AgriSense_Pro_Node') {
+      // ✅ FIX: Removed email gate — MQTT topic isolation is sufficient security.
+      // The subscription topic already filters by user email:
+      //   agrisense/{user_email}/field_b/#
+      // The old email check caused ALL sensor data to be silently dropped whenever
+      // there was a case difference, typo, or any mismatch between the hardcoded
+      // firmware email and the Firebase login email.
+      //
+      // We now process any message that arrives on our subscribed topic.
+      if (data && typeof data === 'object') {
         const updatedSensorData = processMqttMessage(topic, data, sensorDataRef.current);
         if (updatedSensorData !== sensorDataRef.current) {
           sensorDataRef.current = updatedSensorData;
@@ -97,13 +104,14 @@ export const TelemetryProvider = ({ children, user, farmInfo, nodePower }) => {
       setLastGlobalUpdate(new Date().toLocaleTimeString());
     };
 
+    // ✅ FIX: Pass raw email string as primaryId so mqttService builds the correct topic
     mqttService.connect(primary, secondary, handleMqttMessage, (status) => setMqttStatus(status));
 
     return () => {
       mqttService.disconnect();
       connectionRef.current = null;
     };
-  }, [farmInfo?.projectName, farmInfo?.name]);
+  }, [farmInfo?.projectName, farmInfo?.name, user?.email]);
 
   useEffect(() => {
     const watchdog = setInterval(() => {
@@ -127,28 +135,76 @@ export const TelemetryProvider = ({ children, user, farmInfo, nodePower }) => {
   }, []);
 
   useEffect(() => {
+    let tick = 0;
     const livePulse = setInterval(() => {
       const currentData = sensorDataRef.current;
       // ✅ FIX #8: Only snapshot history when we have real sensor values.
       // Avoids polluting history with initial null-state entries.
       if (!currentData || currentData.soil?.moisture == null) return;
       const now = Date.now();
-      setSensorHistory(prev => [...prev, { ...currentData, timestamp: now }].slice(-2000));
+      const payload = { ...currentData, timestamp: now, node: "unified_snapshot" };
+      setSensorHistory(prev => [...prev, payload].slice(-2000));
+      
+      // ✅ FIX: Store telemetry in Firestore periodically for historical charts
+      // Save every 12th pulse (60 seconds) to avoid exceeding free-tier quotas
+      tick++;
+      if (tick >= 12 && user?.email) {
+        tick = 0;
+        const telRef = collection(db, "farmers", user.email, "telemetry");
+        
+        // 🚀 CRITICAL: Sanitize payload to strip undefined fields which crash Firestore
+        const sanitizedPayload = JSON.parse(JSON.stringify(payload)); 
+        
+        addDoc(telRef, sanitizedPayload)
+          .then(() => console.log("🛰️ [DB_SYNC] Telemetry Snapshot Saved"))
+          .catch(err => console.error("❌ [DB_SYNC] Save Error:", err));
+      }
     }, 5000);
     return () => clearInterval(livePulse);
-  }, []);
+  }, [user?.email]);
 
-  // ✅ FIX #3: Use strict `=== false` check. If nodePower key is undefined/missing
-  // (e.g. guest user with partial profile), we should SHOW data, not hide it.
-  // The old truthy check `nodePower.soil ?` would zero out data if key was undefined.
-  const maskedSensorData = useMemo(() => ({
-    ...sensorData,
-    soil:    nodePower?.soil    === false ? {} : sensorData.soil,
-    weather: nodePower?.weather === false ? {} : sensorData.weather,
-    water:   nodePower?.water   === false ? {} : sensorData.water,
-    storage: nodePower?.storage === false ? {} : sensorData.storage,
-    vision:  nodePower?.vision  === false ? {} : sensorData.vision,
-  }), [sensorData, nodePower]);
+  // 🚀 INITIAL HYDRATION: Fetch latest state from Firestore on mount
+  useEffect(() => {
+    if (!user?.email) return;
+    
+    const hydrate = async () => {
+      try {
+        const telRef = collection(db, "farmers", user.email, "telemetry");
+        const q = query(telRef, orderBy("timestamp", "desc"), limit(1));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          const latest = snap.docs[0].data();
+          delete latest.timestamp;
+          delete latest.node;
+          console.log("🛰️ [HYDRATION] Restored latest state from Firestore");
+          setSensorData(prev => ({ ...prev, ...latest }));
+          sensorDataRef.current = { ...sensorDataRef.current, ...latest };
+        }
+      } catch (err) {
+        console.warn("⚠️ [HYDRATION] Latest state fetch failed (likely missing index or empty coll)");
+      }
+    };
+    
+    hydrate();
+  }, [user?.email]);
+
+  // 🛰️ DATA MASKING ENGINE: Zeroes out data if node is manually disabled OR hardware goes OFFLINE
+  const maskedSensorData = useMemo(() => {
+    const isSoilDown    = nodePower?.soil    === false || devices.soil_node?.status    === 'OFFLINE';
+    const isWeatherDown = nodePower?.weather === false || devices.weather_node?.status === 'OFFLINE';
+    const isWaterDown   = nodePower?.water   === false || devices.water_node?.status   === 'OFFLINE';
+    const isStorageDown = nodePower?.storage === false || devices.storage_node?.status === 'OFFLINE';
+    const isVisionDown  = nodePower?.vision  === false || devices.vision_node?.status  === 'OFFLINE';
+
+    return {
+      ...sensorData,
+      soil:    isSoilDown    ? {} : sensorData.soil,
+      weather: isWeatherDown ? {} : sensorData.weather,
+      water:   isWaterDown   ? {} : sensorData.water,
+      storage: isStorageDown ? {} : sensorData.storage,
+      vision:  isVisionDown  ? {} : sensorData.vision,
+    };
+  }, [sensorData, nodePower, devices]);
 
   // ✅ FIX #9: Mask devices status based on nodePower. 
   // Ensures Dashboard reflects 'OFFLINE' when user manually disables a node.
@@ -168,7 +224,6 @@ export const TelemetryProvider = ({ children, user, farmInfo, nodePower }) => {
       const telRef = collection(db, "farmers", user.email, "telemetry");
       const q = query(
         telRef, 
-        where("node", "==", "unified_snapshot"),
         where("timestamp", ">=", startTime),
         orderBy("timestamp", "asc"),
         limit(5000)

@@ -43,8 +43,8 @@ const HealthOverview = React.memo(({ score, systemHealth, devices }) => {
   const activeNodesCount = ['soil_node', 'water_node', 'weather_node', 'storage_node', 'vision_node']
     .filter(id => devices?.[id]?.status === 'ACTIVE' || devices?.[id]?.status === 'PARTIAL').length;
     
-  const isOffline = score === null || score === 0 || activeNodesCount === 0;
-  const healthColor = isOffline ? 'var(--text-inactive)' : getHealthColor(score);
+  const isOffline = activeNodesCount === 0;
+  const healthColor = isOffline ? 'var(--text-inactive)' : getHealthColor(score || 0);
   const visionOnline = devices?.vision_node?.status === 'ACTIVE' || devices?.vision_node?.status === 'PARTIAL';
   
   const totalNodesCount = 5;
@@ -187,7 +187,7 @@ const SensorCard = React.memo(({ title, icon: Icon, color, status, score, onClic
   );
 });
 
-const CamCard = React.memo(({ isOnline, onClick }) => (
+const CamCard = React.memo(({ isOnline, streamUrl, onClick }) => (
   <motion.div
     variants={itemFadeUp}
     whileTap={{ scale: 0.98 }}
@@ -202,11 +202,11 @@ const CamCard = React.memo(({ isOnline, onClick }) => (
     <div style={{ position: 'relative', borderRadius: 'calc(var(--radius-xl) - 8px)', overflow: 'hidden', height: '100%', background: 'var(--bg-dark)' }}>
       {isOnline ? (
         <motion.img 
+          key={streamUrl}
           initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-          src="http://192.168.4.2:81/stream" 
+          src={streamUrl} 
           alt="Field" 
           style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-          onError={(e) => { e.target.style.display = 'none'; }}
         />
       ) : (
         <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-main)', gap: '10px' }}>
@@ -590,6 +590,7 @@ const Dashboard = () => {
       {/* Camera View */}
       <CamCard
         isOnline={visionOnline}
+        streamUrl={`http://${sensorData?.vision?.ip || '192.168.4.2'}:81/stream`}
         onClick={() => navigate('/camera')}
       />
 
@@ -608,7 +609,7 @@ const Dashboard = () => {
 
       <footer style={{ textAlign: 'center', marginTop: '1rem', paddingBottom: '10px' }}>
         <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '0.1em', opacity: 0.5 }}>
-          AgriSense Pro Architecture • v{farmInfo?.version || '18.0.0'}
+          AgriSense Pro • v{farmInfo?.version || '1.4.3'}
         </div>
       </footer>
     </motion.div>

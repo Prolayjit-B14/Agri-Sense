@@ -8,7 +8,8 @@ import {
   CloudRain, Sun, Wind, Thermometer, Droplets,
   Sunrise, Sunset, LineChart, Umbrella, CloudSun,
   AlignLeft, AlignCenter, BarChart3, List, Layout, Rows, Columns,
-  ChevronRight, Cloud, Zap, ArrowUp, ArrowDown, Minus
+  ChevronRight, Cloud, Zap, ArrowUp, ArrowDown, Minus,
+  Gauge, Activity
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../state/AppContext';
@@ -286,14 +287,14 @@ const WeatherMonitoring = () => {
           <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '0.02em' }}>Regional Intelligence</h3>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
-           <RegionalMetric label="AQI"    value={apiWeather?.aqi || '--'} icon={BarChart3} color="#10B981" />
-           <RegionalMetric label="Clouds" value={apiWeather?.clouds ? `${apiWeather.clouds}%` : '--'} icon={Rows} color="#64748B" />
-           <RegionalMetric label="Wind"   value={apiWeather?.windSpeed || '--'} icon={AlignLeft} color="#F59E0B" />
-           <RegionalMetric label="Feels"  value={`${apiWeather?.feelsLike || '--'}°`} icon={Columns} color="#EF4444" />
-           <RegionalMetric label="Press"  value={apiWeather?.pressure || '--'} icon={List} color="#8B5CF6" />
-           <RegionalMetric label="Visib"  value={apiWeather?.visibility || '--'} icon={Layout} color="#10B981" />
-           <RegionalMetric label="UV"     value={apiWeather?.uvIndex || '--'} icon={AlignCenter} color="#F97316" />
+           <RegionalMetric label="AQI"    value={apiWeather?.aqi || '--'} icon={Activity} color="#10B981" />
+           <RegionalMetric label="Wind"   value={apiWeather?.windSpeed || '--'} icon={Wind} color="#F59E0B" />
+           <RegionalMetric label="Press"  value={apiWeather?.pressure || '--'} icon={Gauge} color="#8B5CF6" />
+           <RegionalMetric label="Feels"  value={`${apiWeather?.feelsLike || '--'}°`} icon={Thermometer} color="#EF4444" />
            <RegionalMetric label="Set"    value={apiWeather?.sunset || '--'} icon={Sunset} color="#3B82F6" />
+           <RegionalMetric label="Rise"   value={apiWeather?.sunrise || '--'} icon={Sunrise} color="#F59E0B" />
+           <RegionalMetric label="UV"     value={apiWeather?.uvIndex || '--'} icon={Sun} color="#F97316" />
+           <RegionalMetric label="Clouds" value={apiWeather?.clouds ? `${apiWeather.clouds}%` : '--'} icon={Cloud} color="#64748B" />
         </div>
       </motion.section>
 

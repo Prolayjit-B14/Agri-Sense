@@ -121,7 +121,7 @@ export const AppProvider = ({ children }) => {
                 name: cloudData.name || userData.name,
                 phone: cloudData.phone || '',
                 location: cloudData.location || '',
-                photo: cloudData.photo || userData.photoURL
+                photo: (cloudData.photo && cloudData.photo.includes('firebasestorage')) ? cloudData.photo : (userData.photoURL || cloudData.photo)
               };
               
               setUser(mergedUser);
@@ -328,20 +328,29 @@ export const AppProvider = ({ children }) => {
             visibility: (data.visibility / 1000).toFixed(1) + ' km',
             uvIndex: 'Low',
             sunset: new Date(data.sys.sunset * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            sunrise: new Date(data.sys.sunrise * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            seaLevel: data.main.sea_level || data.main.pressure,
+            groundLevel: data.main.grnd_level || data.main.pressure,
             lastUpdate: new Date().toLocaleTimeString()
           });
 
           // Also fetch 5-day forecast
-          const fRes = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lng}&appid=${API_KEY}&units=metric`);
-          const fData = await fRes.json();
-          if (fData.list) {
-            const daily = fData.list.filter((_, i) => i % 8 === 0).slice(0, 5).map(item => ({
-              date: new Date(item.dt * 1000).toLocaleDateString([], { weekday: 'short' }),
-              temp: Math.round(item.main.temp),
-              condition: item.weather[0].main,
-              rainProb: (item.pop * 100).toFixed(0) + '%'
-            }));
-            setApiForecast(daily);
+          try {
+            const fRes = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lng}&appid=${API_KEY}&units=metric`);
+            const fData = await fRes.json();
+            if (fData.list) {
+              const daily = fData.list.filter((_, i) => i % 8 === 0).slice(0, 5).map(item => ({
+                date: new Date(item.dt * 1000).toLocaleDateString([], { weekday: 'short' }),
+                temp: Math.round(item.main.temp),
+                condition: item.weather[0].main,
+                rainProb: (item.pop * 100).toFixed(0) + '%'
+              }));
+              setApiForecast(daily);
+            } else {
+              console.warn("🛰️ [WEATHER ENGINE]: Forecast data format invalid or empty list.", fData);
+            }
+          } catch (err) {
+            console.error("🛰️ [WEATHER ENGINE]: Forecast fetch failed:", err);
           }
         }
       } catch (err) {

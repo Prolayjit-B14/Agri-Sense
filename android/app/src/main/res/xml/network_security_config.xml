@@ -13,8 +13,8 @@
     </domain-config>
 
     <!-- 🌐 GLOBAL HTTPS REQUIREMENT -->
-    <!-- Ensures all cloud traffic is encrypted via TLS/SSL -->
-    <base-config cleartextTrafficPermitted="false">
+    <!-- Allow cleartext for dynamic local IP camera feeds on mobile hotspots -->
+    <base-config cleartextTrafficPermitted="true">
         <trust-anchors>
             <certificates src="system" />
         </trust-anchors>

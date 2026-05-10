@@ -42,9 +42,15 @@ const int   MQTT_PORT    = 8883;
 const char* MQTT_USER    = "Agri-Sense_admin";
 const char* MQTT_PASS    = "@agri2026P";
 
-// MQTT Topics
-const char* TOPIC_SENSORS  = "agrisense/agrisense_pro/master_field/sensors";
-const char* TOPIC_COMMANDS = "agrisense/agrisense_pro/master_field/commands";
+// 🔐 ACCOUNT BINDING: This email MUST match the Firebase login email used in the AgriSense app.
+//    The MQTT topic is built from this email: agrisense/{USER_EMAIL}/field_b/sensors
+//    If the email here doesn't match your login email, the app will receive data
+//    but the topic subscription won't filter it (or it will subscribe to wrong topic).
+const char* USER_EMAIL   = "contact.prolay14@gmail.com"; // ← UPDATE THIS TO YOUR FIREBASE LOGIN EMAIL
+
+// MQTT Topics (Constructed dynamically in setup)
+String TOPIC_SENSORS;
+String TOPIC_COMMANDS;
 
 /* ----------------------------------------------------------------------------
  *  SYSTEM STATE & OBJECTS
@@ -87,6 +93,10 @@ void setup() {
   Serial.println(F(" /_/ |_|\\_, / /_/ /_/_/\\___/  \\__/ /_//_/___/\\__/     "));
   Serial.println(F("       /___/  PRO INDUSTRIAL GATEWAY v2.6.0           "));
   Serial.println(F(" -----------------------------------------------------"));
+
+  // Construct topics dynamically using the centralized email
+  TOPIC_SENSORS  = "agrisense/" + String(USER_EMAIL) + "/field_b/sensors";
+  TOPIC_COMMANDS = "agrisense/" + String(USER_EMAIL) + "/field_b/commands";
 
   setupHardware();
   connectWifi();
@@ -183,12 +193,13 @@ void connectMqtt() {
   while (!mqttClient.connected()) {
     Serial.print(F("[MQTT] Authenticating with HiveMQ..."));
     
-    // Generate unique ClientID for each session
-    String clientId = "AGRI_PRO_" + String(random(0xFFFF), HEX);
+    // Generate unique ClientID based on MAC Address
+    String clientId = "AGRI_PRO_" + WiFi.macAddress();
+    clientId.replace(":", "");
 
     if (mqttClient.connect(clientId.c_str(), MQTT_USER, MQTT_PASS)) {
       Serial.println(F(" CONNECTED"));
-      mqttClient.subscribe(TOPIC_COMMANDS);
+      mqttClient.subscribe(TOPIC_COMMANDS.c_str());
       Serial.print(F("[MQTT] Subscribed to Topic: "));
       Serial.println(TOPIC_COMMANDS);
     } else {
@@ -260,13 +271,14 @@ void onMessageReceived(char* topic, byte* payload, unsigned int length) {
  *  TELEMETRY PROCESSING & PUBLISHING
  * ---------------------------------------------------------------------------- */
 void processTelemetry() {
-  StaticJsonDocument<1200> doc; // Rich capacity for full environment map
+  StaticJsonDocument<1200> doc; 
+  doc["user_email"] = USER_EMAIL; 
 
   // Section 1: SOIL PARAMETERS (NPK + Environment)
   JsonObject soil = doc.createNestedObject("soil");
-  soil["ph"]   = (random(62, 74) / 10.0f);
-  soil["temp"] = random(24, 31);
-  soil["hum"]  = random(45, 68);
+  soil["ph"]       = (random(62, 74) / 10.0f);
+  soil["temp"]     = random(24, 31);
+  soil["moisture"] = random(45, 68);
   
   JsonObject npk = soil.createNestedObject("npk");
   npk["n"] = random(80, 110);
@@ -280,31 +292,16 @@ void processTelemetry() {
   weather["lightIntensity"]  = random(3000, 8501);
   weather["rainLevel"] = (random(0, 10) > 8) ? random(20, 95) : 0;
 
-  // Section 3: STORAGE FACILITY
-  JsonObject storage = doc.createNestedObject("storage");
-  storage["temp"] = (random(150, 265) / 10.0f);
-  storage["humidity"]  = random(32, 55);
-  storage["mq135"]  = random(100, 185);
+  // Sections 3 & 5 OMITTED TO MATCH PRODUCTION (Storage/Vision Offline)
 
   // Section 4: HYDRAULICS & IRRIGATION
   JsonObject irrigation = doc.createNestedObject("irrigation");
-  irrigation["level"] = random(55, 98);
-  irrigation["flow"]  = state.pumpActive ? (random(15, 38) / 10.0f) : 0.0f;
-
-  // Section 5: VISION AI & DIAGNOSTICS
-  JsonObject vision = doc.createNestedObject("vision");
-  vision["active"]    = true;
-  vision["detection"] = (random(0, 10) > 9) ? "Pest Alert: Spodoptera" : "Flora Health: Optimal";
-  vision["level"]     = "Normal";
-  vision["zone"]      = "North Sector A";
+  irrigation["pump"]  = state.pumpActive ? "ACTIVE" : "ONLINE";
 
   // Section 6: HARDWARE NODE STATUS
   JsonObject hardware = doc.createNestedObject("hardware");
   hardware["pump"]    = state.pumpActive   ? "ACTIVE" : "ONLINE";
-  hardware["buzzer"]  = state.buzzerActive ? "ACTIVE" : "ONLINE";
-  hardware["light"]   = state.lightActive  ? "ACTIVE" : "ONLINE";
   hardware["display"] = "ONLINE";
-  hardware["cam"]     = "ACTIVE";
 
   // Global Node Metadata
   doc["node"]   = state.nodeID;
@@ -316,7 +313,7 @@ void processTelemetry() {
   char payloadBuffer[1200];
   serializeJson(doc, payloadBuffer);
   
-  if (mqttClient.publish(TOPIC_SENSORS, payloadBuffer)) {
+  if (mqttClient.publish(TOPIC_SENSORS.c_str(), payloadBuffer)) {
     logFullTelemetry(doc);
   } else {
     Serial.println(F("[MQTT] FAIL: Transmission Error."));
@@ -336,29 +333,22 @@ void logFullTelemetry(StaticJsonDocument<1200>& doc) {
   Serial.print(doc["soil"]["npk"]["n"].as<int>()); Serial.print("/");
   Serial.print(doc["soil"]["npk"]["p"].as<int>()); Serial.print("/");
   Serial.println(doc["soil"]["npk"]["k"].as<int>());
-  Serial.print(F("          |-- pH/T/H: ")); 
+  Serial.print(F("          |-- pH/T/M: ")); 
   Serial.print(doc["soil"]["ph"].as<float>()); Serial.print(" / ");
   Serial.print(doc["soil"]["temp"].as<int>()); Serial.print("C / ");
-  Serial.print(doc["soil"]["hum"].as<int>()); Serial.println("%");
+  Serial.print(doc["soil"]["moisture"].as<int>()); Serial.println("%");
 
   Serial.println(F("   [DATA] ZONE: WEATHER"));
   Serial.print(F("          |-- LDR/RN: ")); 
   Serial.print(doc["weather"]["lightIntensity"].as<int>()); Serial.print(" lx / ");
-  Serial.print(doc["weather"]["rainLevel"].as<int>()); Serial.println(" mm");
+  Serial.print(doc["weather"]["rainLevel"].as<int>()); Serial.println(" %");
   Serial.print(F("          |-- T/H:    ")); 
   Serial.print(doc["weather"]["temp"].as<float>()); Serial.print("C / ");
   Serial.print(doc["weather"]["humidity"].as<int>()); Serial.println("%");
 
-  Serial.println(F("   [DATA] ZONE: STORAGE"));
-  Serial.print(F("          |-- GAS/T/H:")); 
-  Serial.print(doc["storage"]["mq135"].as<int>()); Serial.print(" ppm / ");
-  Serial.print(doc["storage"]["temp"].as<float>()); Serial.print("C / ");
-  Serial.print(doc["storage"]["humidity"].as<int>()); Serial.println("%");
-
   Serial.println(F("   [DATA] ZONE: HYDRAULIC"));
-  Serial.print(F("          |-- LVL/FLW:")); 
-  Serial.print(doc["irrigation"]["level"].as<int>()); Serial.print("% / ");
-  Serial.print(doc["irrigation"]["flow"].as<float>()); Serial.println(" L/min");
+  Serial.print(F("          |-- PUMP:   ")); 
+  Serial.println(doc["irrigation"]["pump"].as<const char*>());
 
   Serial.print(F("   [TIME] Pulse: ")); Serial.print(doc["uptime"].as<long>()); Serial.println("s uptime");
   Serial.println(F("   -------------------------------------------------"));

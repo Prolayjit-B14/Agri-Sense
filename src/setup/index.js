@@ -10,10 +10,10 @@
 export const MASTER_CONFIG = {
   // 🎨 BRANDING & IDENTITY
   PROJECT_NAME: "AgriSense Pro",
-  FARM_NAME: "Master Field",
-  TAGLINE: "Smart Agriculture Command Center",
-  FOOTER_CREDIT: "by Prolayjit Biswas",
-  VERSION: "19.1.1",
+  FARM_NAME: "MAKAUT Field",
+  TAGLINE: "Smart Agriculture Platform for Better Farming",
+  FOOTER_CREDIT: "SemiColon",
+  VERSION: "1.4.3",
   
   // 🔐 AUTHORIZED INVESTIGATORS
   AUTHORIZED_USERS: [
@@ -27,15 +27,14 @@ export const MASTER_CONFIG = {
   MQTT_WSS_PORT: 8884, // HiveMQ Cloud WSS
   MQTT_USER: import.meta.env.VITE_MQTT_USER || "admin",
   MQTT_PASS: import.meta.env.VITE_MQTT_PASS || "pass",
-  FIELD_TOPIC_SENSORS: "agrisense/agrisense_pro/master_field/sensors",
-  FIELD_TOPIC_COMMANDS: "agrisense/agrisense_pro/master_field/commands",
+
   
   // 🖼️ ASSETS
   DEFAULT_PROFILE_PHOTO: "",
   
   // 🗺️ MAP & WEATHER (Optional External APIs)
   OPENWEATHER_API_KEY: import.meta.env.VITE_OPENWEATHER_API_KEY || "", 
-  GEMINI_API_KEY: import.meta.env.VITE_GEMINI_API_KEY || "",
+  GEMINI_API_KEY: import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyCkSNHlszuwxAUua2f3k0qPGclcGsENEuU",
   WEATHER_CITY: import.meta.env.VITE_WEATHER_CITY || "",
   
   MAP_LAT: parseFloat(import.meta.env.VITE_MAP_LAT) || null,

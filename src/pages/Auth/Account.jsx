@@ -93,7 +93,7 @@ const InfoRow = ({ label, value, icon: Icon, color = 'var(--secondary)', isEditi
 
 const StatCard = ({ label, value, icon: Icon, color }) => (
   <div className="premium-card" style={{ 
-    padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px', 
+    padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '6px', 
     border: '1px solid var(--glass-stroke)', background: 'var(--bg-card)'
   }}>
     <div style={{ 
@@ -351,36 +351,7 @@ const Account = () => {
         </div>
       </motion.div>
 
-      {/* 🚀 3. DEVICE & SYSTEM INFRASTRUCTURE */}
-      <motion.div variants={ANIM.item}>
-        <div className="premium-card" style={{ padding: 0, overflow: 'hidden', background: 'var(--bg-card)', boxShadow: 'var(--shadow-md)' }}>
-          <SectionHeader title="System Core" icon={Zap} color="var(--secondary)" />
-          
-          <div style={{ padding: '0 24px 24px' }}>
-             <div style={{ 
-               background: 'var(--bg-main)', borderRadius: 'var(--radius-md)', padding: '24px',
-               display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px'
-             }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Network Cluster</span>
-                  {isEditing ? (
-                    <input value={codename} onChange={e => setCodename(e.target.value)} style={{ border: 'none', background: 'var(--bg-card)', padding: '6px 10px', borderRadius: '8px', fontSize: '1rem', fontWeight: 800, color: 'var(--secondary)', width: '100%' }} />
-                  ) : (
-                    <span style={{ fontSize: '1.25rem', fontWeight: 950, color: 'var(--secondary)', letterSpacing: '-0.02em' }}>{codename}</span>
-                  )}
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Main Node ID</span>
-                  {isEditing ? (
-                    <input value={clientId} onChange={e => setClientId(e.target.value)} style={{ border: 'none', background: 'var(--bg-card)', padding: '6px 10px', borderRadius: '8px', fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)', width: '100%' }} />
-                  ) : (
-                    <span style={{ fontSize: '1.25rem', fontWeight: 950, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>{clientId}</span>
-                  )}
-                </div>
-             </div>
-          </div>
-        </div>
-      </motion.div>
+
 
 
 
@@ -398,99 +369,38 @@ const Account = () => {
           <div style={{ position: 'absolute', bottom: '-40px', left: '-20px', width: '220px', height: '220px', background: 'var(--primary-soft)', borderRadius: '50%', filter: 'blur(70px)', opacity: 0.3 }} />
 
           <div style={{ position: 'relative', zIndex: 1 }}>
-            {/* Credits Grid */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '20px' }}>
-              
-              {/* Developer */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '12px', background: 'var(--secondary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Code size={18} color="var(--secondary)" strokeWidth={2.5} />
-                  </div>
-                  <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>App Developer</span>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '1rem', fontWeight: 950, color: 'var(--text-main)', display: 'block' }}>Prolayjit Biswas</span>
-                  <span style={{ fontSize: '1rem', fontWeight: 950, color: 'var(--text-main)', display: 'block' }}>Ankan Bhowmik</span>
-                </div>
-              </div>
-
-              <div style={{ height: '1px', width: '100%', background: 'var(--bg-main)', opacity: 0.5 }} />
-
-              {/* Owner */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '12px', background: 'var(--primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <ShieldCheck size={18} color="var(--primary)" strokeWidth={2.5} />
-                  </div>
-                  <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>App Owner</span>
-                </div>
-                <span style={{ fontSize: '1rem', fontWeight: 950, color: 'var(--text-main)' }}>Team SemiColon</span>
-              </div>
-
-              <div style={{ height: '1px', width: '100%', background: 'var(--bg-main)', opacity: 0.5 }} />
-
-              {/* Version */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '12px', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Globe size={18} color="var(--accent)" strokeWidth={2.5} />
-                  </div>
-                <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Version</span>
-                </div>
-                <span style={{ fontSize: '1rem', fontWeight: 950, color: 'var(--text-main)' }}>{farmInfo?.version?.replace(/[^0-9.]/g, '') || '19.1.1'}</span>
-              </div>
+            {/* Minimalist Build Identity */}
+            <div style={{ 
+              textAlign: 'center', marginBottom: '24px', padding: '12px',
+              borderTop: '1px solid var(--glass-stroke)', borderBottom: '1px solid var(--glass-stroke)'
+            }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                Built by <span style={{ color: 'var(--primary)' }}>SemiColon</span> • Version {farmInfo?.version?.replace(/[^0-9.]/g, '') || '1.4.3'}
+              </span>
             </div>
 
             {/* Premium Links */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginTop: '20px' }}>
-              <motion.button
-                whileHover={{ y: -4, background: 'var(--bg-main)' }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => window.open('https://github.com/Prolayjit-B14/Agri-Sense', '_blank')}
-                style={{ 
-                  padding: '12px 8px', borderRadius: '16px', 
-                  background: 'var(--bg-card)', border: '1px solid var(--glass-stroke)',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                  color: 'var(--text-main)', cursor: 'pointer', transition: 'all 0.3s ease',
-                  boxShadow: 'var(--shadow-sm)'
-                }}
-              >
-                <Github size={18} color="var(--primary)" strokeWidth={2.5} />
-                <span style={{ fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase' }}>Source</span>
-              </motion.button>
-
-              <motion.button
-                whileHover={{ y: -4, background: 'var(--bg-main)' }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => showToast("AgriSense Pro: Engineered for Industrial Precision 🛰️")}
-                style={{ 
-                  padding: '12px 8px', borderRadius: '16px', 
-                  background: 'var(--bg-card)', border: '1px solid var(--glass-stroke)',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                  color: 'var(--text-main)', cursor: 'pointer', transition: 'all 0.3s ease',
-                  boxShadow: 'var(--shadow-sm)'
-                }}
-              >
-                <Info size={18} color="var(--secondary)" strokeWidth={2.5} />
-                <span style={{ fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase' }}>About</span>
-              </motion.button>
-
-              <motion.button
-                whileHover={{ y: -4, background: 'var(--bg-main)' }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => window.open('https://github.com/Prolayjit-B14/Agri-Sense#readme', '_blank')}
-                style={{ 
-                  padding: '12px 8px', borderRadius: '16px', 
-                  background: 'var(--bg-card)', border: '1px solid var(--glass-stroke)',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                  color: 'var(--text-main)', cursor: 'pointer', transition: 'all 0.3s ease',
-                  boxShadow: 'var(--shadow-sm)'
-                }}
-              >
-                <BookOpen size={18} color="var(--primary)" strokeWidth={2.5} />
-                <span style={{ fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase' }}>Docs</span>
-              </motion.button>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginTop: '20px' }}>
+              {[
+                { icon: Github, label: 'Source', color: 'var(--primary)', url: 'https://github.com/Prolayjit-B14/Agri-Sense' },
+                { icon: Info, label: 'About', color: 'var(--secondary)', action: () => showToast("AgriSense Pro: Engineered for Industrial Precision 🛰️") },
+                { icon: BookOpen, label: 'Docs', color: 'var(--primary)', url: 'https://github.com/Prolayjit-B14/Agri-Sense#readme' }
+              ].map((item, i) => (
+                <motion.button
+                  key={i}
+                  whileTap={{ scale: 0.92 }}
+                  onClick={item.url ? () => window.open(item.url, '_blank') : item.action}
+                  className="premium-card"
+                  style={{ 
+                    padding: '12px 8px', 
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                    color: 'var(--text-main)', cursor: 'pointer'
+                  }}
+                >
+                  {React.createElement(item.icon, { size: 18, color: item.color, strokeWidth: 2.5 })}
+                  <span style={{ fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.02em' }}>{item.label}</span>
+                </motion.button>
+              ))}
             </div>
           </div>
         </div>

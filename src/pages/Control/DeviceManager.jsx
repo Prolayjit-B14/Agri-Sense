@@ -163,7 +163,7 @@ const NodeCard = ({ icon: Icon, label, color, isOnline, sensors, actuators, togg
 // ─── NETWORK HEALTH CARD ──────────────────────────────────────────────────────
 const NetworkHealthCard = ({ activeCount, totalCount, mqttStatus }) => {
   const isConnected = mqttStatus === 'connected';
-  const displayCount = isConnected ? activeCount : 0;
+  const displayCount = activeCount;
   const pct = (displayCount / totalCount) * 100;
   
   const statusMap = {
@@ -174,7 +174,12 @@ const NetworkHealthCard = ({ activeCount, totalCount, mqttStatus }) => {
     disconnected: { color: T.danger,  bg: 'var(--danger-soft)', text: 'DISCONNECTED' }
   };
 
-  const current = statusMap[mqttStatus] || statusMap.disconnected;
+  let current = { ...(statusMap[mqttStatus] || statusMap.disconnected) };
+  
+  // If MQTT is connected but no hardware nodes are active, show as IDLE
+  if (mqttStatus === 'connected' && activeCount === 0) {
+    current = { color: T.warning, bg: 'var(--accent-soft)', text: 'IDLE (NO NODES)' };
+  }
 
   return (
     <div style={{
@@ -205,7 +210,10 @@ const NetworkHealthCard = ({ activeCount, totalCount, mqttStatus }) => {
               <span style={{ fontSize: '1.5rem', fontWeight: 800, color: T.muted }}>/ {totalCount}</span>
             </div>
             <p style={{ margin: '4px 0 0', fontSize: '0.9rem', fontWeight: 700, color: T.text }}>
-              {isConnected ? 'Devices Active' : 'Nodes Unreachable'}
+              {isConnected ? (activeCount === 0 ? 'Idle (Waiting for Nodes)' : 'Devices Active') : 'Nodes Unreachable'}
+            </p>
+            <p style={{ margin: '2px 0 0', fontSize: '0.75rem', fontWeight: 800, color: isConnected && activeCount > 0 ? T.primary : T.danger }}>
+              Link Status: {isConnected && activeCount > 0 ? '🔒 SECURE LINK' : '🔓 NO HARDWARE LINK'}
             </p>
           </div>
 
@@ -394,7 +402,8 @@ const NodePowerPanel = ({ nodePower, toggleNodePower, devices }) => {
         gap: '6px'
       }}>
         {nodes.map((n) => {
-          const isHardwareActive = devices[n.nodeId]?.status === 'ACTIVE';
+          const status = devices[n.nodeId]?.status;
+          const isHardwareActive = status === 'ACTIVE' || status === 'PARTIAL';
           const isPowered = isHardwareActive && nodePower[n.id];
           
           return (
@@ -519,11 +528,18 @@ const DeviceManager = () => {
   const { actuators, toggleActuator, nodePower, toggleNodePower } = useApp();
   const { sensorData, mqttStatus, devices, rawDevices } = useTelemetry();
 
-  const soilOnline    = devices['soil_node']?.status    === 'ACTIVE' && nodePower.soil;
-  const weatherOnline = devices['weather_node']?.status === 'ACTIVE' && nodePower.weather;
-  const waterOnline   = devices['water_node']?.status   === 'ACTIVE' && nodePower.water;
-  const storageOnline = devices['storage_node']?.status === 'ACTIVE' && nodePower.storage;
-  const visionOnline  = devices['vision_node']?.status  === 'ACTIVE' && nodePower.vision;
+  // ✅ FIX: Accept PARTIAL nodes too — a node is considered 'online' if ACTIVE or PARTIAL.
+  // Previously strict === 'ACTIVE' check hid sensor data when only some sensors were live.
+  const isNodeOnline = (id) => {
+    const s = devices[id]?.status;
+    return (s === 'ACTIVE' || s === 'PARTIAL');
+  };
+
+  const soilOnline    = isNodeOnline('soil_node')    && nodePower?.soil !== false;
+  const weatherOnline = isNodeOnline('weather_node') && nodePower?.weather !== false;
+  const waterOnline   = isNodeOnline('water_node')   && nodePower?.water !== false;
+  const storageOnline = isNodeOnline('storage_node') && nodePower?.storage !== false;
+  const visionOnline  = isNodeOnline('vision_node')  && nodePower?.vision !== false;
 
   const sd = soilOnline    ? (sensorData?.soil    || {}) : {};
   const wd = weatherOnline ? (sensorData?.weather || {}) : {};
