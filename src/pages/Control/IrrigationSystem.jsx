@@ -31,7 +31,7 @@ const TANK_CAPACITY = 6000;
 
 const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, range, unit }) => {
   const isOffline = value === null || value === undefined;
-  const systemColor = isOffline ? '#94A3B8' : color;
+  const systemColor = isOffline ? 'var(--text-inactive)' : color;
 
   const numVal = parseFloat(value);
   const health = isOffline ? 'offline'
@@ -40,10 +40,10 @@ const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, range, unit
     : 'critical';
 
   const statusMap = {
-    optimal:  { dot: '#22C55E' },
-    warning:  { dot: '#F59E0B' },
-    critical: { dot: '#EF4444' },
-    offline:  { dot: '#CBD5E1' }
+    optimal:  { dot: 'var(--primary)' },
+    warning:  { dot: 'var(--accent)' },
+    critical: { dot: 'var(--danger)' },
+    offline:  { dot: 'var(--text-inactive)' }
   };
 
   const { dot: dotColor } = statusMap[health];
@@ -54,8 +54,9 @@ const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, range, unit
       whileTap={{ scale: 0.97 }}
       style={{
         borderRadius: 'var(--radius-xl)',
-        border: '1px solid ' + (isOffline ? '#E2E8F0' : systemColor + '30'),
-        boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+        background: 'var(--bg-card)',
+        border: '1px solid ' + (isOffline ? 'var(--border-main)' : systemColor + '30'),
+        boxShadow: 'var(--shadow-md)',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
@@ -63,7 +64,7 @@ const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, range, unit
       }}
     >
       <div style={{
-        background: isOffline ? '#F1F5F9' : systemColor + '15',
+        background: isOffline ? 'var(--bg-main)' : systemColor + '15',
         padding: '0.9rem 1rem 0.8rem',
         display: 'flex',
         alignItems: 'center',
@@ -72,16 +73,16 @@ const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, range, unit
       }}>
         <div style={{
           width: '40px', height: '40px', borderRadius: '12px', flexShrink: 0,
-          background: isOffline ? 'rgba(0,0,0,0.06)' : systemColor + '25',
+          background: isOffline ? 'var(--bg-main)' : systemColor + '25',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           boxShadow: 'none',
-          border: isOffline ? 'none' : '1px solid ' + systemColor + '35'
+          border: isOffline ? 'none' : '1px solid ' + systemColor + '20'
         }}>
-          <Icon size={21} color={isOffline ? '#94A3B8' : systemColor} strokeWidth={2.5} />
+          <Icon size={21} color={isOffline ? 'var(--text-inactive)' : systemColor} strokeWidth={2.5} />
         </div>
         <span style={{
           fontSize: '0.8rem', fontWeight: 900,
-          color: isOffline ? '#94A3B8' : systemColor,
+          color: isOffline ? 'var(--text-inactive)' : systemColor,
           letterSpacing: '0.02em', textTransform: 'uppercase', lineHeight: 1.2
         }}>
           {label}
@@ -89,7 +90,7 @@ const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, range, unit
       </div>
 
       <div style={{
-        background: '#FFFFFF',
+        background: 'var(--bg-card)',
         flex: 1, display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
         padding: '0.5rem 1rem 0.8rem'
@@ -97,12 +98,12 @@ const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, range, unit
         <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
           <span style={{
             fontSize: '2.8rem', fontWeight: 950,
-            color: isOffline ? '#CBD5E1' : 'var(--text-main)',
+            color: isOffline ? 'var(--text-inactive)' : 'var(--text-main)',
             letterSpacing: '-0.06em', lineHeight: 1, textAlign: 'center'
           }}>
             {isOffline ? '--' : value}
           </span>
-          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#94A3B8' }}>{unit}</span>
+          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-inactive)' }}>{unit}</span>
         </div>
       </div>
     </motion.div>
@@ -131,10 +132,10 @@ const IrrigationSystem = () => {
 
   const heroConfig = useMemo(() => {
     const mainColor = '#06D6A0';
-    if (!isOnline) return { label: 'Node Offline', status: 'Standby', color: '#64748B', bg: '#F8FAFC' };
-    if (healthScore >= 75) return { label: 'Optimal Reserve', status: 'Stable', color: mainColor, bg: mainColor + '08' };
-    if (healthScore >= 35) return { label: 'Low Reserve', status: 'Caution', color: mainColor, bg: mainColor + '08' };
-    return { label: 'Critical Level', status: 'Alert', color: mainColor, bg: mainColor + '08' };
+    if (!isOnline) return { label: 'Node Offline', status: 'Standby', color: 'var(--text-muted)', bg: 'var(--bg-card)' };
+    if (healthScore >= 75) return { label: 'Optimal Reserve', status: 'Stable', color: mainColor, bg: 'var(--bg-card)' };
+    if (healthScore >= 35) return { label: 'Low Reserve', status: 'Caution', color: 'var(--accent)', bg: 'var(--bg-card)' };
+    return { label: 'Critical Level', status: 'Alert', color: 'var(--danger)', bg: 'var(--bg-card)' };
   }, [isOnline, healthScore]);
 
   return (
@@ -151,9 +152,9 @@ const IrrigationSystem = () => {
           background: heroConfig.bg,
           borderRadius: 'var(--radius-xl)',
           padding: '1.75rem',
-          boxShadow: '0 10px 30px -10px ' + heroConfig.color + '30',
+          boxShadow: 'var(--shadow-lg)',
           marginBottom: '1.5rem',
-          border: '1px solid ' + heroConfig.color + '25',
+          border: '1px solid ' + (isOnline ? heroConfig.color + '25' : 'var(--border-main)'),
           position: 'relative',
           overflow: 'hidden',
           display: 'flex',
@@ -167,9 +168,9 @@ const IrrigationSystem = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
               width: '44px', height: '44px', borderRadius: '13px',
-              background: '#FFFFFF', display: 'flex', alignItems: 'center',
-              justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-              border: '1px solid ' + heroConfig.color + '15'
+              background: 'var(--bg-sheet)', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', boxShadow: 'var(--shadow-sm)',
+              border: '1px solid ' + heroConfig.color + '20'
             }}>
               <Waves size={24} color={heroConfig.color} strokeWidth={2.5} />
             </div>
@@ -181,9 +182,9 @@ const IrrigationSystem = () => {
           </div>
           <div style={{
             padding: '6px 14px', borderRadius: '100px',
-            background: '#FFFFFF', color: heroConfig.color,
+            background: 'var(--bg-card)', color: heroConfig.color,
             fontSize: '0.65rem', fontWeight: 950, display: 'flex', alignItems: 'center', gap: '8px',
-            border: `1px solid ${heroConfig.color}30`
+            border: `1px solid ${heroConfig.color}25`
           }}>
             {heroConfig.status}
           </div>
@@ -199,8 +200,8 @@ const IrrigationSystem = () => {
 
           <div style={{
             display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem',
-            padding: '1rem 1.25rem', background: 'rgba(255,255,255,0.5)',
-            borderRadius: 'var(--radius-lg)', border: '1px solid rgba(255,255,255,0.8)',
+            padding: '1rem 1.25rem', background: 'var(--glass)',
+            borderRadius: 'var(--radius-lg)', border: '1px solid var(--glass-border)',
             maxWidth: '200px'
           }}>
             <div>
@@ -227,9 +228,9 @@ const IrrigationSystem = () => {
       <motion.section 
         variants={itemFadeUp}
         style={{ 
-          background: (isPumpActive && isOnline) ? '#0F172A' : '#FFFFFF', 
+          background: (isPumpActive && isOnline) ? 'var(--bg-dark)' : 'var(--bg-card)', 
           borderRadius: '24px', padding: '1.5rem', 
-          border: '1px solid rgba(0,0,0,0.05)', 
+          border: '1px solid var(--border-main)', 
           marginBottom: '1.5rem', 
           boxShadow: 'var(--shadow-md)',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center'
@@ -238,14 +239,14 @@ const IrrigationSystem = () => {
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
           <div style={{ 
             width: '48px', height: '48px', borderRadius: '14px', 
-            background: (isPumpActive && isOnline) ? 'rgba(16, 185, 129, 0.1)' : '#F1F5F9', 
+            background: (isPumpActive && isOnline) ? 'var(--primary-soft)' : 'var(--bg-main)', 
             display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
-            <Power size={22} color={(isPumpActive && isOnline) ? '#10B981' : '#64748B'} strokeWidth={2.5} />
+            <Power size={22} color={(isPumpActive && isOnline) ? 'var(--primary)' : 'var(--text-inactive)'} strokeWidth={2.5} />
           </div>
           <div>
             <p style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: (isPumpActive && isOnline) ? 'white' : 'var(--text-main)' }}>Master Pump Control</p>
-            <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 800, color: (isPumpActive && isOnline) ? '#10B981' : 'var(--text-muted)', textTransform: 'uppercase' }}>
+            <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 800, color: (isPumpActive && isOnline) ? 'var(--primary)' : 'var(--text-muted)', textTransform: 'uppercase' }}>
               {isPumpActive ? 'Flow Active' : 'System Ready'}
             </p>
           </div>
@@ -256,7 +257,7 @@ const IrrigationSystem = () => {
           onClick={() => isOnline && toggleActuator(ACTUATORS.PUMP)} 
           style={{ 
             padding: '10px 20px', 
-            background: (isPumpActive && isOnline) ? '#10B981' : '#0F172A', 
+            background: (isPumpActive && isOnline) ? 'var(--primary)' : 'var(--bg-dark)', 
             borderRadius: '12px', border: 'none',
             color: 'white',
             fontSize: '0.75rem', fontWeight: 950, cursor: isOnline ? 'pointer' : 'default'

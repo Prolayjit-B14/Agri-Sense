@@ -13,7 +13,7 @@ export const MASTER_CONFIG = {
   FARM_NAME: "Master Field",
   TAGLINE: "Smart Agriculture Command Center",
   FOOTER_CREDIT: "by Prolayjit Biswas",
-  VERSION: "19.1.1_ULTRA_PREMIUM",
+  VERSION: "19.1.1",
   
   // 🔐 AUTHORIZED INVESTIGATORS
   AUTHORIZED_USERS: [

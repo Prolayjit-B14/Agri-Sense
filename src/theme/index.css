@@ -30,15 +30,20 @@ html {
   
   --bg-main: #f8fafc;
   --bg-card: #ffffff;
+  --bg-elevated: #ffffff;
   --bg-dark: #020617;
+  --bg-overlay: rgba(0, 0, 0, 0.12);
   
   --text-main: #0f172a;
   --text-muted: #64748b;
+  --text-inactive: #94a3b8;
   --text-inverse: #ffffff;
   
   --glass: rgba(255, 255, 255, 0.7);
   --glass-border: rgba(255, 255, 255, 0.8);
   --glass-stroke: rgba(0, 0, 0, 0.04);
+  --border-main: rgba(0, 0, 0, 0.05);
+  --border-light: rgba(0, 0, 0, 0.03);
   
   --radius-2xl: 40px;
   --radius-xl: 32px;
@@ -58,14 +63,36 @@ html {
 }
 
 [data-theme='dark'] {
-  --bg-main: #020617;
-  --bg-card: #0f172a;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --glass: rgba(15, 23, 42, 0.75);
-  --glass-border: rgba(255, 255, 255, 0.06);
-  --glass-stroke: rgba(255, 255, 255, 0.05);
-  --shadow-premium: 0 40px 80px -20px rgba(0, 0, 0, 0.6), 0 25px 50px -25px rgba(0, 0, 0, 0.4);
+  --primary: #10f1b1; /* Electric Emerald */
+  --secondary: #00d2ff; /* Electric Sky */
+  --accent: #ffcb2f; /* Vivid Amber */
+  --danger: #ff5f5f; /* Vivid Red */
+  
+  --bg-main: #0a0f1d; /* Deep Navy Main */
+  --bg-card: #161d31; /* Deep Navy Card */
+  --bg-elevated: #1e2945; /* Lighter Navy Elevated */
+  --bg-overlay: rgba(0, 0, 0, 0.75);
+  
+  --text-main: #ffffff;
+  --text-muted: #e2e8f0;
+  --text-inactive: #94a3b8;
+  
+  --glass: rgba(22, 29, 49, 0.88);
+  --glass-border: rgba(255, 255, 255, 0.15);
+  --glass-stroke: rgba(255, 255, 255, 0.1);
+  --border-main: rgba(255, 255, 255, 0.15);
+  
+  --primary-soft: rgba(16, 241, 177, 0.2);
+  --danger-soft: rgba(255, 95, 95, 0.2);
+  --accent-soft: rgba(255, 203, 47, 0.2);
+  --secondary-soft: rgba(0, 210, 255, 0.2);
+  --success-soft: rgba(16, 241, 177, 0.2);
+  
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.8);
+  --shadow-premium: 0 0 40px rgba(16, 241, 177, 0.15), 0 40px 80px -20px rgba(0, 0, 0, 0.8);
+  --shadow-glow-primary: 0 0 20px rgba(16, 241, 177, 0.4);
 }
 
 /* 🤖 UTILITIES */
@@ -153,16 +180,16 @@ body {
 }
 
 .glass-morphic {
-  background: rgba(255, 255, 255, 0.4);
+  background: var(--glass);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--glass-border);
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
 }
 
 /* 🦴 SKELETON LOADERS */
 .skeleton {
-  background: #f1f5f9;
-  background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%);
+  background: var(--bg-main);
+  background: linear-gradient(90deg, var(--bg-main) 25%, var(--glass-stroke) 50%, var(--bg-main) 75%);
   background-size: 200% 100%;
   animation: skeleton-loading 2s infinite ease-in-out;
   border-radius: var(--radius-sm);
@@ -191,27 +218,34 @@ h1, h2, h3, h4 {
 /* ─── COMPONENTS ───────────────────────────────────────────────────────── */
 
 .btn-premium {
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
   color: white;
   border: none;
-  padding: 14px 24px;
-  border-radius: var(--radius-lg);
-  font-weight: 700;
+  padding: 16px 28px;
+  border-radius: var(--radius-md);
+  font-weight: 800;
   font-size: 0.95rem;
-  box-shadow: 0 12px 24px -8px rgba(16, 185, 129, 0.4);
+  letter-spacing: -0.01em;
+  box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4), inset 0 1px 1px rgba(255,255,255,0.3);
   cursor: pointer;
   transition: var(--transition-smooth);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
   position: relative;
   overflow: hidden;
+  text-transform: none;
+}
+
+.btn-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 30px -5px rgba(16, 185, 129, 0.5), inset 0 1px 1px rgba(255,255,255,0.4);
 }
 
 .btn-premium:active {
-  transform: scale(0.95);
-  box-shadow: 0 6px 12px -4px rgba(16, 185, 129, 0.3);
+  transform: translateY(0) scale(0.96);
+  box-shadow: 0 5px 15px -3px rgba(16, 185, 129, 0.4);
 }
 
 .btn-premium::after {
@@ -238,8 +272,8 @@ h1, h2, h3, h4 {
   gap: 6px;
 }
 
-.badge-success { background: #ecfdf5; color: #059669; border: 1px solid rgba(16, 185, 129, 0.1); }
-.badge-danger { background: #fef2f2; color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.1); }
+.badge-success { background: var(--primary-soft); color: var(--primary); border: 1px solid var(--primary-soft); }
+.badge-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.1); }
 
 /* ─── ANIMATIONS ────────────────────────────────────────────────────────── */
 

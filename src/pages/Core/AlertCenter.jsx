@@ -10,14 +10,14 @@ import {
 } from 'lucide-react';
 
 const COLORS = {
-  critical: '#EF4444',
-  warning: '#F59E0B',
-  info: '#3B82F6',
-  success: '#10B981',
-  text: '#0F172A',
-  subtext: '#64748B',
-  bg: '#FFFFFF',
-  border: 'rgba(0, 0, 0, 0.05)'
+  critical: 'var(--danger)',
+  warning: 'var(--accent)',
+  info: 'var(--secondary)',
+  success: 'var(--primary)',
+  text: 'var(--text-main)',
+  subtext: 'var(--text-muted)',
+  bg: 'var(--bg-main)',
+  border: 'var(--glass-stroke)'
 };
 
 const staggerContainer = {
@@ -36,11 +36,11 @@ const itemFadeUp = {
 
 const AlertCard = ({ alert, onDismiss }) => {
   const config = {
-    critical: { icon: AlertTriangle, color: COLORS.critical, bg: '#FEF2F2', border: '#FEE2E2', label: 'CRITICAL' },
-    warning: { icon: AlertTriangle, color: COLORS.warning, bg: '#FFFBEB', border: '#FEF3C7', label: 'WARNING' },
-    info: { icon: Info, color: COLORS.info, bg: '#EFF6FF', border: '#DBEAFE', label: 'INFO' },
-    success: { icon: CheckCircle2, color: COLORS.success, bg: '#F0FDF4', border: '#DCFCE7', label: 'OPTIMAL' }
-  }[alert.type] || { icon: Bell, color: COLORS.text, bg: 'white', border: COLORS.border, label: 'ALERT' };
+    critical: { icon: AlertTriangle, color: COLORS.critical, bg: 'var(--danger-soft)', border: 'var(--danger-soft)', label: 'CRITICAL' },
+    warning: { icon: AlertTriangle, color: COLORS.warning, bg: 'var(--accent-soft)', border: 'var(--accent-soft)', label: 'WARNING' },
+    info: { icon: Info, color: COLORS.info, bg: 'var(--secondary-soft)', border: 'var(--secondary-soft)', label: 'INFO' },
+    success: { icon: CheckCircle2, color: COLORS.success, bg: 'var(--success-soft)', border: 'var(--success-soft)', label: 'OPTIMAL' }
+  }[alert.type] || { icon: Bell, color: COLORS.text, bg: 'var(--bg-card)', border: 'var(--border-main)', label: 'ALERT' };
 
   return (
     <motion.div
@@ -50,12 +50,12 @@ const AlertCard = ({ alert, onDismiss }) => {
       exit={{ opacity: 0, scale: 0.95 }}
       whileHover={{ y: -2 }}
       style={{
-        background: `linear-gradient(165deg, ${config.bg}60 0%, #FFFFFF 100%)`, 
+        background: `linear-gradient(165deg, ${config.bg} 0%, var(--bg-sheet) 100%)`, 
         borderRadius: '24px', 
         padding: '1.25rem',
         marginBottom: '1rem', 
-        border: `1px solid ${config.border}`,
-        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.03), 0 8px 10px -6px rgba(0,0,0,0.03), inset 0 1px 1px rgba(255,255,255,0.9)', 
+        border: `1px solid var(--border-main)`,
+        boxShadow: 'var(--shadow-lg)', 
         position: 'relative', 
         overflow: 'hidden'
       }}
@@ -71,7 +71,7 @@ const AlertCard = ({ alert, onDismiss }) => {
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '0.6rem', fontWeight: 950, color: config.color, letterSpacing: '0.05em', background: `${config.color}15`, padding: '2px 8px', borderRadius: '6px' }}>
+              <span style={{ fontSize: '0.6rem', fontWeight: 950, color: config.color, letterSpacing: '0.05em', background: 'var(--bg-main)', padding: '2px 8px', borderRadius: '6px' }}>
                 {config.label}
               </span>
             </div>
@@ -91,8 +91,8 @@ const AlertCard = ({ alert, onDismiss }) => {
                whileTap={{ scale: 0.95 }}
                style={{ 
                  padding: '8px 16px', borderRadius: '12px', border: 'none', 
-                 background: COLORS.text, color: 'white', fontSize: '0.7rem', fontWeight: 900,
-                 cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                 background: 'var(--text-main)', color: 'var(--bg-card)', fontSize: '0.7rem', fontWeight: 900,
+                 cursor: 'pointer', boxShadow: 'var(--shadow-sm)'
                }}
              >
                INVESTIGATE
@@ -101,8 +101,8 @@ const AlertCard = ({ alert, onDismiss }) => {
                whileTap={{ scale: 0.95 }}
                onClick={onDismiss} 
                style={{ 
-                 padding: '8px 16px', borderRadius: '12px', border: `1px solid rgba(0,0,0,0.05)`, 
-                 background: 'white', color: COLORS.subtext, fontSize: '0.7rem', fontWeight: 900,
+                 padding: '8px 16px', borderRadius: '12px', border: '1px solid var(--border-main)', 
+                 background: 'var(--bg-card)', color: COLORS.subtext, fontSize: '0.7rem', fontWeight: 900,
                  cursor: 'pointer'
                }}
              >
@@ -199,12 +199,12 @@ const AlertCenter = () => {
               onClick={() => setFilter(f.id)}
               style={{
                 padding: '10px 18px', borderRadius: '16px', border: 'none',
-                background: isActive ? f.color : 'white',
+                background: isActive ? f.color : 'var(--bg-card)',
                 color: isActive ? 'white' : COLORS.subtext,
                 fontSize: '0.75rem', fontWeight: 850, whiteSpace: 'nowrap',
                 display: 'flex', alignItems: 'center', gap: '8px',
-                boxShadow: isActive ? `0 8px 25px ${f.color}30` : '0 4px 12px rgba(0,0,0,0.02)',
-                border: isActive ? 'none' : '1px solid rgba(0,0,0,0.05)',
+                boxShadow: isActive ? `0 8px 25px ${f.color}30` : 'var(--shadow-sm)',
+                border: isActive ? 'none' : '1px solid var(--glass-stroke)',
                 transition: '0.3s'
               }}
             >
@@ -220,9 +220,9 @@ const AlertCenter = () => {
             whileTap={{ scale: 0.95 }}
             onClick={clearAll} 
             style={{ 
-              background: 'rgba(239, 68, 68, 0.08)', border: 'none', 
+              background: 'var(--danger-soft)', border: 'none', 
               padding: '8px 14px', borderRadius: '12px',
-              display: 'flex', alignItems: 'center', gap: '8px', color: COLORS.critical,
+              display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--danger)',
               cursor: 'pointer', transition: '0.2s'
             }}
           >
@@ -243,12 +243,12 @@ const AlertCenter = () => {
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               style={{ 
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
-                height: '350px', background: 'linear-gradient(165deg, #F8FAFC 0%, #FFFFFF 100%)',
-                borderRadius: '32px', border: '1.5px dashed #E2E8F0', padding: '2rem', textAlign: 'center'
+                height: '350px', background: 'linear-gradient(165deg, var(--bg-main) 0%, var(--bg-card) 100%)',
+                borderRadius: '32px', border: '1.5px dashed var(--glass-stroke)', padding: '2rem', textAlign: 'center'
               }}
             >
               <div style={{ 
-                width: '72px', height: '72px', borderRadius: '24px', background: '#F0FDF4',
+                width: '72px', height: '72px', borderRadius: '24px', background: 'var(--primary-soft)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem'
               }}>
                 <ShieldCheck size={36} color={COLORS.success} strokeWidth={2} />

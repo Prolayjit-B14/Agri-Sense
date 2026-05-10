@@ -20,13 +20,13 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────
 const COLORS = {
-  good: '#10B981', warning: '#F59E0B', critical: '#EF4444', neutral: '#94A3B8',
-  bg: '#FFFFFF', card: '#FFFFFF', border: '#E2E8F0', text: '#0F172A', subtext: '#64748B',
-  soil: ['#10B981', '#3B82F6', '#A855F7', '#EC4899', '#F59E0B', '#14B8A6', '#6366F1', '#8B5CF6'],
-  weather: ['#0EA5E9', '#F59E0B', '#6366F1', '#10B981', '#F43F5E', '#8B5CF6', '#14B8A6', '#A855F7'],
-  storage: ['#8B5CF6', '#F43F5E', '#10B981', '#3B82F6', '#0EA5E9', '#F59E0B', '#6366F1', '#14B8A6'],
-  water: ['#3B82F6', '#0EA5E9', '#10B981', '#F59E0B'],
-  vision: ['#A855F7', '#EC4899', '#EF4444', '#10B981']
+  good: 'var(--primary)', warning: 'var(--accent)', critical: 'var(--danger)', neutral: 'var(--text-muted)',
+  bg: 'var(--bg-main)', card: 'var(--bg-card)', border: 'var(--glass-stroke)', text: 'var(--text-main)', subtext: 'var(--text-muted)',
+  soil: ['var(--primary)', 'var(--secondary)', 'var(--accent)', 'var(--danger)', 'var(--primary)', 'var(--secondary)', 'var(--accent)', 'var(--primary)'],
+  weather: ['var(--secondary)', 'var(--accent)', 'var(--primary)', 'var(--secondary)', 'var(--danger)', 'var(--primary)', 'var(--accent)', 'var(--secondary)'],
+  storage: ['var(--accent)', 'var(--danger)', 'var(--primary)', 'var(--secondary)', 'var(--secondary)', 'var(--accent)', 'var(--primary)', 'var(--secondary)'],
+  water: ['var(--secondary)', 'var(--primary)', 'var(--primary)', 'var(--accent)'],
+  vision: ['var(--accent)', 'var(--secondary)', 'var(--danger)', 'var(--primary)']
 };
 
 // ─── COMPONENTS ───────────────────────────────────────────────────────────
@@ -36,11 +36,11 @@ const AnalyticsCard = React.memo(({ title, isOffline, children, height = '340px'
     <motion.div 
       variants={itemFadeUp}
       style={{
-        background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)',
+        background: 'linear-gradient(165deg, var(--bg-card) 0%, var(--bg-main) 100%)',
         borderRadius: '24px',
         padding: '1.5rem',
-        border: '1px solid rgba(255, 255, 255, 0.8)',
-        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
+        border: '1px solid var(--glass-stroke)',
+        boxShadow: 'var(--shadow-lg)',
         display: 'flex',
         flexDirection: 'column',
         height,
@@ -71,7 +71,7 @@ const AnalyticsCard = React.memo(({ title, isOffline, children, height = '340px'
         {isHistorical && !isOffline && (
           <div style={{ 
             display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', 
-            background: 'rgba(0,0,0,0.05)', padding: '1px', borderRadius: '12px',
+            background: 'var(--border-main)', padding: '1px', borderRadius: '12px',
             overflow: 'hidden'
           }}>
             <div style={{ background: 'transparent', padding: '8px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -135,12 +135,12 @@ const CustomTooltip = ({ active, payload, unit, isRealtime, color }) => {
 
     return (
       <div style={{
-        background: 'rgba(15, 23, 42, 0.95)',
+        background: 'var(--bg-dark)',
         padding: '5px 9px',
         borderRadius: '10px',
-        boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
-        border: '1px solid rgba(255,255,255,0.1)',
-        color: 'white',
+        boxShadow: 'var(--shadow-lg)',
+        border: '1px solid var(--glass-border)',
+        color: 'var(--text-main)',
         pointerEvents: 'none',
         display: 'flex',
         flexDirection: 'column',
@@ -162,7 +162,7 @@ const CustomTooltip = ({ active, payload, unit, isRealtime, color }) => {
         ))}
 
         {dataSeries.length === 1 && (
-          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', paddingTop: '4px', borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: '2px' }}>
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', paddingTop: '4px', borderTop: '1px solid var(--border-main)', marginTop: '2px' }}>
             {(() => {
               const dk = dataSeries[0].dataKey;
               const min = data[`${dk}_min`] ?? data.min;
@@ -202,7 +202,7 @@ const Pinpoint = (props) => {
   return (
     <g>
       <circle cx={cx} cy={cy} r={8} fill={stroke} fillOpacity={0.15} stroke="none" />
-      <circle cx={cx} cy={cy} r={5.5} fill="#0F172A" stroke="white" strokeWidth={2.5} style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }} />
+      <circle cx={cx} cy={cy} r={5.5} fill="var(--bg-main)" stroke="var(--text-main)" strokeWidth={2.5} style={{ filter: 'var(--shadow-md)' }} />
     </g>
   );
 };
@@ -586,21 +586,21 @@ const AnalyticsHub = () => {
             >
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={chartData} margin={{ top: 20, right: 35, left: 10, bottom: 25 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.08)" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--glass-stroke)" />
                   <XAxis 
                     dataKey={isRealtime ? "plotTime" : "name"} 
                     type="number"
                     domain={xDomain}
                     ticks={xTicks}
                     tickFormatter={formatXLabel}
-                    axisLine={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 1 }} 
-                    tickLine={{ stroke: 'rgba(0,0,0,0.1)' }} 
+                    axisLine={{ stroke: 'var(--border-main)', strokeWidth: 1 }} 
+                    tickLine={{ stroke: 'var(--border-main)' }} 
                     tick={{ fontSize: 9, fontWeight: 800, fill: COLORS.subtext, dy: 10 }} 
                     interval={0}
                   />
                   <YAxis 
-                    axisLine={{ stroke: 'rgba(0,0,0,0.1)', strokeWidth: 1 }} 
-                    tickLine={{ stroke: 'rgba(0,0,0,0.1)' }} 
+                    axisLine={{ stroke: 'var(--border-main)', strokeWidth: 1 }} 
+                    tickLine={{ stroke: 'var(--border-main)' }} 
                     tick={{ fontSize: 9, fontWeight: 900, fill: COLORS.subtext, dx: -5 }}
                     tickFormatter={(v) => v % 1 === 0 ? v : v.toFixed(1)}
                     domain={[c.min ?? 0, c.max ?? 'auto']}
@@ -682,13 +682,13 @@ const AnalyticsHub = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
         <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }} className="no-scrollbar">
           {[
-            { id: 'soil', label: 'Soil', icon: Sprout, color: '#10B981' },
-            { id: 'weather', label: 'Weather', icon: CloudRain, color: '#F97316' },
-            { id: 'storage', label: 'Storage', icon: Archive, color: '#8B5CF6' }
+            { id: 'soil', label: 'Soil', icon: Sprout, color: 'var(--primary)' },
+            { id: 'weather', label: 'Weather', icon: CloudRain, color: 'var(--secondary)' },
+            { id: 'storage', label: 'Storage', icon: Archive, color: 'var(--accent)' }
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
               padding: '8px 16px', borderRadius: '12px', border: 'none',
-              background: activeTab === tab.id ? tab.color : 'white',
+              background: activeTab === tab.id ? tab.color : 'var(--bg-card)',
               color: activeTab === tab.id ? 'white' : COLORS.text,
               display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer',
               boxShadow: '0 2px 8px rgba(0,0,0,0.02)', transition: '0.3s',
@@ -710,7 +710,7 @@ const AnalyticsHub = () => {
               onClick={() => setTimeRange(range)}
               style={{
                 whiteSpace: 'nowrap', padding: '6px 14px', borderRadius: '100px',
-                border: `1.5px solid ${isSelected ? COLORS.good : '#E2E8F0'}`,
+                border: `1.5px solid ${isSelected ? COLORS.good : 'var(--glass-stroke)'}`,
                 background: isSelected ? `${COLORS.good}10` : 'transparent',
                 color: isSelected ? COLORS.good : COLORS.subtext,
                 fontSize: '0.65rem', fontWeight: 900, cursor: 'pointer',
@@ -725,9 +725,9 @@ const AnalyticsHub = () => {
 
       <div style={{ flex: 1, paddingBottom: '1rem', minHeight: '400px', display: 'flex', flexDirection: 'column' }}>
         {isReady ? renderGrid(activeTab) : (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '15px', background: 'rgba(255,255,255,0.5)', borderRadius: '24px' }}>
-             <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} style={{ width: '32px', height: '32px', border: '3px solid #10B981', borderTopColor: 'transparent', borderRadius: '50%' }} />
-             <div style={{ fontSize: '0.7rem', fontWeight: 900, color: '#94A3B8', letterSpacing: '0.1em' }}>PROCESSING DATA MATRIX...</div>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '15px', background: 'var(--glass)', borderRadius: '24px' }}>
+             <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} style={{ width: '32px', height: '32px', border: '3px solid var(--primary)', borderTopColor: 'transparent', borderRadius: '50%' }} />
+             <div style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--text-muted)', letterSpacing: '0.1em' }}>PROCESSING DATA MATRIX...</div>
           </div>
         )}
       </div>

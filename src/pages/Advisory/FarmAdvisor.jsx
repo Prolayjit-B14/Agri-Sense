@@ -31,16 +31,16 @@ import {
 
 // ─── DESIGN TOKENS ─────────────────────────────────────────────────────────
 const COLORS = {
-  primary: '#10B981',
-  primaryDark: '#059669',
-  secondary: '#0EA5E9',
-  danger: '#EF4444',
-  warning: '#F59E0B',
-  background: '#FFFFFF',
-  cardBg: '#FFFFFF',
-  textMain: '#0F172A',
-  textMuted: '#64748B',
-  border: 'rgba(0, 0, 0, 0.04)',
+  primary: 'var(--primary)',
+  primaryDark: 'var(--primary-deep)',
+  secondary: 'var(--secondary)',
+  danger: 'var(--danger)',
+  warning: 'var(--accent)',
+  background: 'var(--bg-main)',
+  cardBg: 'var(--bg-card)',
+  textMain: 'var(--text-main)',
+  textMuted: 'var(--text-muted)',
+  border: 'var(--border-main)',
 };
 
 const RAD = {
@@ -91,34 +91,34 @@ const CropBottomSheet = ({ isOpen, onClose, crops, onSelect, selectedCrop }) => 
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={onClose}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000 }}
+            style={{ position: 'fixed', inset: 0, background: 'var(--bg-overlay)', zIndex: 1000 }}
           />
           <motion.div 
             initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             style={{ 
               position: 'fixed', bottom: 0, left: 0, right: 0, 
-              background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderTopLeftRadius: '32px', borderTopRightRadius: '32px',
+              background: 'var(--bg-card)', borderTopLeftRadius: '32px', borderTopRightRadius: '32px',
               zIndex: 1001, maxHeight: '85vh', display: 'flex', flexDirection: 'column',
-              padding: '1.5rem', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)'
+              padding: '1.5rem', boxShadow: 'var(--shadow-lg)', borderTop: '1px solid var(--border-main)'
             }}
           >
-            <div style={{ width: '40px', height: '4px', background: '#E2E8F0', borderRadius: '2px', alignSelf: 'center', marginBottom: '1.5rem' }} />
+            <div style={{ width: '40px', height: '4px', background: 'var(--border-main)', borderRadius: '2px', alignSelf: 'center', marginBottom: '1.5rem' }} />
             
-            <div style={{ position: 'sticky', top: 0, background: 'white', zIndex: 2, paddingBottom: '1rem' }}>
+            <div style={{ position: 'sticky', top: 0, background: 'var(--bg-card)', zIndex: 2, paddingBottom: '1rem' }}>
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <Search size={18} color="#94A3B8" style={{ position: 'absolute', left: '16px' }} />
+                <Search size={18} color="var(--text-muted)" style={{ position: 'absolute', left: '16px' }} />
                 <input 
                   placeholder="Search 86 Industrial Crops..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   style={{ 
                     width: '100%', padding: '14px 14px 14px 48px', borderRadius: '16px',
-                    border: '1px solid #E2E8F0', background: '#FFFFFF', outline: 'none',
-                    fontSize: '1rem', fontWeight: 600, color: '#0F172A'
+                    border: '1px solid var(--border-main)', background: 'var(--bg-main)', outline: 'none',
+                    fontSize: '1rem', fontWeight: 600, color: 'var(--text-main)'
                   }}
                 />
-                {search && <X size={18} color="#94A3B8" style={{ position: 'absolute', right: '16px' }} onClick={() => setSearch('')} />}
+                {search && <X size={18} color="var(--text-muted)" style={{ position: 'absolute', right: '16px' }} onClick={() => setSearch('')} />}
               </div>
             </div>
 
@@ -143,14 +143,14 @@ const CropBottomSheet = ({ isOpen, onClose, crops, onSelect, selectedCrop }) => 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                       <div style={{ 
                         width: '48px', height: '48px', borderRadius: '12px', 
-                        background: isSel ? '#FFFFFF' : `${cropColor}15`,
+                        background: isSel ? 'var(--bg-card)' : `${cropColor}15`,
                         display: 'flex', alignItems: 'center', justifyContent: 'center'
                       }}>
                         <CropIcon size={24} color={cropColor} />
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ fontSize: '1rem', fontWeight: isSel ? 800 : 600, color: isSel ? '#0F172A' : '#1E293B' }}>{formatCropName(spec.label || c)}</span>
-                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.02em' }}>{spec.type || 'Crop'}</span>
+                        <span style={{ fontSize: '1rem', fontWeight: isSel ? 800 : 600, color: isSel ? 'var(--text-main)' : 'var(--text-muted)' }}>{formatCropName(spec.label || c)}</span>
+                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-inactive)', textTransform: 'uppercase', letterSpacing: '0.02em' }}>{spec.type || 'Crop'}</span>
                       </div>
                     </div>
                     {isSel && <CheckCircle2 size={20} color={cropColor} />}
@@ -632,21 +632,21 @@ const FarmAdvisor = () => {
     sensorData?.vision?.detection
   ]);
 
-  if (db.loading || !brain) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF' }}><RefreshCw className="animate-spin" color={COLORS.primary} /></div>;
+  if (db.loading || !brain) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-main)' }}><RefreshCw className="animate-spin" color={COLORS.primary} /></div>;
 
-  if (db.error) return <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF', padding: '20px', textAlign: 'center' }}>
+  if (db.error) return <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-main)', padding: '20px', textAlign: 'center' }}>
     <AlertTriangle size={48} color={COLORS.danger} style={{ marginBottom: '1rem' }} />
-    <h2 style={{ fontWeight: 900 }}>Database Sync Error</h2>
+    <h2 style={{ fontWeight: 900, color: 'var(--text-main)' }}>Database Sync Error</h2>
     <p style={{ color: COLORS.textMuted }}>Unable to load crop specifications.</p>
   </div>;
 
   const cardStyle = {
-    background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)',
+    background: 'var(--bg-card)',
     borderRadius: RAD.card,
     padding: DESIGN.cardPad,
     marginBottom: DESIGN.cardMargin,
-    border: '1px solid rgba(255, 255, 255, 0.8)',
-    boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
+    border: '1px solid var(--border-main)',
+    boxShadow: 'var(--shadow-md)',
     position: 'relative',
     overflow: 'hidden'
   };
@@ -671,8 +671,8 @@ const FarmAdvisor = () => {
     >
       {!isReady ? (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '15px' }}>
-          <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} style={{ width: '40px', height: '40px', border: '3px solid #10B981', borderTopColor: 'transparent', borderRadius: '50%' }} />
-          <div style={{ fontSize: '0.75rem', fontWeight: 900, color: '#94A3B8', letterSpacing: '0.1em' }}>CALIBRATING ADVISOR...</div>
+          <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} style={{ width: '40px', height: '40px', border: '3px solid var(--primary)', borderTopColor: 'transparent', borderRadius: '50%' }} />
+          <div style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--text-muted)', letterSpacing: '0.1em' }}>CALIBRATING ADVISOR...</div>
         </div>
       ) : (
         <>
@@ -682,8 +682,8 @@ const FarmAdvisor = () => {
         <motion.div 
           variants={itemFadeUp}
           style={{ 
-            background: 'linear-gradient(165deg, #10B98105 0%, #FFFFFF 50%, #FBFDFF 100%)', borderRadius: '24px', padding: DESIGN.cardPad,
-            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)', border: '1px solid rgba(255, 255, 255, 0.8)',
+            background: 'var(--bg-card)', borderRadius: '24px', padding: DESIGN.cardPad,
+            boxShadow: 'var(--shadow-md)', border: '1px solid var(--border-main)',
             opacity: heroOpacity,
             position: 'relative',
             overflow: 'hidden',
@@ -695,19 +695,19 @@ const FarmAdvisor = () => {
             onClick={() => setIsSheetOpen(true)}
             style={{ 
               display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
-              background: '#FFFFFF', padding: '10px 14px', borderRadius: '14px', border: '1px solid #F1F5F9',
+              background: 'var(--bg-main)', padding: '10px 14px', borderRadius: '14px', border: '1px solid var(--border-main)',
               cursor: 'pointer', marginBottom: DESIGN.innerPad
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: getCropIcon(brain.meta.type, selectedCrop).color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {React.createElement(getCropIcon(brain.meta.type, selectedCrop).icon, { size: 16, color: 'white' })}
+                {React.createElement(getCropIcon(brain.meta.type, selectedCrop).icon, { size: 16, color: 'var(--bg-card)' })}
               </div>
-              <h1 style={{ fontSize: '1.1rem', fontWeight: 950, color: '#0F172A', letterSpacing: '0.02em', margin: 0 }}>
+              <h1 style={{ fontSize: '1.1rem', fontWeight: 950, color: 'var(--text-main)', letterSpacing: '0.02em', margin: 0 }}>
                 {formatCropName(selectedCrop)}
               </h1>
             </div>
-            <ChevronDown size={18} color="#94A3B8" />
+            <ChevronDown size={18} color="var(--text-muted)" />
           </div>
 
           {/* 2. FIELD PROFILE CONTEXT: UNIFORM 3x2 GRID */}
@@ -750,11 +750,11 @@ const FarmAdvisor = () => {
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.95rem', fontWeight: 950, color: brain.recColor }}>{brain.recStatus}</span>
-                <span style={{ fontSize: '0.65rem', fontWeight: 900, color: '#94A3B8' }}>
+                <span style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-muted)' }}>
                   {brain.isOffline ? 'Sync Pending' : `${brain.matchScore}% Match`}
                 </span>
               </div>
-              <p style={{ margin: '2px 0 0 0', fontSize: '0.7rem', fontWeight: 700, color: '#64748B', lineHeight: 1.3 }}>{brain.isOffline ? 'Sensors disconnected. Real-time suitability pending.' : brain.recReason}</p>
+              <p style={{ margin: '2px 0 0 0', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', lineHeight: 1.3 }}>{brain.isOffline ? 'Sensors disconnected. Real-time suitability pending.' : brain.recReason}</p>
             </div>
           </div>
 
@@ -784,9 +784,9 @@ const FarmAdvisor = () => {
               onClick={() => setActiveTab(t.id)}
               style={{
                 flex: 1, padding: '14px', borderRadius: '18px',
-                background: isActive ? 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)' : 'rgba(0,0,0,0.02)',
-                border: isActive ? '1px solid rgba(255, 255, 255, 0.8)' : '1px solid transparent',
-                boxShadow: isActive ? '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)' : 'none',
+                background: isActive ? 'var(--bg-card)' : 'var(--bg-sheet)',
+                border: isActive ? '1px solid var(--border-main)' : '1px solid transparent',
+                boxShadow: isActive ? 'var(--shadow-md)' : 'none',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                 cursor: 'pointer', transition: 'none', outline: 'none'
               }}

@@ -15,15 +15,15 @@ import { db } from '../../api/firebase';
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────
 const COLORS = {
-  primary: '#10B981',
-  secondary: '#3B82F6',
-  danger: '#EF4444',
-  bg: '#FFFFFF',
-  card: '#FFFFFF',
-  border: '#F1F5F9',
-  text: '#0F172A',
-  textMuted: '#64748B',
-  accent: '#1E293B'
+  primary: 'var(--primary)',
+  secondary: 'var(--secondary)',
+  danger: 'var(--danger)',
+  bg: 'var(--bg-main)',
+  card: 'var(--bg-card)',
+  border: 'var(--border-main)',
+  text: 'var(--text-main)',
+  textMuted: 'var(--text-muted)',
+  accent: 'var(--text-main)'
 };
 
 const AdminDashboard = () => {
@@ -104,9 +104,9 @@ const AdminDashboard = () => {
         </div>
 
         <div style={{ 
-          background: COLORS.accent, padding: '10px 16px', borderRadius: '16px',
-          display: 'flex', alignItems: 'center', gap: '10px', color: 'white',
-          boxShadow: '0 10px 20px rgba(30, 41, 59, 0.1)'
+          background: 'var(--bg-card)', padding: '10px 16px', borderRadius: '16px',
+          display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-main)',
+          boxShadow: 'var(--shadow-md)', border: '1px solid var(--border-main)'
         }}>
           <Server size={18} color={COLORS.primary} />
           <div style={{ textAlign: 'right' }}>
@@ -119,8 +119,8 @@ const AdminDashboard = () => {
       {/* ── ERROR ALERT ── */}
       {error && (
         <div style={{ 
-          background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)',
-          color: COLORS.danger, padding: '16px', borderRadius: '16px', marginBottom: '24px',
+          background: 'var(--danger-soft)', border: '1px solid var(--border-main)',
+          color: 'var(--danger)', padding: '16px', borderRadius: '16px', marginBottom: '24px',
           display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.85rem', fontWeight: 600
         }}>
           <AlertCircle size={18} />
@@ -135,7 +135,7 @@ const AdminDashboard = () => {
       }}>
         <StatCard label="Total Registry" value={stats.total} icon={Users} color={COLORS.secondary} />
         <StatCard label="Live Syncs Today" value={stats.activeToday} icon={Zap} color={COLORS.primary} />
-        <StatCard label="Registered Units" value={stats.registered} icon={Fingerprint} color="#8B5CF6" />
+        <StatCard label="Registered Units" value={stats.registered} icon={Fingerprint} color="var(--primary)" />
         <StatCard label="Guest Sessions" value={stats.guest} icon={Radio} color={COLORS.textMuted} />
       </div>
 
@@ -156,10 +156,10 @@ const AdminDashboard = () => {
             type="text" placeholder="Search operational ID or email..."
             value={search} onChange={e => setSearch(e.target.value)}
             style={{ 
-              width: '100%', height: '58px', background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', 
-              border: '1px solid rgba(255, 255, 255, 0.8)', borderRadius: '20px',
-              paddingLeft: '52px', fontSize: '0.95rem', fontWeight: 600,
-              outline: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)'
+              width: '100%', height: '58px', background: 'var(--bg-card)', 
+              border: '1px solid var(--glass-stroke)', borderRadius: '20px',
+              paddingLeft: '52px', fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)',
+              outline: 'none', boxShadow: 'var(--shadow-md)'
             }}
           />
         </div>
@@ -175,7 +175,7 @@ const AdminDashboard = () => {
                 <p style={{ marginTop: '16px', fontSize: '0.85rem', fontWeight: 700, color: COLORS.textMuted }}>Synchronizing with Global Database...</p>
               </div>
             ) : filteredFarmers.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px', background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '24px', border: '1px dashed rgba(255, 255, 255, 0.8)', boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.9)' }}>
+              <div style={{ textAlign: 'center', padding: '40px', background: 'var(--bg-card)', borderRadius: '24px', border: '1px dashed var(--border-main)', boxShadow: 'var(--shadow-sm)' }}>
                 <p style={{ color: COLORS.textMuted, fontSize: '0.9rem' }}>No operational records found.</p>
               </div>
             ) : (
@@ -195,8 +195,8 @@ const StatCard = ({ label, value, icon: Icon, color }) => (
   <motion.div 
     whileHover={{ y: -4 }}
     style={{ 
-      background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', padding: '20px', borderRadius: '24px',
-      border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)'
+      background: 'var(--bg-card)', padding: '20px', borderRadius: '24px',
+      border: '1px solid var(--border-main)', boxShadow: 'var(--shadow-md)'
     }}
   >
     <div style={{ 
@@ -230,10 +230,11 @@ const FarmerRow = ({ farmer, index }) => {
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.05 }}
+      whileTap={{ scale: 0.98 }}
       style={{ 
-        background: 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)', borderRadius: '24px', padding: '16px 20px',
-        border: '1px solid rgba(255, 255, 255, 0.8)', display: 'flex', alignItems: 'center',
-        justifyContent: 'space-between', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
+        background: 'var(--bg-card)', borderRadius: '24px', padding: '16px 20px',
+        border: '1px solid var(--border-main)', display: 'flex', alignItems: 'center',
+        justifyContent: 'space-between', boxShadow: 'var(--shadow-sm)',
         marginBottom: '8px'
       }}
     >
@@ -244,10 +245,10 @@ const FarmerRow = ({ farmer, index }) => {
           </div>
           <div style={{ 
             position: 'absolute', bottom: '-4px', right: '-4px',
-            padding: '4px', borderRadius: '6px', background: farmer.isGuest ? '#F1F5F9' : '#ECFDF5',
-            border: '2px solid white'
+            padding: '4px', borderRadius: '6px', background: farmer.isGuest ? 'var(--bg-main)' : 'var(--success-soft)',
+            border: '2px solid var(--bg-card)'
           }}>
-            {farmer.isGuest ? <Terminal size={10} color="#64748B" /> : <Globe size={10} color={COLORS.primary} />}
+            {farmer.isGuest ? <Terminal size={10} color="var(--text-muted)" /> : <Globe size={10} color={COLORS.primary} />}
           </div>
         </div>
 
@@ -257,7 +258,7 @@ const FarmerRow = ({ farmer, index }) => {
             {farmer.email?.toLowerCase() === 'prolayjitbiswas14112004@gmail.com' ? (
               <span style={{ 
                 fontSize: '0.55rem', fontWeight: 900, padding: '2px 8px', borderRadius: '4px',
-                background: 'rgba(16, 185, 129, 0.1)', color: '#10B981',
+                background: 'var(--success-soft)', color: 'var(--primary)',
                 textTransform: 'uppercase'
               }}>
                 ADMINISTRATOR
@@ -265,7 +266,7 @@ const FarmerRow = ({ farmer, index }) => {
             ) : (
               <span style={{ 
                 fontSize: '0.55rem', fontWeight: 900, padding: '2px 8px', borderRadius: '4px',
-                background: farmer.isGuest ? '#F1F5F9' : '#ECFDF5', color: farmer.isGuest ? '#64748B' : COLORS.primary,
+                background: farmer.isGuest ? 'var(--bg-main)' : 'var(--success-soft)', color: farmer.isGuest ? 'var(--text-muted)' : COLORS.primary,
                 textTransform: 'uppercase'
               }}>
                 {farmer.isGuest ? 'GUEST SESSION' : 'REGISTERED UNIT'}

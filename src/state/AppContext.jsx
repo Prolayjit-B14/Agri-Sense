@@ -355,6 +355,14 @@ export const AppProvider = ({ children }) => {
   }, [currentGPS.lat, currentGPS.lng]);
 
   const toggleTheme = React.useCallback(() => setIsDarkMode(prev => !prev), []);
+
+  // ─── THEME ENGINE ────────────────────────────────────────────────────────
+  useEffect(() => {
+    // Apply theme to the document root for CSS variable scoping
+    const theme = isDarkMode ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+    // Also save to localStorage if needed, though we might want to sync with profile
+  }, [isDarkMode]);
   const toggleNodePower = React.useCallback((id) => setNodePower(prev => ({ ...prev, [id]: !prev[id] })), []);
 
   const toggleActuator = React.useCallback((key) => {

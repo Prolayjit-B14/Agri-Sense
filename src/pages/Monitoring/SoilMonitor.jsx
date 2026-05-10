@@ -30,7 +30,7 @@ const itemFadeUp = {
 
 const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, range, trendInfo }) => {
   const isOffline = value === null || value === undefined;
-  const systemColor = isOffline ? '#94A3B8' : color;
+  const systemColor = isOffline ? 'var(--text-inactive)' : color;
 
   // ── Status dot and body tint: green / yellow / red ──────────────────────
   const numVal = parseFloat(value);
@@ -40,10 +40,10 @@ const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, range, tren
     : 'critical';
 
   const statusMap = {
-    optimal:  { dot: '#22C55E' },
-    warning:  { dot: '#F59E0B' },
-    critical: { dot: '#EF4444' },
-    offline:  { dot: '#CBD5E1' }
+    optimal:  { dot: 'var(--primary)' },
+    warning:  { dot: 'var(--accent)' },
+    critical: { dot: 'var(--danger)' },
+    offline:  { dot: 'var(--text-inactive)' }
   };
 
   const { dot: dotColor } = statusMap[health];
@@ -54,8 +54,9 @@ const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, range, tren
       whileTap={{ scale: 0.97 }}
       style={{
         borderRadius: 'var(--radius-xl)',
-        border: '1px solid ' + (isOffline ? '#E2E8F0' : systemColor + '30'),
-        boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+        background: 'var(--bg-card)',
+        border: '1px solid ' + (isOffline ? 'var(--glass-stroke)' : systemColor + '30'),
+        boxShadow: 'var(--shadow-md)',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
@@ -64,7 +65,7 @@ const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, range, tren
     >
       {/* ── TOP BAND: solid background ── */}
       <div style={{
-        background: isOffline ? '#F1F5F9' : systemColor + '15',
+        background: isOffline ? 'var(--bg-main)' : systemColor + '15',
         padding: '0.9rem 1rem 0.8rem',
         display: 'flex',
         alignItems: 'center',
@@ -73,16 +74,16 @@ const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, range, tren
       }}>
         <div style={{
           width: '40px', height: '40px', borderRadius: '12px', flexShrink: 0,
-          background: isOffline ? 'rgba(0,0,0,0.06)' : systemColor + '25',
+          background: isOffline ? 'var(--bg-main)' : systemColor + '25',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           boxShadow: 'none',
-          border: isOffline ? 'none' : '1px solid ' + systemColor + '35'
+          border: isOffline ? 'none' : '1px solid ' + systemColor + '20'
         }}>
-          <Icon size={21} color={isOffline ? '#94A3B8' : systemColor} strokeWidth={2.5} />
+          <Icon size={21} color={isOffline ? 'var(--text-inactive)' : systemColor} strokeWidth={2.5} />
         </div>
         <span style={{
           fontSize: '0.8rem', fontWeight: 900,
-          color: isOffline ? '#94A3B8' : systemColor,
+          color: isOffline ? 'var(--text-inactive)' : systemColor,
           letterSpacing: '0.02em', textTransform: 'uppercase', lineHeight: 1.2
         }}>
           {label}
@@ -91,14 +92,14 @@ const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, range, tren
 
       {/* ── BODY: PURE WHITE background, big centered value ── */}
       <div style={{
-        background: '#FFFFFF',
+        background: 'var(--bg-card)',
         flex: 1, display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
         padding: '0.5rem 1rem 0.8rem'
       }}>
         <span style={{
           fontSize: '3.2rem', fontWeight: 950,
-          color: isOffline ? '#CBD5E1' : 'var(--text-main)',
+          color: isOffline ? 'var(--text-inactive)' : 'var(--text-main)',
           letterSpacing: '-0.06em', lineHeight: 1, textAlign: 'center'
         }}>
           {isOffline ? '--' : value}
@@ -111,18 +112,18 @@ const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, range, tren
         }}>
           <span style={{
             fontSize: '0.48rem', fontWeight: 950,
-            color: isOffline ? '#CBD5E1' : systemColor,
+            color: isOffline ? 'var(--text-inactive)' : systemColor,
             letterSpacing: '0.08em', opacity: 0.75
           }}>RANGE</span>
-          <span style={{ fontSize: '0.6rem', fontWeight: 700, color: '#94A3B8' }}>
+          <span style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-inactive)' }}>
             {range}
           </span>
           {!isOffline && (
             trendInfo?.trend === 'increasing'
               ? <ArrowUp size={11} color={systemColor} />
               : trendInfo?.trend === 'decreasing'
-                ? <ArrowDown size={11} color="#EF4444" />
-                : <Minus size={11} color="#CBD5E1" />
+                ? <ArrowDown size={11} color="var(--danger)" />
+                : <Minus size={11} color="var(--text-inactive)" />
           )}
         </div>
       </div>
@@ -157,10 +158,10 @@ const SoilMonitoring = () => {
 
   const heroConfig = useMemo(() => {
     const mainColor = '#8B5E3C';
-    if (!isOnline) return { label: 'Node Offline', status: 'Inactive', color: '#64748B', bg: '#F8FAFC' };
-    if (healthScore >= 75) return { label: 'Optimal Soil', status: 'Stable', color: mainColor, bg: mainColor + '08' };
-    if (healthScore >= 45) return { label: 'Soil Warning', status: 'Adjust', color: mainColor, bg: mainColor + '08' };
-    return { label: 'Critical Alert', status: 'Urgent', color: mainColor, bg: mainColor + '08' };
+    if (!isOnline) return { label: 'Node Offline', status: 'Inactive', color: 'var(--text-muted)', bg: 'var(--bg-main)' };
+    if (healthScore >= 75) return { label: 'Optimal Soil', status: 'Stable', color: mainColor, bg: 'var(--bg-card)' };
+    if (healthScore >= 45) return { label: 'Soil Warning', status: 'Adjust', color: 'var(--accent)', bg: 'var(--bg-card)' };
+    return { label: 'Critical Alert', status: 'Urgent', color: 'var(--danger)', bg: 'var(--bg-card)' };
   }, [isOnline, healthScore]);
 
 
@@ -178,9 +179,9 @@ const SoilMonitoring = () => {
           background: heroConfig.bg,
           borderRadius: 'var(--radius-xl)',
           padding: '1.75rem',
-          boxShadow: '0 10px 30px -10px ' + heroConfig.color + '30',
+          boxShadow: 'var(--shadow-lg)',
           marginBottom: '1.5rem',
-          border: '1px solid ' + heroConfig.color + '25',
+          border: '1px solid ' + (isOnline ? heroConfig.color + '25' : 'var(--border-main)'),
           position: 'relative',
           overflow: 'hidden',
           display: 'flex',
@@ -196,9 +197,9 @@ const SoilMonitoring = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
               width: '44px', height: '44px', borderRadius: '13px',
-              background: '#FFFFFF', display: 'flex', alignItems: 'center',
-              justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-              border: '1px solid ' + heroConfig.color + '15'
+              background: 'var(--bg-sheet)', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', boxShadow: 'var(--shadow-sm)',
+              border: '1px solid ' + heroConfig.color + '20'
             }}>
               <Sprout size={24} color={heroConfig.color} strokeWidth={2.5} />
             </div>
@@ -210,9 +211,9 @@ const SoilMonitoring = () => {
           </div>
           <div style={{
             padding: '6px 14px', borderRadius: '100px',
-            background: '#FFFFFF', color: heroConfig.color,
+            background: 'var(--bg-card)', color: heroConfig.color,
             fontSize: '0.7rem', fontWeight: 950,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+            boxShadow: 'var(--shadow-sm)',
             border: '1px solid ' + heroConfig.color + '25',
             display: 'flex', alignItems: 'center', gap: '6px'
           }}>
@@ -233,8 +234,8 @@ const SoilMonitoring = () => {
           {/* Right: Vital Stats Panel (Compacted) */}
           <div style={{
             display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem',
-            padding: '1rem 1.25rem', background: 'rgba(255,255,255,0.5)',
-            borderRadius: 'var(--radius-lg)', border: '1px solid rgba(255,255,255,0.8)',
+            padding: '1rem 1.25rem', background: 'var(--glass)',
+            borderRadius: 'var(--radius-lg)', border: '1px solid var(--glass-border)',
             maxWidth: '200px'
           }}>
             <div>

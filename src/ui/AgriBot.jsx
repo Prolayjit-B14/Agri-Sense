@@ -11,14 +11,15 @@ import { askGemini } from '../api/aiService';
 import ReactMarkdown from 'react-markdown';
 
 const COLORS = {
-  primary: '#10B981',
-  secondary: '#3B82F6',
-  accent: '#7C3AED',
-  danger: '#EF4444',
-  warning: '#F59E0B',
-  dark: '#0F172A',
-  glass: 'rgba(255, 255, 255, 0.8)',
-  stroke: 'rgba(0, 0, 0, 0.08)'
+  primary: 'var(--primary)',
+  secondary: 'var(--secondary)',
+  accent: 'var(--accent)',
+  danger: 'var(--danger)',
+  warning: 'var(--accent)',
+  dark: 'var(--bg-dark)',
+  subtext: 'var(--text-muted)',
+  glass: 'var(--glass)',
+  stroke: 'var(--glass-stroke)'
 };
 
 const springConfig = { type: "spring", stiffness: 400, damping: 30 };
@@ -103,24 +104,24 @@ const AgriBot = () => {
               width: '68px',
               height: '68px',
               borderRadius: '22px',
-              background: COLORS.dark,
-              color: 'white',
-              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'var(--bg-dark)',
+              color: 'var(--bg-card)',
+              border: '1px solid var(--border-main)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+              boxShadow: 'var(--shadow-premium)',
               zIndex: 9999,
               cursor: 'pointer',
               overflow: 'hidden'
             }}
           >
-            <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${COLORS.primary}20 0%, transparent 100%)` }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'var(--primary-soft)' }} />
             <div style={{ 
               width: '42px', height: '42px', borderRadius: '14px', 
-              background: `linear-gradient(135deg, ${COLORS.primary} 0%, #059669 100%)`, 
+              background: 'var(--primary)', 
               display: 'flex', alignItems: 'center', justifyContent: 'center', 
-              boxShadow: `0 5px 15px ${COLORS.primary}40`,
+              boxShadow: 'var(--shadow-sm)',
               zIndex: 1
             }}>
               <Bot size={26} strokeWidth={2.5} />
@@ -128,7 +129,7 @@ const AgriBot = () => {
             <motion.div 
               animate={{ rotate: 360 }}
               transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-              style={{ position: 'absolute', width: '120%', height: '120%', border: '1px dashed rgba(16, 185, 129, 0.2)', borderRadius: '50%' }}
+              style={{ position: 'absolute', width: '120%', height: '120%', border: '1px dashed var(--border-main)', borderRadius: '50%', opacity: 0.3 }}
             />
           </motion.button>
         )}
@@ -150,21 +151,21 @@ const AgriBot = () => {
               maxWidth: '460px',
               height: '85vh',
               maxHeight: '720px',
-              background: '#FFFFFF',
+              background: 'var(--bg-card)',
               borderRadius: '32px',
-              boxShadow: '0 40px 120px rgba(0,0,0,0.2)',
+              boxShadow: 'var(--shadow-premium)',
               display: 'flex',
               flexDirection: 'column',
               overflow: 'hidden',
               zIndex: 10001,
-              border: '1px solid rgba(0,0,0,0.1)',
+              border: '1px solid var(--border-main)',
             }}
           >
             {/* 🛠️ TOP NAVIGATION / STATUS BAR */}
             <div style={{
               padding: '24px 28px',
-              background: '#F8FAFC',
-              borderBottom: '1px solid rgba(0,0,0,0.06)',
+              background: 'var(--bg-main)',
+              borderBottom: '1px solid var(--border-main)',
               position: 'relative'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -172,21 +173,21 @@ const AgriBot = () => {
                   <div style={{ position: 'relative' }}>
                     <div style={{ 
                       width: '52px', height: '52px', borderRadius: '15px', 
-                      background: 'rgba(16, 185, 129, 0.1)', display: 'flex', 
+                      background: 'var(--primary-soft)', display: 'flex', 
                       alignItems: 'center', justifyContent: 'center',
-                      boxShadow: '0 8px 16px rgba(0,0,0,0.05)',
-                      border: '1px solid rgba(16, 185, 129, 0.2)'
+                      boxShadow: 'var(--shadow-sm)',
+                      border: '1px solid var(--border-main)'
                     }}>
                       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2L2 7l10 5 10-5-10-5z" fill="#059669" fillOpacity="0.2" />
-                        <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M12 7v6" stroke="#10B981" strokeWidth="2" strokeLinecap="round" />
+                        <path d="M12 2L2 7l10 5 10-5-10-5z" fill="var(--primary-deep)" fillOpacity="0.2" />
+                        <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z" stroke="var(--primary-deep)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M12 7v6" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" />
                       </svg>
                     </div>
                     <motion.div 
                       animate={{ scale: [1, 1.2, 1], opacity: [1, 0.6, 1] }}
                       transition={{ duration: 2, repeat: Infinity }}
-                      style={{ position: 'absolute', bottom: -2, right: -2, width: '14px', height: '14px', borderRadius: '50%', background: COLORS.primary, border: '3px solid white' }} 
+                      style={{ position: 'absolute', bottom: -2, right: -2, width: '14px', height: '14px', borderRadius: '50%', background: 'var(--primary)', border: '3px solid var(--bg-main)' }} 
                     />
                   </div>
                   <div>
@@ -199,7 +200,7 @@ const AgriBot = () => {
                 <motion.button 
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setIsOpen(false)}
-                  style={{ background: 'rgba(0,0,0,0.04)', border: 'none', color: COLORS.dark, width: '44px', height: '44px', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                  style={{ background: 'var(--bg-main)', border: 'none', color: 'var(--text-main)', width: '44px', height: '44px', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                 >
                   <X size={20} strokeWidth={3} />
                 </motion.button>
@@ -207,7 +208,7 @@ const AgriBot = () => {
             </div>
 
             {/* 💬 CHAT STREAM */}
-            <div className="no-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '20px', background: '#FDFDFD' }}>
+            <div className="no-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '20px', background: 'var(--bg-card)' }}>
               <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
 
               {messages.length === 0 && (
@@ -232,12 +233,12 @@ const AgriBot = () => {
                     ].map(s => (
                       <motion.button 
                         key={s.l} 
-                        whileHover={{ y: -2, background: '#F8FAFC' }}
+                        whileHover={{ y: -2, background: 'var(--bg-sheet)' }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => handleSend(s.q)} 
                         style={{ 
-                          padding: '14px', borderRadius: '18px', border: '1px solid rgba(0,0,0,0.06)', 
-                          background: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', 
+                          padding: '14px', borderRadius: '18px', border: '1px solid var(--border-main)', 
+                          background: 'var(--bg-main)', display: 'flex', flexDirection: 'column', alignItems: 'center', 
                           gap: '8px', cursor: 'pointer', transition: '0.2s' 
                         }}
                       >
@@ -257,12 +258,12 @@ const AgriBot = () => {
                   style={{
                     alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
                     maxWidth: '85%',
-                    background: msg.role === 'user' ? `linear-gradient(135deg, ${COLORS.primary} 0%, #059669 100%)` : 'white',
-                    color: msg.role === 'user' ? 'white' : COLORS.dark,
+                    background: msg.role === 'user' ? 'var(--primary)' : 'var(--bg-main)',
+                    color: msg.role === 'user' ? 'var(--bg-card)' : 'var(--text-main)',
                     padding: '18px 22px',
                     borderRadius: msg.role === 'user' ? '24px 24px 4px 24px' : '24px 24px 24px 4px',
-                    boxShadow: msg.role === 'user' ? `0 10px 30px ${COLORS.primary}30` : '0 10px 40px rgba(0,0,0,0.06)',
-                    border: msg.role === 'user' ? 'none' : '1px solid rgba(0,0,0,0.04)',
+                    boxShadow: msg.role === 'user' ? 'var(--shadow-md)' : 'var(--shadow-sm)',
+                    border: msg.role === 'user' ? 'none' : '1px solid var(--border-main)',
                     fontSize: '0.92rem',
                     fontWeight: 600,
                     lineHeight: 1.6,
@@ -274,7 +275,7 @@ const AgriBot = () => {
                       h3: ({node, ...props}) => <h3 style={{ fontSize: '1rem', fontWeight: 950, margin: '14px 0 8px', color: COLORS.primary }} {...props} />,
                       p: ({node, ...props}) => <p style={{ margin: '0 0 10px' }} {...props} />,
                       li: ({node, ...props}) => <li style={{ marginBottom: '6px' }} {...props} />,
-                      strong: ({node, ...props}) => <strong style={{ fontWeight: 900, color: msg.role === 'user' ? 'white' : COLORS.primary }} {...props} />
+                      strong: ({node, ...props}) => <strong style={{ fontWeight: 900, color: msg.role === 'user' ? 'var(--bg-card)' : COLORS.primary }} {...props} />
                     }}
                   >
                     {msg.content}
@@ -288,16 +289,16 @@ const AgriBot = () => {
               {isTyping && (
                 <motion.div 
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                  style={{ alignSelf: 'flex-start', background: 'white', padding: '14px 24px', borderRadius: '20px', display: 'flex', gap: '6px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.03)' }}
+                  style={{ alignSelf: 'flex-start', background: 'var(--bg-main)', padding: '14px 24px', borderRadius: '20px', display: 'flex', gap: '6px', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-main)' }}
                 >
-                  {[0,1,2].map(i => <motion.div key={i} animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: i*0.2 }} style={{ width: '6px', height: '6px', borderRadius: '50%', background: COLORS.primary }} />)}
+                  {[0,1,2].map(i => <motion.div key={i} animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: i*0.2 }} style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary)' }} />)}
                 </motion.div>
               )}
               <div ref={chatEndRef} />
             </div>
 
             {/* ⌨️ INDUSTRIAL INPUT CONSOLE */}
-            <div style={{ padding: '24px 28px', background: 'white', borderTop: '1px solid rgba(0,0,0,0.06)', display: 'flex', gap: '14px', alignItems: 'center' }}>
+            <div style={{ padding: '24px 28px', background: 'var(--bg-main)', borderTop: '1px solid var(--border-main)', display: 'flex', gap: '14px', alignItems: 'center' }}>
               <div style={{ flex: 1, position: 'relative' }}>
                 <input
                   type="text"
@@ -307,24 +308,24 @@ const AgriBot = () => {
                   placeholder="Query system intelligence..."
                   style={{ 
                     width: '100%', 
-                    border: '1.5px solid #E2E8F0', 
-                    background: '#F8FAFC', 
+                    border: '1.5px solid var(--border-main)', 
+                    background: 'var(--bg-card)', 
                     borderRadius: '16px', 
                     padding: '16px 20px', 
                     fontSize: '0.95rem', 
                     outline: 'none', 
                     fontWeight: 700,
-                    color: COLORS.dark,
+                    color: 'var(--text-main)',
                     transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
                   }}
                   onFocus={(e) => {
                     e.target.style.borderColor = COLORS.primary;
-                    e.target.style.background = 'white';
-                    e.target.style.boxShadow = `0 0 0 4px ${COLORS.primary}10`;
+                    e.target.style.background = 'var(--bg-card)';
+                    e.target.style.boxShadow = 'var(--shadow-sm)';
                   }}
                   onBlur={(e) => {
-                    e.target.style.borderColor = '#E2E8F0';
-                    e.target.style.background = '#F8FAFC';
+                    e.target.style.borderColor = 'var(--border-main)';
+                    e.target.style.background = 'var(--bg-card)';
                     e.target.style.boxShadow = 'none';
                   }}
                 />
@@ -338,13 +339,13 @@ const AgriBot = () => {
                   height: '56px', 
                   borderRadius: '18px', 
                   background: COLORS.primary, 
-                  color: 'white', 
+                  color: 'var(--bg-card)', 
                   border: 'none', 
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'center', 
                   cursor: 'pointer',
-                  boxShadow: `0 10px 20px ${COLORS.primary}30`
+                  boxShadow: 'var(--shadow-premium)'
                 }}
               >
                 <Send size={22} strokeWidth={2.5} />

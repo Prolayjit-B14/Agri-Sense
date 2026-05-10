@@ -358,23 +358,23 @@ const Account = () => {
           
           <div style={{ padding: '0 24px 24px' }}>
              <div style={{ 
-               background: 'var(--bg-main)', borderRadius: 'var(--radius-md)', padding: '20px',
-               display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px'
+               background: 'var(--bg-main)', borderRadius: 'var(--radius-md)', padding: '24px',
+               display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px'
              }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <span style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Network Cluster</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Network Cluster</span>
                   {isEditing ? (
-                    <input value={codename} onChange={e => setCodename(e.target.value)} style={{ border: 'none', background: 'var(--bg-card)', padding: '4px 8px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 800, color: 'var(--secondary)', width: '100%' }} />
+                    <input value={codename} onChange={e => setCodename(e.target.value)} style={{ border: 'none', background: 'var(--bg-card)', padding: '6px 10px', borderRadius: '8px', fontSize: '1rem', fontWeight: 800, color: 'var(--secondary)', width: '100%' }} />
                   ) : (
-                    <span style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--secondary)' }}>{codename}</span>
+                    <span style={{ fontSize: '1.25rem', fontWeight: 950, color: 'var(--secondary)', letterSpacing: '-0.02em' }}>{codename}</span>
                   )}
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <span style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Main Node ID</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Main Node ID</span>
                   {isEditing ? (
-                    <input value={clientId} onChange={e => setClientId(e.target.value)} style={{ border: 'none', background: 'var(--bg-card)', padding: '4px 8px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-main)', width: '100%' }} />
+                    <input value={clientId} onChange={e => setClientId(e.target.value)} style={{ border: 'none', background: 'var(--bg-card)', padding: '6px 10px', borderRadius: '8px', fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)', width: '100%' }} />
                   ) : (
-                    <span style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--text-main)' }}>{clientId}</span>
+                    <span style={{ fontSize: '1.25rem', fontWeight: 950, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>{clientId}</span>
                   )}
                 </div>
              </div>
@@ -398,124 +398,99 @@ const Account = () => {
           <div style={{ position: 'absolute', bottom: '-40px', left: '-20px', width: '220px', height: '220px', background: 'var(--primary-soft)', borderRadius: '50%', filter: 'blur(70px)', opacity: 0.3 }} />
 
           <div style={{ position: 'relative', zIndex: 1 }}>
-            {/* Branding */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px' }}>
-              <div style={{ 
-                width: '52px', height: '52px', borderRadius: '16px', 
-                background: 'var(--primary-soft)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center'
-              }}>
-                <Sparkles size={26} color="var(--primary)" />
-              </div>
-              <div>
-                <h4 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 950, letterSpacing: '-0.03em', color: 'var(--text-main)' }}>AgriSense Pro</h4>
-
-              </div>
-            </div>
-
             {/* Credits Grid */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '40px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'var(--secondary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Code size={16} color="var(--secondary)" strokeWidth={2.5} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '20px' }}>
+              
+              {/* Developer */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '12px', background: 'var(--secondary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Code size={18} color="var(--secondary)" strokeWidth={2.5} />
                   </div>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>App Developers</span>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>App Developer</span>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '1.1rem', fontWeight: 950, color: 'var(--text-main)', display: 'block' }}>Prolayjit Biswas</span>
-                  <span style={{ fontSize: '1.1rem', fontWeight: 950, color: 'var(--text-main)', display: 'block' }}>Ankan Bhowmik</span>
+                  <span style={{ fontSize: '1rem', fontWeight: 950, color: 'var(--text-main)', display: 'block' }}>Prolayjit Biswas</span>
+                  <span style={{ fontSize: '1rem', fontWeight: 950, color: 'var(--text-main)', display: 'block' }}>Ankan Bhowmik</span>
                 </div>
               </div>
 
               <div style={{ height: '1px', width: '100%', background: 'var(--bg-main)', opacity: 0.5 }} />
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'var(--primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <ShieldCheck size={16} color="var(--primary)" strokeWidth={2.5} />
+              {/* Owner */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '12px', background: 'var(--primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <ShieldCheck size={18} color="var(--primary)" strokeWidth={2.5} />
                   </div>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>App Owner</span>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>App Owner</span>
                 </div>
-                <span style={{ fontSize: '1.1rem', fontWeight: 950, color: 'var(--text-main)' }}>Team SemiColon</span>
+                <span style={{ fontSize: '1rem', fontWeight: 950, color: 'var(--text-main)' }}>Team SemiColon</span>
+              </div>
+
+              <div style={{ height: '1px', width: '100%', background: 'var(--bg-main)', opacity: 0.5 }} />
+
+              {/* Version */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '12px', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Globe size={18} color="var(--accent)" strokeWidth={2.5} />
+                  </div>
+                <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Version</span>
+                </div>
+                <span style={{ fontSize: '1rem', fontWeight: 950, color: 'var(--text-main)' }}>{farmInfo?.version?.replace(/[^0-9.]/g, '') || '19.1.1'}</span>
               </div>
             </div>
 
-            {/* Quick Links */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '32px' }}>
-              {[
-                { label: 'Source', icon: Github, color: 'var(--text-main)' },
-                { label: 'About', icon: Info, color: 'var(--secondary)' },
-                { label: 'Docs', icon: BookOpen, color: 'var(--primary)' }
-              ].map((link, i) => (
-                <motion.button
-                  key={i}
-                  whileHover={{ y: -4, background: 'var(--bg-main)', borderColor: 'var(--primary-soft)' }}
-                  whileTap={{ scale: 0.95 }}
-                  style={{ 
-                    flex: '1 1 100px', padding: '14px', borderRadius: '20px', 
-                    background: 'var(--bg-card)', border: '1px solid var(--glass-stroke)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-                    color: 'var(--text-main)', cursor: 'pointer', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    boxShadow: 'var(--shadow-sm)'
-                  }}
-                >
-                  <link.icon size={16} color={link.color} strokeWidth={2.5} />
-                  <span style={{ fontSize: '0.8rem', fontWeight: 900 }}>{link.label}</span>
-                </motion.button>
-              ))}
-            </div>
+            {/* Premium Links */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginTop: '20px' }}>
+              <motion.button
+                whileHover={{ y: -4, background: 'var(--bg-main)' }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => window.open('https://github.com/Prolayjit-B14/Agri-Sense', '_blank')}
+                style={{ 
+                  padding: '12px 8px', borderRadius: '16px', 
+                  background: 'var(--bg-card)', border: '1px solid var(--glass-stroke)',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                  color: 'var(--text-main)', cursor: 'pointer', transition: 'all 0.3s ease',
+                  boxShadow: 'var(--shadow-sm)'
+                }}
+              >
+                <Github size={18} color="var(--primary)" strokeWidth={2.5} />
+                <span style={{ fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase' }}>Source</span>
+              </motion.button>
 
-            {/* Version Badge */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ 
-                padding: '8px 20px', borderRadius: '20px', background: 'var(--bg-main)',
-                display: 'flex', alignItems: 'center', gap: '10px', border: '1px solid var(--glass-stroke)'
-              }}>
-                <Globe size={14} color="var(--primary)" />
-                <span style={{ fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.25em', color: 'var(--text-muted)' }}>
-                  System Version {farmInfo?.version || '19.1.1'}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </motion.div>
+              <motion.button
+                whileHover={{ y: -4, background: 'var(--bg-main)' }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => showToast("AgriSense Pro: Engineered for Industrial Precision 🛰️")}
+                style={{ 
+                  padding: '12px 8px', borderRadius: '16px', 
+                  background: 'var(--bg-card)', border: '1px solid var(--glass-stroke)',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                  color: 'var(--text-main)', cursor: 'pointer', transition: 'all 0.3s ease',
+                  boxShadow: 'var(--shadow-sm)'
+                }}
+              >
+                <Info size={18} color="var(--secondary)" strokeWidth={2.5} />
+                <span style={{ fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase' }}>About</span>
+              </motion.button>
 
-      {/* 🚀 SYSTEM PREFERENCES & SECURITY */}
-      <motion.div variants={ANIM.item} style={{ marginTop: '12px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-          <motion.div 
-            whileTap={{ scale: 0.95 }}
-            onClick={toggleTheme}
-            className="premium-card"
-            style={{ 
-              padding: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px',
-              background: 'var(--bg-card)', boxShadow: 'var(--shadow-md)'
-            }}
-          >
-            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--secondary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Settings size={18} color="var(--secondary)" />
-            </div>
-            <div>
-              <p style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--text-muted)', margin: 0 }}>THEME</p>
-              <p style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>{isDarkMode ? 'Dark' : 'Light'}</p>
-            </div>
-          </motion.div>
-
-          <div 
-            className="premium-card"
-            style={{ 
-              padding: '20px', display: 'flex', alignItems: 'center', gap: '12px',
-              background: 'var(--bg-card)', boxShadow: 'var(--shadow-md)'
-            }}
-          >
-            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <ShieldCheck size={18} color="var(--primary)" />
-            </div>
-            <div>
-              <p style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--text-muted)', margin: 0 }}>SECURITY</p>
-              <p style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>Encrypted</p>
+              <motion.button
+                whileHover={{ y: -4, background: 'var(--bg-main)' }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => window.open('https://github.com/Prolayjit-B14/Agri-Sense#readme', '_blank')}
+                style={{ 
+                  padding: '12px 8px', borderRadius: '16px', 
+                  background: 'var(--bg-card)', border: '1px solid var(--glass-stroke)',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                  color: 'var(--text-main)', cursor: 'pointer', transition: 'all 0.3s ease',
+                  boxShadow: 'var(--shadow-sm)'
+                }}
+              >
+                <BookOpen size={18} color="var(--primary)" strokeWidth={2.5} />
+                <span style={{ fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase' }}>Docs</span>
+              </motion.button>
             </div>
           </div>
         </div>

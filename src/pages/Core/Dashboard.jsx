@@ -44,17 +44,17 @@ const HealthOverview = React.memo(({ score, systemHealth, devices }) => {
     .filter(id => devices?.[id]?.status === 'ACTIVE' || devices?.[id]?.status === 'PARTIAL').length;
     
   const isOffline = score === null || score === 0 || activeNodesCount === 0;
-  const healthColor = isOffline ? '#94A3B8' : getHealthColor(score);
+  const healthColor = isOffline ? 'var(--text-inactive)' : getHealthColor(score);
   const visionOnline = devices?.vision_node?.status === 'ACTIVE' || devices?.vision_node?.status === 'PARTIAL';
   
   const totalNodesCount = 5;
 
   const systems = [
-    { label: 'Soil', icon: Sprout, color: '#8B5E3C', active: systemHealth?.soil != null },
-    { label: 'Weather', icon: CloudSun, color: '#3B82F6', active: systemHealth?.weather != null },
-    { label: 'Irrigation', icon: Waves, color: '#06D6A0', active: systemHealth?.water != null },
-    { label: 'Storage', icon: Database, color: '#64748B', active: systemHealth?.storage != null },
-    { label: 'Vision', icon: Camera, color: '#7C3AED', active: visionOnline },
+    { label: 'Soil', icon: Sprout, color: 'var(--primary)', active: systemHealth?.soil != null },
+    { label: 'Weather', icon: CloudSun, color: 'var(--accent)', active: systemHealth?.weather != null },
+    { label: 'Irrigation', icon: Waves, color: 'var(--secondary)', active: systemHealth?.water != null },
+    { label: 'Storage', icon: Database, color: 'var(--text-muted)', active: systemHealth?.storage != null },
+    { label: 'Vision', icon: Camera, color: 'var(--primary)', active: visionOnline },
   ];
 
   return (
@@ -62,8 +62,8 @@ const HealthOverview = React.memo(({ score, systemHealth, devices }) => {
       variants={itemFadeUp}
       style={{
         background: isOffline 
-          ? 'linear-gradient(165deg, #f8fafc 0%, #f1f5f9 100%)' 
-          : `linear-gradient(165deg, ${healthColor}15 0%, #ffffff 100%)`,
+          ? 'var(--bg-main)' 
+          : `linear-gradient(165deg, ${healthColor}15 0%, var(--bg-card) 100%)`,
         borderRadius: 'var(--radius-xl)', 
         padding: '1.5rem',
         border: '1px solid var(--glass-stroke)',
@@ -81,7 +81,7 @@ const HealthOverview = React.memo(({ score, systemHealth, devices }) => {
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <div style={{ position: 'relative', width: '90px', height: '90px', flexShrink: 0 }}>
           <svg width="90" height="90" viewBox="0 0 100 100">
-            <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(0,0,0,0.03)" strokeWidth="8" />
+            <circle cx="50" cy="50" r="44" fill="none" stroke="var(--border-main)" strokeWidth="8" />
             <motion.circle
               cx="50" cy="50" r="44" fill="none" stroke={healthColor} strokeWidth="10" strokeLinecap="round" strokeDasharray="276"
               initial={{ strokeDashoffset: 276 }}
@@ -112,17 +112,17 @@ const HealthOverview = React.memo(({ score, systemHealth, devices }) => {
         </div>
       </div>
       
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px', paddingTop: '1rem', borderTop: '1px solid rgba(0,0,0,0.03)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px', paddingTop: '1rem', borderTop: '1px solid var(--glass-stroke)' }}>
         {systems.map((s) => {
           const Icon = s.icon;
           const isActive = s.active && !isOffline;
           return (
             <div key={s.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
               <div style={{
-                width: '100%', height: '40px', borderRadius: '14px', background: isActive ? `${s.color}10` : 'rgba(0,0,0,0.02)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', border: isActive ? `1px solid ${s.color}20` : '1px solid transparent'
+                width: '100%', height: '40px', borderRadius: '14px', background: isActive ? `${s.color}15` : 'var(--bg-sheet)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', border: isActive ? `1px solid ${s.color}20` : '1px solid var(--border-main)'
               }}>
-                <Icon size={18} color={isActive ? s.color : '#94A3B8'} strokeWidth={2.5} />
+                <Icon size={18} color={isActive ? s.color : 'var(--text-inactive)'} strokeWidth={2.5} />
               </div>
               <span style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--text-muted)' }}>{s.label}</span>
             </div>
@@ -135,8 +135,8 @@ const HealthOverview = React.memo(({ score, systemHealth, devices }) => {
 
 const SensorCard = React.memo(({ title, icon: Icon, color, status, score, onClick, nodeType }) => {
   const isConnected = status === 'CONNECTED' || status === 'ACTIVE' || status === 'PARTIAL';
-  const systemColor = !isConnected ? '#94A3B8' : ({ soil: '#8B5E3C', irrigation: '#06D6A0', water: '#06D6A0', weather: '#3B82F6', storage: '#64748B', vision: '#7C3AED' }[nodeType] || color);
-  const healthColor = !isConnected ? '#E2E8F0' : (score >= 80 ? '#10B981' : score >= 50 ? '#F59E0B' : '#EF4444');
+  const systemColor = !isConnected ? 'var(--text-inactive)' : ({ soil: 'var(--primary)', irrigation: 'var(--secondary)', water: 'var(--secondary)', weather: 'var(--accent)', storage: 'var(--text-muted)', vision: 'var(--primary)' }[nodeType] || color);
+  const healthColor = !isConnected ? 'var(--border-main)' : (score >= 80 ? 'var(--primary)' : score >= 50 ? 'var(--accent)' : 'var(--danger)');
 
   return (
     <motion.div
@@ -145,8 +145,8 @@ const SensorCard = React.memo(({ title, icon: Icon, color, status, score, onClic
       onClick={onClick}
       style={{
         background: isConnected 
-          ? `linear-gradient(165deg, #ffffff 0%, ${systemColor}08 50%, ${systemColor}12 100%)` 
-          : 'linear-gradient(165deg, #f8fafc 0%, #f1f5f9 100%)',
+          ? `linear-gradient(165deg, var(--bg-card) 0%, ${systemColor}08 50%, ${systemColor}12 100%)` 
+          : 'var(--bg-main)',
         borderRadius: 'var(--radius-xl)', padding: '1.25rem',
         border: '1px solid var(--glass-stroke)', boxShadow: 'var(--shadow-md)',
         cursor: 'pointer', position: 'relative', overflow: 'hidden',
@@ -156,26 +156,26 @@ const SensorCard = React.memo(({ title, icon: Icon, color, status, score, onClic
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <div style={{ 
           width: '44px', height: '44px', borderRadius: '14px', 
-          background: isConnected ? `${systemColor}12` : 'rgba(0,0,0,0.03)', 
+          background: isConnected ? `${systemColor}15` : 'var(--bg-main)', 
           display: 'flex', alignItems: 'center', justifyContent: 'center', 
-          border: isConnected ? `1px solid ${systemColor}20` : '1px solid transparent'
+          border: isConnected ? `1px solid ${systemColor}20` : '1px solid var(--border-main)'
         }}>
           <Icon size={22} color={systemColor} strokeWidth={2.5} />
         </div>
-        <div style={{ fontSize: '0.8rem', color: isConnected ? 'var(--text-muted)' : '#94A3B8', fontWeight: 700 }}>{title}</div>
+        <div style={{ fontSize: '0.8rem', color: isConnected ? 'var(--text-muted)' : 'var(--text-inactive)', fontWeight: 700 }}>{title}</div>
       </div>
 
       <div>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-          <span style={{ fontSize: '1.8rem', fontWeight: 950, color: isConnected ? 'var(--text-main)' : '#94A3B8', letterSpacing: '-0.05em' }}>
+          <span style={{ fontSize: '1.8rem', fontWeight: 950, color: isConnected ? 'var(--text-main)' : 'var(--text-inactive)', letterSpacing: '-0.05em' }}>
             {score != null && isConnected ? Math.round(score) : '--'}
           </span>
-          <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#94A3B8' }}>%</span>
+          <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-inactive)' }}>%</span>
         </div>
       </div>
 
       {/* Progress Bar Mini */}
-      <div style={{ width: '100%', height: '6px', background: 'rgba(0,0,0,0.03)', borderRadius: '3px', overflow: 'hidden' }}>
+      <div style={{ width: '100%', height: '6px', background: 'var(--border-light)', borderRadius: '3px', overflow: 'hidden' }}>
         <motion.div 
           initial={{ width: 0 }}
           animate={{ width: isConnected ? `${score || 0}%` : '0%' }}
@@ -199,7 +199,7 @@ const CamCard = React.memo(({ isOnline, onClick }) => (
       height: '220px', width: '100%'
     }}
   >
-    <div style={{ position: 'relative', borderRadius: 'calc(var(--radius-xl) - 8px)', overflow: 'hidden', height: '100%', background: '#0F172A' }}>
+    <div style={{ position: 'relative', borderRadius: 'calc(var(--radius-xl) - 8px)', overflow: 'hidden', height: '100%', background: 'var(--bg-dark)' }}>
       {isOnline ? (
         <motion.img 
           initial={{ opacity: 0 }} animate={{ opacity: 1 }}
@@ -209,31 +209,31 @@ const CamCard = React.memo(({ isOnline, onClick }) => (
           onError={(e) => { e.target.style.display = 'none'; }}
         />
       ) : (
-        <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#1e293b', gap: '10px' }}>
-          <Camera size={48} color="rgba(255,255,255,0.1)" />
-          <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.05em' }}>FEED OFFLINE</span>
+        <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-main)', gap: '10px' }}>
+          <Camera size={48} color="var(--text-inactive)" />
+          <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>FEED OFFLINE</span>
         </div>
       )}
       
       <div style={{ 
         position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', 
-        background: isOnline ? 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 40%, transparent 70%, rgba(0,0,0,0.3) 100%)' : 'rgba(15, 23, 42, 0.4)', 
+        background: isOnline ? 'linear-gradient(to bottom, var(--bg-overlay) 0%, transparent 40%, transparent 70%, var(--bg-overlay) 100%)' : 'var(--bg-overlay)', 
         display: 'flex', alignItems: 'center', justifyContent: 'center' 
       }}>
         {!isOnline && (
-          <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.2)' }}>
-            <WifiOff size={24} color="#fff" />
+          <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'var(--bg-card)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--glass-stroke)' }}>
+            <WifiOff size={24} color="var(--text-inactive)" />
           </div>
         )}
       </div>
 
-      <div style={{ position: 'absolute', top: '16px', left: '16px', padding: '6px 12px', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(12px)', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
-        <span style={{ fontSize: '0.65rem', fontWeight: 900, color: 'white', letterSpacing: '0.05em' }}>Vision Feed</span>
+      <div style={{ position: 'absolute', top: '16px', left: '16px', padding: '6px 12px', background: 'var(--bg-overlay)', backdropFilter: 'blur(12px)', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid var(--glass-stroke)' }}>
+        <span style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '0.05em' }}>Vision Feed</span>
       </div>
 
       <div style={{ position: 'absolute', bottom: '16px', right: '16px' }}>
-        <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.3)' }}>
-          <Navigation size={18} color="#fff" />
+        <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--primary-soft)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--glass-border)' }}>
+          <Navigation size={18} color="var(--primary)" />
         </div>
       </div>
     </div>
@@ -242,16 +242,16 @@ const CamCard = React.memo(({ isOnline, onClick }) => (
 
 const ControlsCard = React.memo(({ actuators, toggleActuator, ACTUATORS }) => {
   const controls = [
-    { key: ACTUATORS?.PUMP, label: 'Pump', icon: Droplets, color: '#3B82F6', bg: '#EFF6FF' },
-    { key: ACTUATORS?.BUZZER, label: 'Siren', icon: BellRing, color: '#EF4444', bg: '#FEF2F2' },
-    { key: ACTUATORS?.LIGHT, label: 'Light', icon: Lightbulb, color: '#F59E0B', bg: '#FFFBEB' },
+    { key: ACTUATORS?.PUMP, label: 'Pump', icon: Droplets, color: 'var(--secondary)' },
+    { key: ACTUATORS?.BUZZER, label: 'Siren', icon: BellRing, color: 'var(--danger)' },
+    { key: ACTUATORS?.LIGHT, label: 'Light', icon: Lightbulb, color: 'var(--accent)' },
   ];
 
   return (
     <motion.div
       variants={itemFadeUp}
       style={{
-        background: 'linear-gradient(165deg, #ffffff 0%, #f8fafc 100%)', 
+        background: 'linear-gradient(165deg, var(--bg-card) 0%, var(--bg-main) 100%)', 
         borderRadius: 'var(--radius-xl)', padding: '1.25rem',
         border: '1px solid var(--glass-stroke)', boxShadow: 'var(--shadow-md)',
         display: 'flex', flexDirection: 'column', gap: '1rem',
@@ -271,33 +271,33 @@ const ControlsCard = React.memo(({ actuators, toggleActuator, ACTUATORS }) => {
           return (
             <div key={c.label} style={{ 
               flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', 
-              padding: '16px 8px', borderRadius: '24px', border: '1px solid rgba(0,0,0,0.03)', 
-              background: isOn ? `${c.color}08` : 'rgba(0,0,0,0.01)',
+              padding: '16px 8px', borderRadius: '24px', border: '1px solid var(--border-main)', 
+              background: isOn ? `${c.color}15` : 'var(--bg-main)',
               transition: '0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-              boxShadow: isOn ? `0 4px 12px ${c.color}10` : 'none'
+              boxShadow: isOn ? 'var(--shadow-sm)' : 'none'
             }}>
               <div style={{ 
                 width: '46px', height: '46px', borderRadius: '16px', 
-                background: isOn ? c.color : 'rgba(0,0,0,0.04)', 
+                background: isOn ? c.color : 'var(--bg-sheet)', 
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: isOn ? `0 8px 16px ${c.color}30` : 'none',
+                boxShadow: isOn ? 'var(--shadow-premium)' : 'none',
                 transition: '0.4s'
               }}>
-                <c.icon size={22} color={isOn ? '#fff' : '#94A3B8'} strokeWidth={2.5} />
+                <c.icon size={22} color={isOn ? 'var(--bg-card)' : 'var(--text-inactive)'} strokeWidth={2.5} />
               </div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 800, color: isOn ? 'var(--text-main)' : '#94A3B8' }}>{c.label}</div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 800, color: isOn ? 'var(--text-main)' : 'var(--text-inactive)' }}>{c.label}</div>
               <motion.div 
                 whileTap={{ scale: 0.9 }}
                 onClick={() => toggleActuator(c.key)} 
                 style={{ 
                   width: '40px', height: '22px', borderRadius: '12px', 
-                  background: isOn ? c.color : '#E2E8F0', position: 'relative', cursor: 'pointer', transition: '0.3s' 
+                  background: isOn ? c.color : 'var(--bg-sheet)', position: 'relative', cursor: 'pointer', transition: '0.3s' 
                 }}
               >
                 <motion.div 
                   animate={{ x: isOn ? 20 : 2 }} 
                   transition={springConfig}
-                  style={{ position: 'absolute', top: '2px', left: 0, width: '18px', height: '18px', borderRadius: '50%', background: '#fff', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }} 
+                  style={{ position: 'absolute', top: '2px', left: 0, width: '18px', height: '18px', borderRadius: '50%', background: 'var(--bg-card)', boxShadow: 'var(--shadow-sm)' }} 
                 />
               </motion.div>
             </div>
@@ -313,8 +313,8 @@ const InsightsCard = React.memo(({ sensorData, sensorHistory, navigate }) => {
     const list = [];
     if (!sensorData || !sensorHistory || sensorHistory.length < 1) {
       return [
-        { text: 'Synchronizing intelligence...', icon: Activity, color: '#94A3B8', bg: '#F1F5F9' },
-        { text: 'Analyzing crop patterns', icon: RefreshCw, color: '#94A3B8', bg: '#F1F5F9' }
+        { text: 'Synchronizing intelligence...', icon: Activity, color: 'var(--text-muted)', bg: 'var(--bg-main)' },
+        { text: 'Analyzing crop patterns', icon: RefreshCw, color: 'var(--text-muted)', bg: 'var(--bg-main)' }
       ];
     }
 
@@ -346,9 +346,10 @@ const InsightsCard = React.memo(({ sensorData, sensorHistory, navigate }) => {
       }
       list.push({
         text,
+        text,
         icon: diff > 0 ? ArrowUp : ArrowDown,
         color: diff > 0 ? 'var(--danger)' : 'var(--secondary)',
-        bg: diff > 0 ? 'rgba(239, 68, 68, 0.08)' : 'var(--secondary-soft)'
+        bg: diff > 0 ? 'var(--danger-soft)' : 'var(--secondary-soft)'
       });
     }
 
@@ -381,7 +382,7 @@ const InsightsCard = React.memo(({ sensorData, sensorHistory, navigate }) => {
       recText = 'Alert: Low Soil Moisture';
       recIcon = BellRing;
       recColor = 'var(--accent)';
-      recBg = 'rgba(245, 158, 11, 0.08)';
+      recBg = 'var(--accent-soft)';
     }
 
     list.push({ text: recText, icon: recIcon, color: recColor, bg: recBg });
@@ -393,7 +394,7 @@ const InsightsCard = React.memo(({ sensorData, sensorHistory, navigate }) => {
     <motion.div
       variants={itemFadeUp}
       style={{
-        background: 'linear-gradient(165deg, var(--primary-soft) 0%, #ffffff 100%)', 
+        background: 'linear-gradient(165deg, var(--primary-soft) 0%, var(--bg-card) 100%)', 
         borderRadius: 'var(--radius-xl)', 
         padding: '1.5rem',
         border: '1px solid var(--glass-stroke)', 
@@ -403,7 +404,7 @@ const InsightsCard = React.memo(({ sensorData, sensorHistory, navigate }) => {
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.25rem' }}>
         <div style={{ 
-          width: '36px', height: '36px', borderRadius: '12px', background: 'white', 
+          width: '36px', height: '36px', borderRadius: '12px', background: 'var(--bg-card)', 
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           boxShadow: 'var(--shadow-sm)'
         }}>
@@ -437,8 +438,8 @@ const InsightsCard = React.memo(({ sensorData, sensorHistory, navigate }) => {
         onClick={() => navigate('/reports')} 
         className="btn-premium"
         style={{
-          width: '100%', marginTop: '1.5rem', background: 'white', color: 'var(--primary)',
-          boxShadow: 'var(--shadow-sm)', border: '1px solid rgba(0,0,0,0.02)'
+          width: '100%', marginTop: '1.5rem', background: 'var(--bg-card)', color: 'var(--primary)',
+          boxShadow: 'var(--shadow-sm)', border: '1px solid var(--glass-stroke)'
         }}
       >
         ANALYSIS REPORT <ChevronRight size={16} />
@@ -479,9 +480,9 @@ const WelcomeHeader = React.memo(() => {
         animate={{ opacity: 1, x: 0 }}
         style={{ 
           display: 'inline-flex', alignItems: 'center', gap: '8px', 
-          background: 'rgba(16, 185, 129, 0.08)', 
+          background: 'var(--primary-soft)', 
           padding: '6px 14px', borderRadius: '40px',
-          border: '1px solid rgba(16, 185, 129, 0.1)',
+          border: '1px solid var(--border-main)',
           backdropFilter: 'blur(10px)',
           alignSelf: 'flex-start'
         }}
@@ -523,16 +524,16 @@ const Dashboard = () => {
 
         <div style={{ display: 'flex', gap: '10px' }}>
           {user?.email?.toLowerCase() === 'prolayjitbiswas14112004@gmail.com' && (
-            <motion.button
+              <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => navigate('/admin')}
               style={{ 
                 width: '48px', height: '48px', borderRadius: '16px', 
-                background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.1)',
+                background: 'var(--danger-soft)', border: '1px solid var(--border-main)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center'
               }}
             >
-              <ShieldCheck size={24} color="#dc2626" />
+              <ShieldCheck size={24} color="var(--danger)" />
             </motion.button>
           )}
           <motion.button
@@ -540,7 +541,7 @@ const Dashboard = () => {
             onClick={handleSync}
             style={{ 
               width: '48px', height: '48px', borderRadius: '16px', 
-              background: 'white', border: '1px solid rgba(0,0,0,0.04)',
+              background: 'var(--bg-card)', border: '1px solid var(--glass-stroke)',
               boxShadow: 'var(--shadow-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}
           >

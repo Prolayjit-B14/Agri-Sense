@@ -19,24 +19,24 @@ import { ACTUATORS } from '../../logic/healthEngine';
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
 const T = {
-  primary: '#10B981',
-  primaryLight: '#D1FAE5',
-  primaryDeep: '#065F46',
-  secondary: '#3B82F6',
-  secondaryLight: '#DBEAFE',
-  accent: '#8B5CF6',
-  accentLight: '#EDE9FE',
-  danger: '#EF4444',
-  dangerLight: '#FEE2E2',
-  warning: '#F59E0B',
-  warningLight: '#FEF3C7',
-  text: '#1E293B',
-  sub: '#64748B',
-  muted: '#94A3B8',
-  bg: '#FFFFFF',
-  card: '#FFFFFF',
-  border: '#F1F5F9',
-  shadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+  primary: 'var(--primary)',
+  primaryLight: 'var(--primary-soft)',
+  primaryDeep: 'var(--primary-deep)',
+  secondary: 'var(--secondary)',
+  secondaryLight: 'var(--secondary-soft)',
+  accent: 'var(--accent)',
+  accentLight: 'var(--accent-soft)',
+  danger: 'var(--danger)',
+  dangerLight: 'var(--danger-soft)',
+  warning: 'var(--accent)',
+  warningLight: 'var(--accent-soft)',
+  text: 'var(--text-main)',
+  sub: 'var(--text-muted)',
+  muted: 'var(--text-inactive)',
+  bg: 'var(--bg-main)',
+  card: 'var(--bg-card)',
+  border: 'var(--border-main)',
+  shadow: 'var(--shadow-md)',
 };
 
 // ─── MINI SPARKLINE ────────────────────────────────────────────────────────────
@@ -60,7 +60,7 @@ const MiniGraph = ({ color, data = [30, 45, 35, 50, 40, 60, 55] }) => {
         />
         <defs>
           <linearGradient id={`grad-${color.replace('#', '')}`} x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style={{ stopColor: color, stopOpacity: 1 }} />
+            <stop offset="0%" style={{ stopColor: color, stopOpacity: 0.5 }} />
             <stop offset="100%" style={{ stopColor: color, stopOpacity: 0 }} />
           </linearGradient>
         </defs>
@@ -94,17 +94,17 @@ const NodeCard = ({ icon: Icon, label, color, isOnline, sensors, actuators, togg
     whileHover={{ y: -2 }}
     style={{
       background: isOnline 
-        ? `linear-gradient(165deg, ${color}10 0%, #FFFFFF 100%)` 
-        : 'linear-gradient(165deg, #F8FAFC 0%, #F1F5F9 100%)',
+        ? `linear-gradient(165deg, ${color}10 0%, var(--bg-sheet) 100%)` 
+        : 'linear-gradient(165deg, var(--bg-main) 0%, var(--bg-sheet) 100%)',
       borderRadius: '24px',
       padding: '16px',
-      boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
+      boxShadow: 'var(--shadow-md)',
       display: 'flex',
       flexDirection: 'column',
       gridColumn: isFullWidth ? '1 / -1' : 'auto',
       position: 'relative',
       overflow: 'hidden',
-      border: '1px solid rgba(255, 255, 255, 0.8)'
+      border: '1px solid var(--glass-stroke)'
     }}
   >
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
@@ -167,24 +167,24 @@ const NetworkHealthCard = ({ activeCount, totalCount, mqttStatus }) => {
   const pct = (displayCount / totalCount) * 100;
   
   const statusMap = {
-    connected:    { color: T.primary, bg: '#ECFDF5', text: 'MQTT CONNECTED' },
-    connecting:   { color: T.warning, bg: '#FFFBEB', text: 'CONNECTING...' },
-    reconnecting: { color: T.warning, bg: '#FFFBEB', text: 'RECONNECTING...' },
-    error:        { color: T.danger,  bg: '#FEF2F2', text: 'CONNECTION ERROR' },
-    disconnected: { color: T.danger,  bg: '#FEF2F2', text: 'DISCONNECTED' }
+    connected:    { color: T.primary, bg: 'var(--success-soft)', text: 'MQTT CONNECTED' },
+    connecting:   { color: T.warning, bg: 'var(--accent-soft)', text: 'CONNECTING...' },
+    reconnecting: { color: T.warning, bg: 'var(--accent-soft)', text: 'RECONNECTING...' },
+    error:        { color: T.danger,  bg: 'var(--danger-soft)', text: 'CONNECTION ERROR' },
+    disconnected: { color: T.danger,  bg: 'var(--danger-soft)', text: 'DISCONNECTED' }
   };
 
   const current = statusMap[mqttStatus] || statusMap.disconnected;
 
   return (
     <div style={{
-      background: `linear-gradient(165deg, ${current.bg} 0%, #FFFFFF 100%)`,
+      background: `linear-gradient(165deg, ${current.bg} 0%, var(--bg-sheet) 100%)`,
       borderRadius: '24px',
       padding: '16px',
       position: 'relative',
       overflow: 'hidden',
-      boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
-      border: '1px solid rgba(255, 255, 255, 0.8)',
+      boxShadow: 'var(--shadow-lg)',
+      border: '1px solid var(--glass-stroke)',
       transition: 'all 0.5s ease'
     }}>
       {/* Wavy Background Decoration */}
@@ -213,8 +213,8 @@ const NetworkHealthCard = ({ activeCount, totalCount, mqttStatus }) => {
             <div style={{
               padding: '6px 12px',
               borderRadius: '20px',
-              background: `${current.color}15`,
-              border: `1px solid ${current.color}25`,
+              background: 'var(--bg-main)',
+              border: `1px solid var(--border-main)`,
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
@@ -230,11 +230,11 @@ const NetworkHealthCard = ({ activeCount, totalCount, mqttStatus }) => {
               width: '64px',
               height: '64px',
               borderRadius: '20px',
-              background: `${current.color}15`,
+              background: 'var(--bg-main)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: `0 8px 16px ${current.color}10`,
+              boxShadow: 'var(--shadow-sm)',
               transition: 'all 0.5s ease'
             }}>
               <ShieldCheck size={32} color={current.color} strokeWidth={2.5} />
@@ -243,7 +243,7 @@ const NetworkHealthCard = ({ activeCount, totalCount, mqttStatus }) => {
         </div>
 
         <div style={{ marginTop: '24px' }}>
-          <div style={{ height: '8px', borderRadius: '4px', background: '#F1F5F9', overflow: 'hidden' }}>
+          <div style={{ height: '8px', borderRadius: '4px', background: 'var(--bg-main)', overflow: 'hidden' }}>
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${pct}%` }}
@@ -270,21 +270,21 @@ const VisionCard = ({ isOnline, detection }) => {
   return (
     <div style={{
       background: isOnline 
-        ? 'linear-gradient(165deg, #F5F3FF 0%, #FFFFFF 100%)' 
-        : 'linear-gradient(165deg, #F8FAFC 0%, #F1F5F9 100%)',
+        ? 'linear-gradient(165deg, var(--accent-soft) 0%, var(--bg-sheet) 100%)' 
+        : 'linear-gradient(165deg, var(--bg-main) 0%, var(--bg-sheet) 100%)',
       borderRadius: '24px',
       padding: '16px',
-      boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
+      boxShadow: 'var(--shadow-md)',
       gridColumn: '1 / -1',
       display: 'flex',
       flexDirection: 'column',
       gap: '16px',
-      border: '1px solid rgba(255, 255, 255, 0.8)'
+      border: '1px solid var(--glass-stroke)'
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${T.accent}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Camera size={20} color="#7C3AED" />
+          <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--bg-main)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Camera size={20} color="var(--secondary)" />
           </div>
           <span style={{ fontSize: '0.9rem', fontWeight: 800, color: T.text }}>Vision Node</span>
         </div>
@@ -296,7 +296,7 @@ const VisionCard = ({ isOnline, detection }) => {
       <div style={{ display: 'flex', gap: '12px', height: '160px' }}>
         <div style={{ 
           flex: 1.5, 
-          background: '#0F172A', 
+          background: 'var(--bg-dark)', 
           borderRadius: '16px', 
           position: 'relative', 
           overflow: 'hidden',
@@ -317,14 +317,14 @@ const VisionCard = ({ isOnline, detection }) => {
               <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 700 }}>FEED UNAVAILABLE</p>
             </div>
           )}
-          <div style={{ position: 'absolute', top: '12px', left: '12px', padding: '4px 8px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', borderRadius: '6px' }}>
-            <span style={{ fontSize: '0.55rem', fontWeight: 800, color: 'white' }}>CAMERA 01</span>
+          <div style={{ position: 'absolute', top: '12px', left: '12px', padding: '4px 8px', background: 'var(--bg-overlay)', backdropFilter: 'blur(4px)', borderRadius: '6px' }}>
+            <span style={{ fontSize: '0.55rem', fontWeight: 800, color: 'var(--text-main)' }}>CAMERA 01</span>
           </div>
         </div>
 
         <div style={{ 
           flex: 1, 
-          background: isOnline ? '#FFFFFF' : `${T.danger}05`, 
+          background: isOnline ? 'var(--bg-card)' : 'var(--danger-soft)', 
           borderRadius: '16px', 
           padding: '12px 8px',
           display: 'flex',
@@ -332,7 +332,7 @@ const VisionCard = ({ isOnline, detection }) => {
           alignItems: 'center',
           justifyContent: 'center',
           textAlign: 'center',
-          border: `1px solid ${isOnline ? T.border : `${T.danger}10`}`
+          border: `1px solid ${isOnline ? 'var(--border-main)' : 'var(--danger-soft)'}`
         }}>
           {!isOnline ? (
             <>
@@ -373,11 +373,11 @@ const NodePowerPanel = ({ nodePower, toggleNodePower, devices }) => {
   return (
     <div style={{ 
       marginTop: '8px',
-      background: 'linear-gradient(165deg, #F0F9FF 0%, #FFFFFF 100%)',
+      background: 'linear-gradient(165deg, var(--secondary-soft) 0%, var(--bg-sheet) 100%)',
       padding: '16px',
       borderRadius: '24px',
-      boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9)',
-      border: '1px solid rgba(255, 255, 255, 0.8)',
+      boxShadow: 'var(--shadow-md)',
+      border: '1px solid var(--glass-stroke)',
       display: 'flex',
       flexDirection: 'column',
       gap: '14px'
@@ -407,7 +407,7 @@ const NodePowerPanel = ({ nodePower, toggleNodePower, devices }) => {
                 padding: '10px 0',
                 borderRadius: '14px',
                 border: 'none',
-                background: isPowered ? `${n.color}15` : '#F1F5F9',
+                background: isPowered ? `${n.color}15` : 'var(--bg-main)',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -461,16 +461,16 @@ const ControlPanel = ({ actuators, toggleActuator, sensorData }) => {
             <motion.div 
               key={c.id} 
               style={{
-                background: isOn ? c.color : 'linear-gradient(165deg, #FFFFFF 0%, #FBFDFF 100%)',
+                background: isOn ? c.color : 'var(--bg-card)',
                 borderRadius: '16px',
                 padding: '12px 4px',
-                boxShadow: isOn ? `0 8px 20px ${c.color}30` : '0 4px 12px rgba(0,0,0,0.02), inset 0 1px 1px rgba(255,255,255,0.9)',
+                boxShadow: isOn ? `0 8px 20px ${c.color}30` : 'var(--shadow-sm)',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
-                border: `1px solid ${isOn ? c.color : 'rgba(255, 255, 255, 0.8)'}`,
+                border: `1px solid ${isOn ? c.color : 'var(--glass-stroke)'}`,
                 transition: 'all 0.3s ease',
                 cursor: 'default'
               }}
@@ -479,12 +479,12 @@ const ControlPanel = ({ actuators, toggleActuator, sensorData }) => {
                 width: '32px', 
                 height: '32px', 
                 borderRadius: '10px', 
-                background: isOn ? 'rgba(255,255,255,0.2)' : `${c.color}10`, 
+                background: isOn ? 'var(--bg-overlay)' : 'var(--bg-main)', 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center' 
               }}>
-                <c.icon size={18} color={isOn ? 'white' : c.color} strokeWidth={2.5} />
+                <c.icon size={18} color={isOn ? 'var(--text-main)' : c.color} strokeWidth={2.5} />
               </div>
               <div style={{ textAlign: 'center' }}>
                 <span style={{ 
@@ -500,7 +500,7 @@ const ControlPanel = ({ actuators, toggleActuator, sensorData }) => {
                 <span style={{ 
                   fontSize: '0.5rem', 
                   fontWeight: 900, 
-                  color: isOn ? 'rgba(255,255,255,0.8)' : T.muted,
+                  color: isOn ? 'var(--text-main)' : T.muted,
                   textTransform: 'uppercase'
                 }}>
                   {isOn ? 'ON' : 'OFF'}
